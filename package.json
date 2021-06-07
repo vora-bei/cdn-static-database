@@ -1,0 +1,32 @@
+{
+  "name": "gatsby-full-text-search-server-static-index-plugin",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "ts-node src/tests/index"
+
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/vora-bei/gatsby-full-text-search-server-static-index-plugin.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://gitlab.com/vora-bei/gatsby-full-text-search-server-static-index-plugin/issues"
+  },
+  "homepage": "https://gitlab.com/vora-bei/gatsby-full-text-search-server-static-index-plugin#readme",
+  "devDependencies": {
+    "typescript": "^4.3.2"
+  },
+  "dependencies": {
+    "@types/node": "^15.12.1",
+    "bloom-filters": "^1.3.4",
+    "mingo": "^4.1.2",
+    "n-gram": "^1.1.2",
+    "snowball": "^0.3.1"
+  }
+}

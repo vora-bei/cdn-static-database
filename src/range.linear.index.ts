@@ -8,14 +8,15 @@ interface IOptions<T, P> {
 }
 let id_counter = 1;
 export class RangeLinearIndex<T, P> implements IIndex<T, P> {
-    public indexes: Map<Range<T>, IIndex<T, P>> = new Map();
+    public indexes: Map<Range<P>, IIndex<T, P>> = new Map();
     public options: IOptions<T, P>;
     public get id() {
         return this.options.id!!;
     }
     constructor({ indexes, id = `${id_counter++}` }: IOptions<T, P>) {
         if (indexes) {
-            this.indexes = new Map(indexes.map((index) => [Range.fromKeys<P>(index.keys), index]))
+            this.indexes = new Map(indexes
+                .map((index) => [Range.fromKeys<P>(index.keys), index]))
         }
         this.options = { indexes, id };
     }
@@ -28,18 +29,18 @@ export class RangeLinearIndex<T, P> implements IIndex<T, P> {
     serialize(): { data: any; options: any; } {
         const data = [...this.indexes]
             .map(([filter, index], i) => ([filter, { ...index.serialize().options, isLoaded: false }]));
-        return { data, options: {  } };
+        return { data, options: {} };
     }
     static deserialize<T, P>(data: [Range<P>, IIndex<T, P>][], options: { errorRate: number, id: string }): IIndex<T, P> {
-        const indexes = new Map(data.map(([{left, right}, index]) => {
+        const indexes = new Map(data.map(([{ left, right }, index]) => {
             return [new Range(left, right), index]
         }));
         const index = new RangeLinearIndex<T, P>({ ...options });
         index.indexes = indexes;
         return index;
     }
-    async find(value: string): Promise<T[]> {
-        const weights = [...this.indexes].map<[number, IIndex<T>]>(([filter, index]) => {
+    async find(value: P): Promise<T[]> {
+        const weights = [...this.indexes].map<[number, IIndex<T, P>]>(([filter, index]) => {
             const tokens = index.tokenizr(value);
             const width = tokens.reduce((w, token) => filter.has(token) ? 1 + w : w, 0);
             return [width, index];

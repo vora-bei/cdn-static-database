@@ -1,6 +1,6 @@
 export class Range<T> {
-    left: T | null;
-    right: T | null;
+    left: T;
+    right: T;
     constructor(left: T, right: T) {
         this.left = left;
         this.right = right;
@@ -11,6 +11,9 @@ export class Range<T> {
             let right = sum.right === null ? val : sum.right;
             return { left: left > val ? val : left, right: right < val ? val : right }
         }, { left: null, right: null });
+        if(left===null|| right===null){
+            throw new Error("indexes with null left or right border is forbiden");
+        }
         return new Range(left, right)
     }
 }

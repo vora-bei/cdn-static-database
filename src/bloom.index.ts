@@ -3,12 +3,12 @@ import { IIndex } from "interfaces";
 
 interface IOptions<T> {
     errorRate?: number;
-    indexes?: IIndex<T>[];
+    indexes?: IIndex<T, string>[];
     id?: string;
 }
 let id_counter = 1;
-export class BloomIndex<T> implements IIndex<T> {
-    public indexes: Map<BloomFilter, IIndex<T>> = new Map();
+export class BloomIndex<T> implements IIndex<T, string> {
+    public indexes: Map<BloomFilter, IIndex<T, string>> = new Map();
     public options: IOptions<T>;
     public get id() {
         return this.options.id!!;
@@ -31,7 +31,7 @@ export class BloomIndex<T> implements IIndex<T> {
             .map(([filter, index], i) => ([filter.saveAsJSON(), { ...index.serialize().options, isLoaded: false }]));
         return { data, options: { errorRate } };
     }
-    static deserialize<P>(data: [Object, IIndex<P>][], options: { errorRate: number, id: string }): IIndex<P> {
+    static deserialize<P>(data: [Object, IIndex<P, string>][], options: { errorRate: number, id: string }): IIndex<P, string> {
         const indexes = new Map(data.map(([bloom, index]) => {
             return [BloomFilter.fromJSON(bloom), index]
         }));
@@ -40,7 +40,7 @@ export class BloomIndex<T> implements IIndex<T> {
         return index;
     }
     async find(value: string): Promise<T[]> {
-        const weights = [...this.indexes].map<[number, IIndex<T>]>(([filter, index]) => {
+        const weights = [...this.indexes].map<[number, IIndex<T, string>]>(([filter, index]) => {
             const tokens = index.tokenizr(value);
             const width = tokens.reduce((w, token) => filter.has(token) ? 1 + w : w, 0);
             return [width, index];

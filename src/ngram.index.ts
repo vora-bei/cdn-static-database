@@ -12,7 +12,7 @@ interface IOptions {
     load?: () => Promise<any>;
 }
 let id_counter = 1;
-export class NgramIndex<T> implements IIndex<T>{
+export class NgramIndex<T> implements IIndex<T, string>{
     private nGram: ReturnType<typeof nGram>;
     public indexes: Map<string, T[]> = new Map();
     public options: IOptions;

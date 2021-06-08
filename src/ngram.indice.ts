@@ -1,5 +1,5 @@
 import nGram from "n-gram";
-import { IIndex } from "./interfaces"
+import { IIndice } from "./interfaces"
 const CHUNK_SIZE_DEFAULT = 100;
 const AUTO_LIMIT_FIND_PERCENT = 40;
 interface IOptions {
@@ -12,12 +12,19 @@ interface IOptions {
     load?: () => Promise<any>;
 }
 let id_counter = 1;
-export class NgramIndex<T> implements IIndex<T, string>{
+export class NgramIndice<T> implements IIndice<T, string>{
     private nGram: ReturnType<typeof nGram>;
-    public indexes: Map<string, T[]> = new Map();
+    public indices: Map<string, T[]> = new Map();
     public options: IOptions;
     get keys() {
-        return [...this.indexes.keys()]
+        const keys = [...this.indices.keys()];
+        keys.sort((a, b) => {
+            if (a === b) {
+                return 0;
+            }
+            return a < b ? -1 : 1;
+        })
+        return keys;
     }
     public get id() {
         return this.options.id!!;
@@ -30,9 +37,9 @@ export class NgramIndex<T> implements IIndex<T, string>{
     }
     add(key: T, value: string) {
         this.tokenizr(value).forEach((token) => {
-            const index = this.indexes.get(token) || [];
+            const index = this.indices.get(token) || [];
             index.push(key);
-            this.indexes.set(token, index);
+            this.indices.set(token, index);
         });
     }
     tokenizr(value: string): string[] {
@@ -44,7 +51,7 @@ export class NgramIndex<T> implements IIndex<T, string>{
             return;
         } else if (this.options.load) {
             const { data } = await this.options.load();
-            this.indexes = new Map(data);
+            this.indices = new Map(data);
             this.options.isLoaded = true;
         } else {
             throw (Error("option load doesn't implemented"))
@@ -55,7 +62,7 @@ export class NgramIndex<T> implements IIndex<T, string>{
         await this.load();
         const tokens = this.tokenizr(value);
         this.tokenizr(value).forEach((token) => {
-            const indexes = this.indexes.get(token);
+            const indexes = this.indices.get(token);
             if (indexes) {
                 indexes.forEach((id) => {
                     let count = countResults.get(id) || 0;
@@ -68,36 +75,35 @@ export class NgramIndex<T> implements IIndex<T, string>{
         const results = [...countResults.entries()]
             .filter(([_, count]) => count >= l)
             .map(([id]) => id);
-        console.debug(results.length);
+        console.debug([...countResults.entries()], results.length, this.indices.size, l);
         return results;
     }
     private getLimit(autoLimit: boolean, tokensLength: number, limit: number) {
-        console.debug(tokensLength * AUTO_LIMIT_FIND_PERCENT / 100);
         return autoLimit ? tokensLength * AUTO_LIMIT_FIND_PERCENT / 100 : limit;
     }
 
     serialize() {
-        return { data: [...this.indexes], options: this.options }
+        return { data: [...this.indices], options: this.options }
     }
-    static deserialize<P>(data: any, options?: any) {
+    static deserialize<T, P>(data: any, options?: any) {
         if (!options) {
             options = data;
         }
-        const index = new NgramIndex<P>(options);
-        index.indexes = data;
+        const index = new NgramIndice<P>(options);
+        index.indices = data;
         return index;
     }
-    public spread(chunkSize: number = CHUNK_SIZE_DEFAULT) {
-        const chunkCount = (this.indexes.size - this.indexes.size % chunkSize) / chunkSize;
+    public spread(chunkSize: number = CHUNK_SIZE_DEFAULT): IIndice<T, string>[] {
+        const chunkCount = (this.indices.size - this.indices.size % chunkSize) / chunkSize;
         const { id, ...options } = this.options;
         console.log(options);
         return new Array(chunkCount)
             .fill(0)
-            .map((_, i) => NgramIndex.deserialize<T>(
+            .map<IIndice<T, string>>((_, i) => NgramIndice.deserialize(
                 new Map(this
                     .keys
                     .slice(i * chunkSize, (i + 1) * chunkSize)
-                    .map(key => [key, [...this.indexes.get(key)!]])),
+                    .map(key => [key, [...this.indices.get(key)!]])),
                 options
             ))
     }

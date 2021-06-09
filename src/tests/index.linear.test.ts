@@ -1,13 +1,13 @@
 import { RangeLinearIndice } from "../range.linear.indice";
 import { NgramIndice } from "../ngram.indice";
-import { countries } from "./countries.seed";
+import movies from "./movies";
 import { saveSharedIndeces, restoreSharedIndeces } from "../utils";
 
 
 
 
 const indice = new NgramIndice<number>();
-Object.entries(countries).forEach(([key, val]) => indice.add(Number.parseInt(key), val));
+movies.forEach((val, key) => indice.add(key, val));
 const linear = new RangeLinearIndice<number, string>({ indice, id: 'default_linear' });
 
 
@@ -20,7 +20,7 @@ saveSharedIndeces(linear)
         )
     ).then(async restored => {
         console.time("search")
-        console.log(await restored.find("Аргенnина"));
+        console.log(await restored.find("Conquest of Paradise"));
         console.timeEnd("search")
 
     });

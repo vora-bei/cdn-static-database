@@ -1,13 +1,13 @@
 import fs from "fs";
 import util from "util";
-import { IIndice, ISharedIndice } from "interfaces";
+import { ISharedIndice, ISpreadIndice } from "interfaces";
 const writeFile = util.promisify(fs.writeFile);
 const readFile = util.promisify(fs.readFile);
 
 const mkdir = util.promisify(fs.mkdir);
 const exists = util.promisify(fs.exists);
 
-export const  saveSharedIndeces = async <T, P>(indice: ISharedIndice<T, P>) => {
+export const saveSharedIndeces = async <T, P>(indice: ISharedIndice<T, P>) => {
     const dir = `./${indice.id}`;
     const existDir = await exists(dir);
     if (!existDir) {
@@ -20,14 +20,26 @@ export const  saveSharedIndeces = async <T, P>(indice: ISharedIndice<T, P>) => {
 }
 
 export const restoreSharedIndeces = async <T, P>(
-    path: string,
-     deserializeShared: (data: any, options?: any) => ISharedIndice<T, P>,
-     deserialize: (data: any, options?: any) => IIndice<T, P>
+    id: string,
+    deserializeShared: (
+        data: any,
+        options: any,
+        deserialize: (data: any, options?: any) => ISpreadIndice<T, P>) => ISharedIndice<T, P>,
+    deserialize: (
+        data: any,
+        options?: any
+    ) => ISpreadIndice<T, P>
 
-     ) => {
-    const jsonRaw = await readFile(path);
+) => {
+    const load = async (options: { id }) => {
+        await new Promise((res) => setTimeout(res, 200))
+        console.debug("load")
+        return JSON.parse((await readFile(`./${id}/chunk_${options.id}.json`)).toString())
+    }
+    const jsonRaw = await readFile(`./${id}/index.json`);
     const json: { data: [any, any][], options: any } = JSON.parse(jsonRaw.toString());
-    const data = json.data.map<[any, IIndice<T, P>]>(([obj, options]) => [obj, 
-        deserialize({ ...options, load: async () => JSON.parse((await readFile(`./${json.options.id}/chunk_${options.id}.json`)).toString()) })]);
-    return deserializeShared(data, json.options);
+    return deserializeShared(
+        json.data,
+        json.options,
+        (options) => deserialize({ ...options, load }));
 }

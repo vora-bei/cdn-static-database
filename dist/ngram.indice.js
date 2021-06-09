@@ -1,0 +1,269 @@
+"use strict";
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+var __generator = (this && this.__generator) || function (thisArg, body) {
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
+    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    function verb(n) { return function (v) { return step([n, v]); }; }
+    function step(op) {
+        if (f) throw new TypeError("Generator is already executing.");
+        while (_) try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
+            if (y = 0, t) op = [op[0] & 2, t.value];
+            switch (op[0]) {
+                case 0: case 1: t = op; break;
+                case 4: _.label++; return { value: op[1], done: false };
+                case 5: _.label++; y = op[1]; op = [0]; continue;
+                case 7: op = _.ops.pop(); _.trys.pop(); continue;
+                default:
+                    if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) { _ = 0; continue; }
+                    if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
+                    if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
+                    if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
+            }
+            op = body.call(thisArg, _);
+        } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
+        if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
+    }
+};
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
+var __read = (this && this.__read) || function (o, n) {
+    var m = typeof Symbol === "function" && o[Symbol.iterator];
+    if (!m) return o;
+    var i = m.call(o), r, ar = [], e;
+    try {
+        while ((n === void 0 || n-- > 0) && !(r = i.next()).done) ar.push(r.value);
+    }
+    catch (error) { e = { error: error }; }
+    finally {
+        try {
+            if (r && !r.done && (m = i["return"])) m.call(i);
+        }
+        finally { if (e) throw e.error; }
+    }
+    return ar;
+};
+var __spreadArray = (this && this.__spreadArray) || function (to, from) {
+    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
+        to[j] = from[i];
+    return to;
+};
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.NgramIndice = void 0;
+var n_gram_1 = __importDefault(require("n-gram"));
+var CHUNK_SIZE_DEFAULT = 100;
+var AUTO_LIMIT_FIND_PERCENT = 40;
+var id_counter = 1;
+var NgramIndice = /** @class */ (function () {
+    function NgramIndice(options) {
+        if (options === void 0) { options = { number: 3, limit: 2, toLowcase: true, autoLimit: false, isLoaded: true }; }
+        this.indices = new Map();
+        var _a = options.id, id = _a === void 0 ? "" + id_counter++ : _a;
+        this.nGram = n_gram_1.default(options.number);
+        this.options = __assign(__assign({}, options), { id: id });
+        return this;
+    }
+    Object.defineProperty(NgramIndice.prototype, "keys", {
+        get: function () {
+            var keys = __spreadArray([], __read(this.indices.keys()));
+            keys.sort(function (a, b) {
+                if (a === b) {
+                    return 0;
+                }
+                return a < b ? -1 : 1;
+            });
+            return keys;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    Object.defineProperty(NgramIndice.prototype, "id", {
+        get: function () {
+            return this.options.id;
+        },
+        enumerable: false,
+        configurable: true
+    });
+    NgramIndice.prototype.serializeOptions = function () {
+        return __assign({}, this.options);
+    };
+    NgramIndice.prototype.serializeData = function () {
+        return __spreadArray([], __read(this.indices));
+    };
+    NgramIndice.prototype.add = function (key, value) {
+        var _this = this;
+        this.tokenizr(value).forEach(function (token) {
+            var index = _this.indices.get(token) || [];
+            index.push(key);
+            _this.indices.set(token, index);
+        });
+    };
+    NgramIndice.prototype.tokenizr = function (value) {
+        var _this = this;
+        var v = this.options.toLowcase ? value.toLowerCase() : value;
+        return v.split(" ").flatMap(function (word) { return _this.nGram(word); });
+    };
+    NgramIndice.prototype.load = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var data;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (!this.options.isLoaded) return [3 /*break*/, 1];
+                        return [2 /*return*/];
+                    case 1:
+                        if (!this.options.load) return [3 /*break*/, 3];
+                        return [4 /*yield*/, this.options.load(this.options)];
+                    case 2:
+                        data = (_a.sent()).data;
+                        this.indices = new Map(data);
+                        this.options.isLoaded = true;
+                        return [3 /*break*/, 4];
+                    case 3: throw (Error("option load doesn't implemented"));
+                    case 4: return [2 /*return*/];
+                }
+            });
+        });
+    };
+    NgramIndice.prototype.preFilter = function (tokens) {
+        return __awaiter(this, void 0, void 0, function () {
+            var countResults, _a, autoLimit, limit, l;
+            var _this = this;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        countResults = new Map();
+                        return [4 /*yield*/, this.load()];
+                    case 1:
+                        _b.sent();
+                        tokens.forEach(function (token) {
+                            var indices = _this.indices.get(token);
+                            if (indices) {
+                                indices.forEach(function (id) {
+                                    var count = countResults.get(id) || 0;
+                                    countResults.set(id, count + 1);
+                                });
+                            }
+                        });
+                        _a = this.options, autoLimit = _a.autoLimit, limit = _a.limit;
+                        l = this.getLimit(autoLimit, tokens.length, limit);
+                        return [2 /*return*/, countResults];
+                }
+            });
+        });
+    };
+    NgramIndice.prototype.find = function (value) {
+        return __awaiter(this, void 0, void 0, function () {
+            var tokens, preResult;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        tokens = this.tokenizr(value);
+                        return [4 /*yield*/, this.preFilter(tokens)];
+                    case 1:
+                        preResult = _a.sent();
+                        return [2 /*return*/, this.postFilter(preResult, tokens)];
+                }
+            });
+        });
+    };
+    NgramIndice.prototype.postFilter = function (countResults, tokens) {
+        var _a = this.options, autoLimit = _a.autoLimit, limit = _a.limit;
+        var l = this.getLimit(autoLimit, tokens.length, limit);
+        var results = __spreadArray([], __read(countResults.entries())).filter(function (_a) {
+            var _b = __read(_a, 2), _ = _b[0], count = _b[1];
+            return count >= l;
+        })
+            .map(function (_a) {
+            var _b = __read(_a, 1), id = _b[0];
+            return id;
+        });
+        return results;
+    };
+    NgramIndice.prototype.getLimit = function (autoLimit, tokensLength, limit) {
+        return autoLimit ? tokensLength * AUTO_LIMIT_FIND_PERCENT / 100 : limit;
+    };
+    NgramIndice.prototype.serialize = function () {
+        return { data: this.serializeData(), options: this.serializeOptions() };
+    };
+    NgramIndice.deserialize = function (data, options) {
+        if (!options) {
+            options = data;
+            data = null;
+        }
+        var index = new NgramIndice(options);
+        if (!!data) {
+            index.indices = data;
+        }
+        return index;
+    };
+    NgramIndice.prototype.spread = function (chunkSize) {
+        var _this = this;
+        if (chunkSize === void 0) { chunkSize = CHUNK_SIZE_DEFAULT; }
+        var chunkCount = (this.indices.size - this.indices.size % chunkSize) / chunkSize;
+        var _a = this.options, id = _a.id, options = __rest(_a, ["id"]);
+        return new Array(chunkCount)
+            .fill(0)
+            .map(function (_, i) { return NgramIndice.deserialize(new Map(_this
+            .keys
+            .slice(i * chunkSize, (i + 1) * chunkSize)
+            .map(function (key) { return [key, __spreadArray([], __read(_this.indices.get(key)))]; })), options); });
+    };
+    NgramIndice.prototype.findAll = function (indices, value) {
+        return __awaiter(this, void 0, void 0, function () {
+            var tokens, list, combineWeights;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        tokens = this.tokenizr(value);
+                        return [4 /*yield*/, Promise.all(indices.map(function (indice) { return indice.preFilter(tokens); }))];
+                    case 1:
+                        list = _a.sent();
+                        combineWeights = list.reduce(function (sum, weights) {
+                            weights.forEach(function (value, key) {
+                                var count = sum.get(key) || 0;
+                                sum.set(key, count + value);
+                            });
+                            return sum;
+                        }, new Map());
+                        return [2 /*return*/, this.postFilter(combineWeights, tokens)];
+                }
+            });
+        });
+    };
+    return NgramIndice;
+}());
+exports.NgramIndice = NgramIndice;

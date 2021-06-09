@@ -1,4 +1,4 @@
-import { IIndice, ISharedIndice, ISpreadIndice } from "interfaces";
+import { ISharedIndice, ISpreadIndice } from "interfaces";
 import { Range } from "./range";
 const DEFAULT_CHUNK_ZIZE = 10;
 

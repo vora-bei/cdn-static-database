@@ -15,7 +15,10 @@ export const saveSharedIndeces = async <T, P>(indice: ISharedIndice<T, P>) => {
     }
     await writeFile(`./${indice.id}/index.json`, JSON.stringify(indice.serialize()))
     for (let [_, v] of indice.indices) {
-        await writeFile(`./${indice.id}/chunk_${v.id}.json`, JSON.stringify(v.serialize()))
+        await writeFile(
+            `./${indice.id}/chunk_${v.id}.json`,
+            JSON.stringify({ data: v.serializeData(), options: { id: v.id } })
+        )
     }
 }
 

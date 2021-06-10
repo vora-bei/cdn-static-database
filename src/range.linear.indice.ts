@@ -1,6 +1,6 @@
 import { ISharedIndice, ISpreadIndice } from "interfaces";
 import { Range } from "./range";
-const DEFAULT_CHUNK_ZIZE = 10;
+const DEFAULT_CHUNK_ZIZE = 2000;
 
 interface IOptions<T, P> {
     chunkSize?: number;

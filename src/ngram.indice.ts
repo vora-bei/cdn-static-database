@@ -111,17 +111,32 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         return index;
     }
     public spread(chunkSize: number = CHUNK_SIZE_DEFAULT): ISpreadIndice<T, string>[] {
-        const chunkCount = (this.indices.size - this.indices.size % chunkSize) / chunkSize;
         const { id, ...options } = this.options;
-        return new Array(chunkCount)
-            .fill(0)
-            .map<ISpreadIndice<T, string>>((_, i) => NgramIndice.deserialize<T, string>(
-                new Map(this
-                    .keys
-                    .slice(i * chunkSize, (i + 1) * chunkSize)
-                    .map(key => [key, [...this.indices.get(key)!]])),
+
+        const result: ISpreadIndice<T, string>[] = [];
+        let size = 0;
+        let map = new Map<string, T[]>();
+        this.keys.forEach((key) => {
+            const value = this.indices.get(key)!;
+            if (size > chunkSize) {
+                result.push(NgramIndice.deserialize<T, string>(
+                    map,
+                    options
+                ))
+                size = 0;
+                map = new Map();
+            } else {
+                size = size + value.length;
+                map.set(key, value);
+            }
+        })
+        if (size != 0) {
+            result.push(NgramIndice.deserialize<T, string>(
+                map,
                 options
             ))
+        }
+        return result;
     }
     public async findAll(indices: ISpreadIndice<T, string>[], value: string): Promise<T[]> {
         const tokens = this.tokenizr(value);

@@ -6,7 +6,7 @@ import { saveSharedIndeces, restoreSharedIndeces } from "../utils";
 
 
 
-const indice = new NgramIndice<number>();
+const indice = new NgramIndice<number>({ number: 3, limit: 2, toLowcase: true, autoLimit: true, isLoaded: false });
 movies.forEach((val, key) => indice.add(key, val));
 const linear = new RangeLinearIndice<number, string>({ indice, id: 'default_linear' });
 

@@ -1,7 +1,7 @@
 import { BloomFilter } from "bloom-filters";
-import { ISharedIndice, IIndice, ISpreadIndice } from "interfaces";
+import { ISharedIndice, ISpreadIndice } from "interfaces";
 
-const DEFAULT_CHUNK_ZIZE = 100;
+const DEFAULT_CHUNK_ZIZE = 1000;
 interface IOptions<T> {
     errorRate?: number;
     chunkSize?: number;

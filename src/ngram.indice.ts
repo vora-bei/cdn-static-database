@@ -9,7 +9,9 @@ interface IOptions {
     toLowcase: boolean;
     autoLimit: boolean;
     isLoaded: boolean;
-    load?: (options: any) => Promise<any>;
+    preTokenizr?(value: string): string;
+    postTokenizr?(value: string, tokens: string[]): string[];
+    load?(options: any): Promise<any>;
 }
 let id_counter = 1;
 export class NgramIndice<T> implements ISpreadIndice<T, string>{
@@ -49,8 +51,12 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         });
     }
     tokenizr(value: string): string[] {
-        const v = this.options.toLowcase ? value.toLowerCase() : value;
-        return v.split(" ").flatMap((word) => this.nGram(word))
+        const { preTokenizr, postTokenizr } = this.options;
+        let v = preTokenizr ? preTokenizr(value) : value
+        v = this.options.toLowcase ? v.toLowerCase() : v;
+        const tokens = v.split(" ").flatMap((word) => this.nGram(word))
+        return postTokenizr ? postTokenizr(value, tokens) : tokens;
+
     }
     private async load() {
         if (this.options.isLoaded) {

@@ -70,7 +70,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RangeLinearIndice = void 0;
 var range_1 = require("./range");
-var DEFAULT_CHUNK_ZIZE = 10;
+var DEFAULT_CHUNK_ZIZE = 2000;
 var id_counter = 1;
 var RangeLinearIndice = /** @class */ (function () {
     function RangeLinearIndice(_a) {
@@ -95,7 +95,7 @@ var RangeLinearIndice = /** @class */ (function () {
     RangeLinearIndice.prototype.serializeData = function () {
         return __spreadArray([], __read(this.indices)).map(function (_a, i) {
             var _b = __read(_a, 2), filter = _b[0], indice = _b[1];
-            return ([filter, indice.id]);
+            return ([[filter.left, filter.right], indice.id]);
         });
     };
     RangeLinearIndice.prototype.serializeOptions = function () {
@@ -104,7 +104,7 @@ var RangeLinearIndice = /** @class */ (function () {
     };
     RangeLinearIndice.deserialize = function (data, options, deserialize) {
         var indices = new Map(data.map(function (_a) {
-            var _b = __read(_a, 2), _c = _b[0], left = _c.left, right = _c.right, id = _b[1];
+            var _b = __read(_a, 2), _c = __read(_b[0], 2), left = _c[0], right = _c[1], id = _b[1];
             return [new range_1.Range(left, right), deserialize(__assign(__assign({}, options.spread), { id: id }))];
         }));
         var indice = new RangeLinearIndice(__assign({}, options.self));
@@ -139,3 +139,4 @@ var RangeLinearIndice = /** @class */ (function () {
     return RangeLinearIndice;
 }());
 exports.RangeLinearIndice = RangeLinearIndice;
+//# sourceMappingURL=range.linear.indice.js.map

@@ -75,3 +75,4 @@ define([], function () {
         return newText;
     };
 });
+//# sourceMappingURL=puntSwitcher.js.map

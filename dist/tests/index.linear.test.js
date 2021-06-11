@@ -43,7 +43,7 @@ var range_linear_indice_1 = require("../range.linear.indice");
 var ngram_indice_1 = require("../ngram.indice");
 var movies_1 = __importDefault(require("./movies"));
 var utils_1 = require("../utils");
-var indice = new ngram_indice_1.NgramIndice();
+var indice = new ngram_indice_1.NgramIndice({ number: 3, limit: 2, toLowcase: true, autoLimit: true, isLoaded: false });
 movies_1.default.forEach(function (val, key) { return indice.add(key, val); });
 var linear = new range_linear_indice_1.RangeLinearIndice({ indice: indice, id: 'default_linear' });
 utils_1.saveSharedIndeces(linear)
@@ -54,7 +54,7 @@ utils_1.saveSharedIndeces(linear)
             case 0:
                 console.time("search");
                 _b = (_a = console).log;
-                return [4 /*yield*/, restored.find("Аргенnина")];
+                return [4 /*yield*/, restored.find("Conquest of Paradise")];
             case 1:
                 _b.apply(_a, [_c.sent()]);
                 console.timeEnd("search");
@@ -62,3 +62,4 @@ utils_1.saveSharedIndeces(linear)
         }
     });
 }); });
+//# sourceMappingURL=index.linear.test.js.map

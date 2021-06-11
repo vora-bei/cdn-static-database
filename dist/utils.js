@@ -110,7 +110,7 @@ var saveSharedIndeces = function (indice) { return __awaiter(void 0, void 0, voi
             case 6:
                 if (!!_b.done) return [3 /*break*/, 9];
                 _c = __read(_b.value, 2), _ = _c[0], v = _c[1];
-                return [4 /*yield*/, writeFile("./" + indice.id + "/chunk_" + v.id + ".json", JSON.stringify(v.serialize()))];
+                return [4 /*yield*/, writeFile("./" + indice.id + "/chunk_" + v.id + ".json", JSON.stringify({ data: v.serializeData(), options: { id: v.id } }))];
             case 7:
                 _e.sent();
                 _e.label = 8;
@@ -161,3 +161,4 @@ var restoreSharedIndeces = function (id, deserializeShared, deserialize) { retur
     });
 }); };
 exports.restoreSharedIndeces = restoreSharedIndeces;
+//# sourceMappingURL=utils.js.map

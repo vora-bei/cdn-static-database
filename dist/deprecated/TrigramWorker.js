@@ -7,3 +7,4 @@ var Trigram_1 = __importDefault(require("./Trigram"));
 onmessage = function (e) {
     postMessage(Trigram_1.default(e.data));
 };
+//# sourceMappingURL=TrigramWorker.js.map

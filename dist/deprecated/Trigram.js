@@ -35,3 +35,4 @@ var calc = function (data) {
     return result;
 };
 exports.default = calc;
+//# sourceMappingURL=Trigram.js.map

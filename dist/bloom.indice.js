@@ -70,7 +70,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BloomIndice = void 0;
 var bloom_filters_1 = require("bloom-filters");
-var DEFAULT_CHUNK_ZIZE = 100;
+var DEFAULT_CHUNK_ZIZE = 1000;
 var id_counter = 1;
 var BloomIndice = /** @class */ (function () {
     function BloomIndice(_a) {
@@ -150,3 +150,4 @@ var BloomIndice = /** @class */ (function () {
     return BloomIndice;
 }());
 exports.BloomIndice = BloomIndice;
+//# sourceMappingURL=bloom.indice.js.map

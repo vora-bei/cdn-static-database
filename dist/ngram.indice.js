@@ -133,8 +133,11 @@ var NgramIndice = /** @class */ (function () {
     };
     NgramIndice.prototype.tokenizr = function (value) {
         var _this = this;
-        var v = this.options.toLowcase ? value.toLowerCase() : value;
-        return v.split(" ").flatMap(function (word) { return _this.nGram(word); });
+        var _a = this.options, preTokenizr = _a.preTokenizr, postTokenizr = _a.postTokenizr;
+        var v = preTokenizr ? preTokenizr(value) : value;
+        v = this.options.toLowcase ? v.toLowerCase() : v;
+        var tokens = v.split(" ").flatMap(function (word) { return _this.nGram(word); });
+        return postTokenizr ? postTokenizr(value, tokens) : tokens;
     };
     NgramIndice.prototype.load = function () {
         return __awaiter(this, void 0, void 0, function () {
@@ -233,14 +236,26 @@ var NgramIndice = /** @class */ (function () {
     NgramIndice.prototype.spread = function (chunkSize) {
         var _this = this;
         if (chunkSize === void 0) { chunkSize = CHUNK_SIZE_DEFAULT; }
-        var chunkCount = (this.indices.size - this.indices.size % chunkSize) / chunkSize;
         var _a = this.options, id = _a.id, options = __rest(_a, ["id"]);
-        return new Array(chunkCount)
-            .fill(0)
-            .map(function (_, i) { return NgramIndice.deserialize(new Map(_this
-            .keys
-            .slice(i * chunkSize, (i + 1) * chunkSize)
-            .map(function (key) { return [key, __spreadArray([], __read(_this.indices.get(key)))]; })), options); });
+        var result = [];
+        var size = 0;
+        var map = new Map();
+        this.keys.forEach(function (key) {
+            var value = _this.indices.get(key);
+            if (size > chunkSize) {
+                result.push(NgramIndice.deserialize(map, options));
+                size = 0;
+                map = new Map();
+            }
+            else {
+                size = size + value.length;
+                map.set(key, value);
+            }
+        });
+        if (size != 0) {
+            result.push(NgramIndice.deserialize(map, options));
+        }
+        return result;
     };
     NgramIndice.prototype.findAll = function (indices, value) {
         return __awaiter(this, void 0, void 0, function () {
@@ -267,3 +282,4 @@ var NgramIndice = /** @class */ (function () {
     return NgramIndice;
 }());
 exports.NgramIndice = NgramIndice;
+//# sourceMappingURL=ngram.indice.js.map

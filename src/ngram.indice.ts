@@ -4,10 +4,10 @@ const CHUNK_SIZE_DEFAULT = 100;
 const AUTO_LIMIT_FIND_PERCENT = 40;
 interface IOptions {
     id?: string;
-    number: number;
-    limit: number;
+    gramLen: number;
+    actuationLimit: number;
     toLowcase: boolean;
-    autoLimit: boolean;
+    actuationLimitAuto: boolean;
     isLoaded: boolean;
     preTokenizr?(value: string): string;
     postTokenizr?(value: string, tokens: string[]): string[];
@@ -31,10 +31,22 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
     public get id() {
         return this.options.id!!;
     }
-    constructor(options: IOptions = { number: 3, limit: 2, toLowcase: true, autoLimit: false, isLoaded: true }) {
-        const { id = `${id_counter++}` } = options;
-        this.nGram = nGram(options.number)
-        this.options = { ...options, id };
+    constructor({
+        id = `${id_counter++}`,
+        gramLen = 3,
+        actuationLimit = 2,
+        toLowcase = true,
+        actuationLimitAuto = false,
+        isLoaded = true
+    }: Partial<IOptions> = {}) {
+        this.nGram = nGram(gramLen)
+        this.options = {
+            gramLen,
+            actuationLimit,
+            toLowcase,
+            actuationLimitAuto,
+            isLoaded, id
+        };
         return this;
     }
     serializeOptions(): Object {
@@ -81,8 +93,8 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
                 });
             }
         });
-        const { autoLimit, limit } = this.options;
-        const l = this.getLimit(autoLimit, tokens.length, limit);
+        const { actuationLimitAuto, actuationLimit } = this.options;
+        const l = this.getLimit(actuationLimitAuto, tokens.length, actuationLimit);
         return countResults;
     }
     async find(value: string) {
@@ -91,8 +103,8 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         return this.postFilter(preResult, tokens);
     }
     public postFilter(countResults: Map<T, number>, tokens: string[]): T[] {
-        const { autoLimit, limit } = this.options;
-        const l = this.getLimit(autoLimit, tokens.length, limit);
+        const { actuationLimitAuto, actuationLimit } = this.options;
+        const l = this.getLimit(actuationLimitAuto, tokens.length, actuationLimit);
         const results = [...countResults.entries()]
             .filter(([_, count]) => count >= l)
             .map(([id]) => id);

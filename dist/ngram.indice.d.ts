@@ -1,10 +1,10 @@
 import { ISpreadIndice } from "./interfaces";
 interface IOptions {
     id?: string;
-    number: number;
-    limit: number;
+    gramLen: number;
+    actuationLimit: number;
     toLowcase: boolean;
-    autoLimit: boolean;
+    actuationLimitAuto: boolean;
     isLoaded: boolean;
     preTokenizr?(value: string): string;
     postTokenizr?(value: string, tokens: string[]): string[];
@@ -16,7 +16,7 @@ export declare class NgramIndice<T> implements ISpreadIndice<T, string> {
     options: IOptions;
     get keys(): string[];
     get id(): string;
-    constructor(options?: IOptions);
+    constructor({ id, gramLen, actuationLimit, toLowcase, actuationLimitAuto, isLoaded }?: Partial<IOptions>);
     serializeOptions(): Object;
     serializeData(): any[];
     add(key: T, value: string): void;

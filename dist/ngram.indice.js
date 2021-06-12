@@ -88,12 +88,17 @@ var CHUNK_SIZE_DEFAULT = 100;
 var AUTO_LIMIT_FIND_PERCENT = 40;
 var id_counter = 1;
 var NgramIndice = /** @class */ (function () {
-    function NgramIndice(options) {
-        if (options === void 0) { options = { number: 3, limit: 2, toLowcase: true, autoLimit: false, isLoaded: true }; }
+    function NgramIndice(_a) {
+        var _b = _a === void 0 ? {} : _a, _c = _b.id, id = _c === void 0 ? "" + id_counter++ : _c, _d = _b.gramLen, gramLen = _d === void 0 ? 3 : _d, _e = _b.actuationLimit, actuationLimit = _e === void 0 ? 2 : _e, _f = _b.toLowcase, toLowcase = _f === void 0 ? true : _f, _g = _b.actuationLimitAuto, actuationLimitAuto = _g === void 0 ? false : _g, _h = _b.isLoaded, isLoaded = _h === void 0 ? true : _h;
         this.indices = new Map();
-        var _a = options.id, id = _a === void 0 ? "" + id_counter++ : _a;
-        this.nGram = n_gram_1.default(options.number);
-        this.options = __assign(__assign({}, options), { id: id });
+        this.nGram = n_gram_1.default(gramLen);
+        this.options = {
+            gramLen: gramLen,
+            actuationLimit: actuationLimit,
+            toLowcase: toLowcase,
+            actuationLimitAuto: actuationLimitAuto,
+            isLoaded: isLoaded, id: id
+        };
         return this;
     }
     Object.defineProperty(NgramIndice.prototype, "keys", {
@@ -163,7 +168,7 @@ var NgramIndice = /** @class */ (function () {
     };
     NgramIndice.prototype.preFilter = function (tokens) {
         return __awaiter(this, void 0, void 0, function () {
-            var countResults, _a, autoLimit, limit, l;
+            var countResults, _a, actuationLimitAuto, actuationLimit, l;
             var _this = this;
             return __generator(this, function (_b) {
                 switch (_b.label) {
@@ -181,8 +186,8 @@ var NgramIndice = /** @class */ (function () {
                                 });
                             }
                         });
-                        _a = this.options, autoLimit = _a.autoLimit, limit = _a.limit;
-                        l = this.getLimit(autoLimit, tokens.length, limit);
+                        _a = this.options, actuationLimitAuto = _a.actuationLimitAuto, actuationLimit = _a.actuationLimit;
+                        l = this.getLimit(actuationLimitAuto, tokens.length, actuationLimit);
                         return [2 /*return*/, countResults];
                 }
             });
@@ -204,8 +209,8 @@ var NgramIndice = /** @class */ (function () {
         });
     };
     NgramIndice.prototype.postFilter = function (countResults, tokens) {
-        var _a = this.options, autoLimit = _a.autoLimit, limit = _a.limit;
-        var l = this.getLimit(autoLimit, tokens.length, limit);
+        var _a = this.options, actuationLimitAuto = _a.actuationLimitAuto, actuationLimit = _a.actuationLimit;
+        var l = this.getLimit(actuationLimitAuto, tokens.length, actuationLimit);
         var results = __spreadArray([], __read(countResults.entries())).filter(function (_a) {
             var _b = __read(_a, 2), _ = _b[0], count = _b[1];
             return count >= l;

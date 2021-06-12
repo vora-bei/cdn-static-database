@@ -56,7 +56,7 @@ var bloom_indice_1 = require("../bloom.indice");
 var ngram_indice_1 = require("../ngram.indice");
 var countries_seed_1 = require("./countries.seed");
 var utils_1 = require("../utils");
-var indices = new ngram_indice_1.NgramIndice({ number: 3, limit: 2, toLowcase: true, autoLimit: true, isLoaded: false });
+var indices = new ngram_indice_1.NgramIndice({ gramLen: 3, actuationLimit: 2, toLowcase: true, actuationLimitAuto: true, isLoaded: false });
 Object.entries(countries_seed_1.countries).forEach(function (_a) {
     var _b = __read(_a, 2), key = _b[0], val = _b[1];
     return indices.add(Number.parseInt(key), val);

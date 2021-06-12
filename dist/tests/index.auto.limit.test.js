@@ -62,8 +62,8 @@ Object.entries(countries_seed_1.countries).forEach(function (_a) {
     return indices.add(Number.parseInt(key), val);
 });
 var bloom = new bloom_indice_1.BloomIndice({ indice: indices, id: 'auto_bloom' });
-utils_1.saveSharedIndeces(bloom)
-    .then(function () { return utils_1.restoreSharedIndeces("auto_bloom", bloom_indice_1.BloomIndice.deserialize, ngram_indice_1.NgramIndice.deserialize); })
+utils_1.saveSharedIndices(bloom)
+    .then(function () { return utils_1.restoreSharedIndices("auto_bloom", bloom_indice_1.BloomIndice.deserialize, ngram_indice_1.NgramIndice.deserialize); })
     .then(function (bloomRestored) { return __awaiter(void 0, void 0, void 0, function () {
     var _a, _b;
     return __generator(this, function (_c) {

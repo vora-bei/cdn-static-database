@@ -77,14 +77,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.restoreSharedIndeces = exports.saveSharedIndeces = void 0;
+exports.restoreSharedIndices = exports.saveSharedIndices = void 0;
 var fs_1 = __importDefault(require("fs"));
 var util_1 = __importDefault(require("util"));
 var writeFile = util_1.default.promisify(fs_1.default.writeFile);
 var readFile = util_1.default.promisify(fs_1.default.readFile);
 var mkdir = util_1.default.promisify(fs_1.default.mkdir);
 var exists = util_1.default.promisify(fs_1.default.exists);
-var saveSharedIndeces = function (indice) { return __awaiter(void 0, void 0, void 0, function () {
+var saveSharedIndices = function (indice) { return __awaiter(void 0, void 0, void 0, function () {
     var dir, existDir, _a, _b, _c, _, v, e_1_1;
     var e_1, _d;
     return __generator(this, function (_e) {
@@ -132,8 +132,8 @@ var saveSharedIndeces = function (indice) { return __awaiter(void 0, void 0, voi
         }
     });
 }); };
-exports.saveSharedIndeces = saveSharedIndeces;
-var restoreSharedIndeces = function (id, deserializeShared, deserialize) { return __awaiter(void 0, void 0, void 0, function () {
+exports.saveSharedIndices = saveSharedIndices;
+var restoreSharedIndices = function (id, deserializeShared, deserialize) { return __awaiter(void 0, void 0, void 0, function () {
     var load, jsonRaw, json;
     return __generator(this, function (_a) {
         switch (_a.label) {
@@ -160,5 +160,5 @@ var restoreSharedIndeces = function (id, deserializeShared, deserialize) { retur
         }
     });
 }); };
-exports.restoreSharedIndeces = restoreSharedIndeces;
+exports.restoreSharedIndices = restoreSharedIndices;
 //# sourceMappingURL=utils.js.map

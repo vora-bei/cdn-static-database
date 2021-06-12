@@ -7,7 +7,7 @@ const readFile = util.promisify(fs.readFile);
 const mkdir = util.promisify(fs.mkdir);
 const exists = util.promisify(fs.exists);
 
-export const saveSharedIndeces = async <T, P>(indice: ISharedIndice<T, P>) => {
+export const saveSharedIndices = async <T, P>(indice: ISharedIndice<T, P>) => {
     const dir = `./${indice.id}`;
     const existDir = await exists(dir);
     if (!existDir) {
@@ -22,7 +22,7 @@ export const saveSharedIndeces = async <T, P>(indice: ISharedIndice<T, P>) => {
     }
 }
 
-export const restoreSharedIndeces = async <T, P>(
+export const restoreSharedIndices = async <T, P>(
     id: string,
     deserializeShared: (
         data: any,

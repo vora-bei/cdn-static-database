@@ -1,7 +1,7 @@
 import { BloomIndice } from "../bloom.indice";
 import { NgramIndice } from "../ngram.indice";
 import { countries } from "./countries.seed";
-import { saveSharedIndeces, restoreSharedIndeces } from "../utils";
+import { saveSharedIndices, restoreSharedIndices } from "../utils";
 
 
 const indice = new NgramIndice<number>();
@@ -9,9 +9,9 @@ Object.entries(countries).forEach(([key, val]) => indice.add(Number.parseInt(key
 const bloom = new BloomIndice<number>({ indice, id: 'default_bloom' });
 
 
-saveSharedIndeces(bloom)
+saveSharedIndices(bloom)
     .then(
-        () => restoreSharedIndeces<number, string>(
+        () => restoreSharedIndices<number, string>(
             "default_bloom",
             BloomIndice.deserialize,
             NgramIndice.deserialize

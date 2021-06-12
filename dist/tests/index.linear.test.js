@@ -46,8 +46,8 @@ var utils_1 = require("../utils");
 var indice = new ngram_indice_1.NgramIndice({ actuationLimitAuto: true, isLoaded: false });
 movies_1.default.forEach(function (val, key) { return indice.add(key, val); });
 var linear = new range_linear_indice_1.RangeLinearIndice({ indice: indice, id: 'default_linear' });
-utils_1.saveSharedIndeces(linear)
-    .then(function () { return utils_1.restoreSharedIndeces("default_linear", range_linear_indice_1.RangeLinearIndice.deserialize, ngram_indice_1.NgramIndice.deserialize); }).then(function (restored) { return __awaiter(void 0, void 0, void 0, function () {
+utils_1.saveSharedIndices(linear)
+    .then(function () { return utils_1.restoreSharedIndices("default_linear", range_linear_indice_1.RangeLinearIndice.deserialize, ngram_indice_1.NgramIndice.deserialize); }).then(function (restored) { return __awaiter(void 0, void 0, void 0, function () {
     var _a, _b;
     return __generator(this, function (_c) {
         switch (_c.label) {

@@ -1,7 +1,7 @@
 import { RangeLinearIndice } from "../range.linear.indice";
 import { NgramIndice } from "../ngram.indice";
 import movies from "./movies";
-import { saveSharedIndeces, restoreSharedIndeces } from "../utils";
+import { saveSharedIndices, restoreSharedIndices } from "../utils";
 
 
 
@@ -13,9 +13,9 @@ movies.forEach((val, key) => indice.add(key, val));
 const linear = new RangeLinearIndice<number, string>({ indice, id: 'default_linear' });
 
 
-saveSharedIndeces(linear)
+saveSharedIndices(linear)
     .then(
-        () => restoreSharedIndeces<number, string>(
+        () => restoreSharedIndices<number, string>(
             "default_linear",
             RangeLinearIndice.deserialize,
             NgramIndice.deserialize

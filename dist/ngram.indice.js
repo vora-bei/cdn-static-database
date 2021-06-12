@@ -122,19 +122,26 @@ var NgramIndice = /** @class */ (function () {
         enumerable: false,
         configurable: true
     });
+    NgramIndice.prototype.add = function (key, value) {
+        var _this = this;
+        var tokens = [];
+        if (Array.isArray(value)) {
+            value.forEach(function (v) { return tokens.push.apply(tokens, __spreadArray([], __read(_this.tokenizr(v)))); });
+        }
+        else {
+            tokens.push.apply(tokens, __spreadArray([], __read(this.tokenizr(value))));
+        }
+        tokens.forEach(function (token) {
+            var index = _this.indices.get(token) || [];
+            index.push(key);
+            _this.indices.set(token, index);
+        });
+    };
     NgramIndice.prototype.serializeOptions = function () {
         return __assign({}, this.options);
     };
     NgramIndice.prototype.serializeData = function () {
         return __spreadArray([], __read(this.indices));
-    };
-    NgramIndice.prototype.add = function (key, value) {
-        var _this = this;
-        this.tokenizr(value).forEach(function (token) {
-            var index = _this.indices.get(token) || [];
-            index.push(key);
-            _this.indices.set(token, index);
-        });
     };
     NgramIndice.prototype.tokenizr = function (value) {
         var _this = this;

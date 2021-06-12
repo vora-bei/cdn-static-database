@@ -11,6 +11,7 @@ export interface IBaseIndice<T, P> {
 }
 export interface IIndice<T, P> extends ISerializeIndex, IBaseIndice<T, P> {
     tokenizr(search: P): P[];
+    add(key: T, value: P | P[]) : void;
     keys: P[];
 }
 export interface ISpreadIndice<T, P> extends IIndice<T, P> {

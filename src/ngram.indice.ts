@@ -49,18 +49,24 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         };
         return this;
     }
+    add(key: T, value: string | string[]): void {
+        const tokens: string[] = []
+        if (Array.isArray(value)) {
+            value.forEach((v) => tokens.push(...this.tokenizr(v)))
+        } else {
+            tokens.push(...this.tokenizr(value));
+        }
+        tokens.forEach((token) => {
+            const index = this.indices.get(token) || [];
+            index.push(key);
+            this.indices.set(token, index);
+        });
+    }
     serializeOptions(): Object {
         return { ...this.options };
     }
     serializeData(): any[] {
         return [...this.indices];
-    }
-    add(key: T, value: string) {
-        this.tokenizr(value).forEach((token) => {
-            const index = this.indices.get(token) || [];
-            index.push(key);
-            this.indices.set(token, index);
-        });
     }
     tokenizr(value: string): string[] {
         const { preTokenizr, postTokenizr } = this.options;

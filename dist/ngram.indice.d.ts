@@ -17,9 +17,9 @@ export declare class NgramIndice<T> implements ISpreadIndice<T, string> {
     get keys(): string[];
     get id(): string;
     constructor({ id, gramLen, actuationLimit, toLowcase, actuationLimitAuto, isLoaded }?: Partial<IOptions>);
+    add(key: T, value: string | string[]): void;
     serializeOptions(): Object;
     serializeData(): any[];
-    add(key: T, value: string): void;
     tokenizr(value: string): string[];
     private load;
     preFilter(tokens: string[]): Promise<Map<T, number>>;

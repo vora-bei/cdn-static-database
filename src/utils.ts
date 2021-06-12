@@ -1,4 +1,5 @@
 import fs from "fs";
+import { join, resolve } from "path";
 import util from "util";
 import { ISharedIndice, ISpreadIndice } from "interfaces";
 const writeFile = util.promisify(fs.writeFile);
@@ -7,16 +8,16 @@ const readFile = util.promisify(fs.readFile);
 const mkdir = util.promisify(fs.mkdir);
 const exists = util.promisify(fs.exists);
 
-export const saveSharedIndices = async <T, P>(indice: ISharedIndice<T, P>) => {
-    const dir = `./${indice.id}`;
+export const saveSharedIndices = async <T, P>(indice: ISharedIndice<T, P>, publicPath: string= '.') => {
+    const dir = join(publicPath, indice.id);
     const existDir = await exists(dir);
     if (!existDir) {
         await mkdir(dir)
     }
-    await writeFile(`./${indice.id}/index.json`, JSON.stringify(indice.serialize()))
+    await writeFile(join(dir, 'index.json'), JSON.stringify(indice.serialize()))
     for (let [_, v] of indice.indices) {
         await writeFile(
-            `./${indice.id}/chunk_${v.id}.json`,
+            join(dir, `chunk_${v.id}.json`),
             JSON.stringify({ data: v.serializeData(), options: { id: v.id } })
         )
     }

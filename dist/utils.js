@@ -79,59 +79,63 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.restoreSharedIndices = exports.saveSharedIndices = void 0;
 var fs_1 = __importDefault(require("fs"));
+var path_1 = require("path");
 var util_1 = __importDefault(require("util"));
 var writeFile = util_1.default.promisify(fs_1.default.writeFile);
 var readFile = util_1.default.promisify(fs_1.default.readFile);
 var mkdir = util_1.default.promisify(fs_1.default.mkdir);
 var exists = util_1.default.promisify(fs_1.default.exists);
-var saveSharedIndices = function (indice) { return __awaiter(void 0, void 0, void 0, function () {
-    var dir, existDir, _a, _b, _c, _, v, e_1_1;
-    var e_1, _d;
-    return __generator(this, function (_e) {
-        switch (_e.label) {
-            case 0:
-                dir = "./" + indice.id;
-                return [4 /*yield*/, exists(dir)];
-            case 1:
-                existDir = _e.sent();
-                if (!!existDir) return [3 /*break*/, 3];
-                return [4 /*yield*/, mkdir(dir)];
-            case 2:
-                _e.sent();
-                _e.label = 3;
-            case 3: return [4 /*yield*/, writeFile("./" + indice.id + "/index.json", JSON.stringify(indice.serialize()))];
-            case 4:
-                _e.sent();
-                _e.label = 5;
-            case 5:
-                _e.trys.push([5, 10, 11, 12]);
-                _a = __values(indice.indices), _b = _a.next();
-                _e.label = 6;
-            case 6:
-                if (!!_b.done) return [3 /*break*/, 9];
-                _c = __read(_b.value, 2), _ = _c[0], v = _c[1];
-                return [4 /*yield*/, writeFile("./" + indice.id + "/chunk_" + v.id + ".json", JSON.stringify({ data: v.serializeData(), options: { id: v.id } }))];
-            case 7:
-                _e.sent();
-                _e.label = 8;
-            case 8:
-                _b = _a.next();
-                return [3 /*break*/, 6];
-            case 9: return [3 /*break*/, 12];
-            case 10:
-                e_1_1 = _e.sent();
-                e_1 = { error: e_1_1 };
-                return [3 /*break*/, 12];
-            case 11:
-                try {
-                    if (_b && !_b.done && (_d = _a.return)) _d.call(_a);
-                }
-                finally { if (e_1) throw e_1.error; }
-                return [7 /*endfinally*/];
-            case 12: return [2 /*return*/];
-        }
+var saveSharedIndices = function (indice, publicPath) {
+    if (publicPath === void 0) { publicPath = '.'; }
+    return __awaiter(void 0, void 0, void 0, function () {
+        var dir, existDir, _a, _b, _c, _, v, e_1_1;
+        var e_1, _d;
+        return __generator(this, function (_e) {
+            switch (_e.label) {
+                case 0:
+                    dir = path_1.join(publicPath, indice.id);
+                    return [4 /*yield*/, exists(dir)];
+                case 1:
+                    existDir = _e.sent();
+                    if (!!existDir) return [3 /*break*/, 3];
+                    return [4 /*yield*/, mkdir(dir)];
+                case 2:
+                    _e.sent();
+                    _e.label = 3;
+                case 3: return [4 /*yield*/, writeFile(path_1.join(dir, 'index.json'), JSON.stringify(indice.serialize()))];
+                case 4:
+                    _e.sent();
+                    _e.label = 5;
+                case 5:
+                    _e.trys.push([5, 10, 11, 12]);
+                    _a = __values(indice.indices), _b = _a.next();
+                    _e.label = 6;
+                case 6:
+                    if (!!_b.done) return [3 /*break*/, 9];
+                    _c = __read(_b.value, 2), _ = _c[0], v = _c[1];
+                    return [4 /*yield*/, writeFile(path_1.join(dir, "chunk_" + v.id + ".json"), JSON.stringify({ data: v.serializeData(), options: { id: v.id } }))];
+                case 7:
+                    _e.sent();
+                    _e.label = 8;
+                case 8:
+                    _b = _a.next();
+                    return [3 /*break*/, 6];
+                case 9: return [3 /*break*/, 12];
+                case 10:
+                    e_1_1 = _e.sent();
+                    e_1 = { error: e_1_1 };
+                    return [3 /*break*/, 12];
+                case 11:
+                    try {
+                        if (_b && !_b.done && (_d = _a.return)) _d.call(_a);
+                    }
+                    finally { if (e_1) throw e_1.error; }
+                    return [7 /*endfinally*/];
+                case 12: return [2 /*return*/];
+            }
+        });
     });
-}); };
+};
 exports.saveSharedIndices = saveSharedIndices;
 var restoreSharedIndices = function (id, deserializeShared, deserialize) { return __awaiter(void 0, void 0, void 0, function () {
     var load, jsonRaw, json;

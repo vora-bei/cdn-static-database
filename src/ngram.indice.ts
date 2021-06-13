@@ -8,9 +8,9 @@ interface IOptions {
     actuationLimit: number;
     toLowcase: boolean;
     actuationLimitAuto: boolean;
-    isLoaded: boolean;
     preTokenizr?(value: string): string;
     postTokenizr?(value: string, tokens: string[]): string[];
+    isLoaded: boolean;
     load?(options: any): Promise<any>;
 }
 let id_counter = 1;

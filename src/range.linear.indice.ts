@@ -6,6 +6,8 @@ interface IOptions<T, P> {
     chunkSize?: number;
     indice?: ISpreadIndice<T, P>;
     id?: string;
+    isLoaded: boolean;
+    load?(options: any): Promise<any>;
 }
 
 interface ISerializeOptions<T, P> {
@@ -20,12 +22,12 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
     public get id() {
         return this.options.id!!;
     }
-    constructor({ indice, chunkSize = DEFAULT_CHUNK_ZIZE, id = `${id_counter++}` }: IOptions<T, P>) {
+    constructor({ indice, chunkSize = DEFAULT_CHUNK_ZIZE, id = `${id_counter++}`, isLoaded = true, load }: Partial<IOptions<T, P>>) {
         if (indice) {
             this.indice = indice;
             this.indices = new Map(indice.spread(chunkSize).map((indice) => [Range.fromKeys<P>(indice.keys), indice]))
         }
-        this.options = { id };
+        this.options = { id, isLoaded, load };
     }
     serialize(): { data: any; options: any; } {
         return { data: this.serializeData(), options: this.serializeOptions() };
@@ -36,6 +38,7 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
     serializeOptions(): ISerializeOptions<T, P> {
         return { self: { ...this.options }, spread: { ...this.indice?.serializeOptions(), isLoaded: false } };
     }
+
     static deserialize<T, P>(
         data: [[P,P], T][],
         options: ISerializeOptions<T, P>,
@@ -47,6 +50,13 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         const indice = new RangeLinearIndice<T, P>({ ...options.self });
         indice.indices = indices;
         indice.indice = deserialize({ ...options.spread })
+        return indice;
+    }
+    static lazy<T, P>(
+        options: {id: string, load(options: any) : Promise<any>},
+        deserialize: (options: any) => ISpreadIndice<T, P>
+    ): ISharedIndice<T, P> {
+        const indice = new RangeLinearIndice<T, P>({ ...options, isLoaded: false });
         return indice;
     }
     async find(value: P): Promise<T[]> {

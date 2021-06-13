@@ -146,13 +146,10 @@ var restoreSharedIndices = function (id, deserializeShared, deserialize) { retur
                     var _a, _b;
                     return __generator(this, function (_c) {
                         switch (_c.label) {
-                            case 0: return [4 /*yield*/, new Promise(function (res) { return setTimeout(res, 200); })];
-                            case 1:
-                                _c.sent();
-                                console.debug("load");
+                            case 0:
                                 _b = (_a = JSON).parse;
                                 return [4 /*yield*/, readFile("./" + id + "/chunk_" + options.id + ".json")];
-                            case 2: return [2 /*return*/, _b.apply(_a, [(_c.sent()).toString()])];
+                            case 1: return [2 /*return*/, _b.apply(_a, [(_c.sent()).toString()])];
                         }
                     });
                 }); };

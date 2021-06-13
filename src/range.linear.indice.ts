@@ -18,6 +18,7 @@ let id_counter = 1;
 export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
     public indices: Map<Range<P>, ISpreadIndice<T, P>> = new Map();
     private indice?: ISpreadIndice<T, P>;
+    private indiceDeserialize?: (options: any) => ISpreadIndice<T, P>
     public options: IOptions<T, P>;
     public get id() {
         return this.options.id!!;
@@ -40,7 +41,7 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
     }
 
     static deserialize<T, P>(
-        data: [[P,P], T][],
+        data: [[P, P], T][],
         options: ISerializeOptions<T, P>,
         deserialize: (data: any, options?: any) => ISpreadIndice<T, P>
     ): ISharedIndice<T, P> {
@@ -53,13 +54,36 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         return indice;
     }
     static lazy<T, P>(
-        options: {id: string, load(options: any) : Promise<any>},
+        options: { id: string, load(options: any): Promise<any> },
         deserialize: (options: any) => ISpreadIndice<T, P>
     ): ISharedIndice<T, P> {
         const indice = new RangeLinearIndice<T, P>({ ...options, isLoaded: false });
+        indice.indiceDeserialize = deserialize;
         return indice;
     }
+    private async load() {
+        if (this.options.isLoaded) {
+            return;
+        } else if (this.options.load) {
+            if (!this.indiceDeserialize) {
+                throw (Error("deserialzed doesn't set"))
+            }
+            const { data, options }: {
+                data: [[P, P], T][],
+                options: ISerializeOptions<T, P>
+            } = await this.options.load(this.options);
+            const indices = new Map(data.map(([[left, right], id]) => {
+                return [new Range(left, right), this.indiceDeserialize!({ ...options.spread, id })]
+            }));
+            this.indices = indices;
+            this.indice = this.indiceDeserialize({ ...options.spread })
+            this.options.isLoaded = true;
+        } else {
+            throw (Error("option load doesn't implemented"))
+        }
+    }
     async find(value: P): Promise<T[]> {
+        await this.load();
         if (!this.indice) {
             throw new Error("Spread indice doesn't initialized")
         }

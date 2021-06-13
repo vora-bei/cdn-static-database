@@ -5,9 +5,9 @@ interface IOptions {
     actuationLimit: number;
     toLowcase: boolean;
     actuationLimitAuto: boolean;
-    isLoaded: boolean;
     preTokenizr?(value: string): string;
     postTokenizr?(value: string, tokens: string[]): string[];
+    isLoaded: boolean;
     load?(options: any): Promise<any>;
 }
 export declare class NgramIndice<T> implements ISpreadIndice<T, string> {

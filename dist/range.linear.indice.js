@@ -74,13 +74,13 @@ var DEFAULT_CHUNK_ZIZE = 2000;
 var id_counter = 1;
 var RangeLinearIndice = /** @class */ (function () {
     function RangeLinearIndice(_a) {
-        var indice = _a.indice, _b = _a.chunkSize, chunkSize = _b === void 0 ? DEFAULT_CHUNK_ZIZE : _b, _c = _a.id, id = _c === void 0 ? "" + id_counter++ : _c;
+        var indice = _a.indice, _b = _a.chunkSize, chunkSize = _b === void 0 ? DEFAULT_CHUNK_ZIZE : _b, _c = _a.id, id = _c === void 0 ? "" + id_counter++ : _c, _d = _a.isLoaded, isLoaded = _d === void 0 ? true : _d, load = _a.load;
         this.indices = new Map();
         if (indice) {
             this.indice = indice;
             this.indices = new Map(indice.spread(chunkSize).map(function (indice) { return [range_1.Range.fromKeys(indice.keys), indice]; }));
         }
-        this.options = { id: id };
+        this.options = { id: id, isLoaded: isLoaded, load: load };
     }
     Object.defineProperty(RangeLinearIndice.prototype, "id", {
         get: function () {
@@ -112,27 +112,68 @@ var RangeLinearIndice = /** @class */ (function () {
         indice.indice = deserialize(__assign({}, options.spread));
         return indice;
     };
+    RangeLinearIndice.lazy = function (options, deserialize) {
+        var indice = new RangeLinearIndice(__assign(__assign({}, options), { isLoaded: false }));
+        indice.indiceDeserialize = deserialize;
+        return indice;
+    };
+    RangeLinearIndice.prototype.load = function () {
+        return __awaiter(this, void 0, void 0, function () {
+            var _a, data, options_1, indices;
+            var _this = this;
+            return __generator(this, function (_b) {
+                switch (_b.label) {
+                    case 0:
+                        if (!this.options.isLoaded) return [3 /*break*/, 1];
+                        return [2 /*return*/];
+                    case 1:
+                        if (!this.options.load) return [3 /*break*/, 3];
+                        if (!this.indiceDeserialize) {
+                            throw (Error("deserialzed doesn't set"));
+                        }
+                        return [4 /*yield*/, this.options.load(this.options)];
+                    case 2:
+                        _a = _b.sent(), data = _a.data, options_1 = _a.options;
+                        indices = new Map(data.map(function (_a) {
+                            var _b = __read(_a, 2), _c = __read(_b[0], 2), left = _c[0], right = _c[1], id = _b[1];
+                            return [new range_1.Range(left, right), _this.indiceDeserialize(__assign(__assign({}, options_1.spread), { id: id }))];
+                        }));
+                        this.indices = indices;
+                        this.indice = this.indiceDeserialize(__assign({}, options_1.spread));
+                        this.options.isLoaded = true;
+                        return [3 /*break*/, 4];
+                    case 3: throw (Error("option load doesn't implemented"));
+                    case 4: return [2 /*return*/];
+                }
+            });
+        });
+    };
     RangeLinearIndice.prototype.find = function (value) {
         return __awaiter(this, void 0, void 0, function () {
             var tokens, weights;
             return __generator(this, function (_a) {
-                if (!this.indice) {
-                    throw new Error("Spread indice doesn't initialized");
+                switch (_a.label) {
+                    case 0: return [4 /*yield*/, this.load()];
+                    case 1:
+                        _a.sent();
+                        if (!this.indice) {
+                            throw new Error("Spread indice doesn't initialized");
+                        }
+                        tokens = this.indice.tokenizr(value);
+                        weights = __spreadArray([], __read(this.indices)).map(function (_a) {
+                            var _b = __read(_a, 2), filter = _b[0], indice = _b[1];
+                            var width = tokens.reduce(function (w, token) { return filter.has(token) ? 1 + w : w; }, 0);
+                            return [width, indice];
+                        }).filter(function (_a) {
+                            var _b = __read(_a, 1), width = _b[0];
+                            return !!width;
+                        })
+                            .map(function (_a) {
+                            var _b = __read(_a, 2), _ = _b[0], indice = _b[1];
+                            return indice;
+                        });
+                        return [2 /*return*/, this.indice.findAll(weights, value)];
                 }
-                tokens = this.indice.tokenizr(value);
-                weights = __spreadArray([], __read(this.indices)).map(function (_a) {
-                    var _b = __read(_a, 2), filter = _b[0], indice = _b[1];
-                    var width = tokens.reduce(function (w, token) { return filter.has(token) ? 1 + w : w; }, 0);
-                    return [width, indice];
-                }).filter(function (_a) {
-                    var _b = __read(_a, 1), width = _b[0];
-                    return !!width;
-                })
-                    .map(function (_a) {
-                    var _b = __read(_a, 2), _ = _b[0], indice = _b[1];
-                    return indice;
-                });
-                return [2 /*return*/, this.indice.findAll(weights, value)];
             });
         });
     };

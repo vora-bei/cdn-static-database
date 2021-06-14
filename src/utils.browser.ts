@@ -5,7 +5,7 @@ interface IOptions<T, P> {
     id: string,
     baseUrl: string,
     deserializeShared: (
-        options: object,
+        options: { id: string, load(options: object): Promise<any> },
         deserialize: (data: any, options?: any) => ISpreadIndice<T, P>) => ISharedIndice<T, P>,
     deserialize: (
         options: object
@@ -26,6 +26,6 @@ export const restoreSharedIndices = async <T, P>(
         return response.json();
     }
     return deserializeShared(
-        {isLoad: false, load},
+        { id, load },
         (options) => deserialize({ ...options, load: loadChunk }));
 }

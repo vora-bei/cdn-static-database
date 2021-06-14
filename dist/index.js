@@ -13,6 +13,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.restoreSharedIndices = exports.saveSharedIndices = void 0;
 __exportStar(require("./interfaces"), exports);
 __exportStar(require("./ngram.indice"), exports);
+__exportStar(require("./simple.indice"), exports);
 __exportStar(require("./range.linear.indice"), exports);
 var utils_1 = require("./utils");
 Object.defineProperty(exports, "saveSharedIndices", { enumerable: true, get: function () { return utils_1.saveSharedIndices; } });

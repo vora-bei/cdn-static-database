@@ -1,5 +1,5 @@
 import { BloomFilter } from "bloom-filters";
-import { ISharedIndice, ISpreadIndice } from "interfaces";
+import { ISharedIndice, ISpreadIndice } from "./interfaces";
 interface IOptions<T> {
     errorRate?: number;
     chunkSize?: number;

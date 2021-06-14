@@ -1,4 +1,4 @@
-import { ISharedIndice, ISpreadIndice } from "interfaces";
+import { ISharedIndice, ISpreadIndice } from "./interfaces";
 import { Range } from "./range";
 interface IOptions<T, P> {
     chunkSize?: number;

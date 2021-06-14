@@ -1,5 +1,5 @@
 import { BloomFilter } from "bloom-filters";
-import { ISharedIndice, ISpreadIndice } from "interfaces";
+import { ISharedIndice, ISpreadIndice } from "./interfaces";
 
 const DEFAULT_CHUNK_ZIZE = 1000;
 interface IOptions<T> {

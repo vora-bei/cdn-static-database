@@ -75,7 +75,7 @@ var restoreSharedIndices = function (_a) {
                     }
                 });
             }); };
-            return [2 /*return*/, deserializeShared({ isLoad: false, load: load }, function (options) { return deserialize(__assign(__assign({}, options), { load: loadChunk })); })];
+            return [2 /*return*/, deserializeShared({ id: id, load: load }, function (options) { return deserialize(__assign(__assign({}, options), { load: loadChunk })); })];
         });
     });
 };

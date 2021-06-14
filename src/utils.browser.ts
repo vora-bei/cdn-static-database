@@ -1,4 +1,4 @@
-import { ISpreadIndice, ISharedIndice } from "interfaces";
+import { ISpreadIndice, ISharedIndice } from "./interfaces";
 
 
 interface IOptions<T, P> {

@@ -18,7 +18,7 @@ let id_counter = 1;
 export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
     public indices: Map<Range<P>, ISpreadIndice<T, P>> = new Map();
     private indice?: ISpreadIndice<T, P>;
-    private indiceDeserialize?: (options: any) => ISpreadIndice<T, P>
+    private indiceDeserialize?: (options: object) => ISpreadIndice<T, P>
     public options: IOptions<T, P>;
     public get id() {
         return this.options.id!!;
@@ -54,8 +54,8 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         return indice;
     }
     static lazy<T, P>(
-        options: { id: string, load(options: any): Promise<any> },
-        deserialize: (options: any) => ISpreadIndice<T, P>
+        options: { id: string, load(options: object): Promise<any> },
+        deserialize: (options: object) => ISpreadIndice<T, P>
     ): ISharedIndice<T, P> {
         const indice = new RangeLinearIndice<T, P>({ ...options, isLoaded: false });
         indice.indiceDeserialize = deserialize;

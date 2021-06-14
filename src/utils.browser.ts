@@ -5,10 +5,10 @@ interface IOptions<T, P> {
     id: string,
     baseUrl: string,
     deserializeShared: (
-        options: any,
+        options: object,
         deserialize: (data: any, options?: any) => ISpreadIndice<T, P>) => ISharedIndice<T, P>,
     deserialize: (
-        options?: any
+        options: object
     ) => ISpreadIndice<T, P>
 }
 

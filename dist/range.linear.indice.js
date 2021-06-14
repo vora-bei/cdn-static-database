@@ -46,6 +46,17 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __rest = (this && this.__rest) || function (s, e) {
+    var t = {};
+    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
+        t[p] = s[p];
+    if (s != null && typeof Object.getOwnPropertySymbols === "function")
+        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
+            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
+                t[p[i]] = s[p[i]];
+        }
+    return t;
+};
 var __read = (this && this.__read) || function (o, n) {
     var m = typeof Symbol === "function" && o[Symbol.iterator];
     if (!m) return o;
@@ -100,7 +111,8 @@ var RangeLinearIndice = /** @class */ (function () {
     };
     RangeLinearIndice.prototype.serializeOptions = function () {
         var _a;
-        return { self: __assign({}, this.options), spread: __assign(__assign({}, (_a = this.indice) === null || _a === void 0 ? void 0 : _a.serializeOptions()), { isLoaded: false }) };
+        var _b = this.options, load = _b.load, options = __rest(_b, ["load"]);
+        return { self: options, spread: __assign(__assign({}, (_a = this.indice) === null || _a === void 0 ? void 0 : _a.serializeOptions()), { isLoaded: false }) };
     };
     RangeLinearIndice.deserialize = function (data, options, deserialize) {
         var indices = new Map(data.map(function (_a) {

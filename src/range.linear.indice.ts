@@ -37,7 +37,8 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         return [...this.indices].map(([filter, indice], i) => ([[filter.left, filter.right], indice.id]));
     }
     serializeOptions(): ISerializeOptions<T, P> {
-        return { self: { ...this.options }, spread: { ...this.indice?.serializeOptions(), isLoaded: false } };
+        const {load, ...options} = this.options;
+        return { self: options, spread: { ...this.indice?.serializeOptions(), isLoaded: false } };
     }
 
     static deserialize<T, P>(

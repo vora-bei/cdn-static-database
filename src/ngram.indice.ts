@@ -37,7 +37,8 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         actuationLimit = 2,
         toLowcase = true,
         actuationLimitAuto = false,
-        isLoaded = true
+        isLoaded = true,
+        load
     }: Partial<IOptions> = {}) {
         this.nGram = nGram(gramLen)
         this.options = {
@@ -45,7 +46,9 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
             actuationLimit,
             toLowcase,
             actuationLimitAuto,
-            isLoaded, id
+            isLoaded,
+            id,
+            load
         };
         return this;
     }
@@ -63,7 +66,8 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         });
     }
     serializeOptions(): Object {
-        return { ...this.options };
+        const {load, ...options} = this.options;
+        return options;
     }
     serializeData(): any[] {
         return [...this.indices];

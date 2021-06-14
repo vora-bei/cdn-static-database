@@ -1,15 +1,4 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -89,7 +78,7 @@ var AUTO_LIMIT_FIND_PERCENT = 40;
 var id_counter = 1;
 var NgramIndice = /** @class */ (function () {
     function NgramIndice(_a) {
-        var _b = _a === void 0 ? {} : _a, _c = _b.id, id = _c === void 0 ? "" + id_counter++ : _c, _d = _b.gramLen, gramLen = _d === void 0 ? 3 : _d, _e = _b.actuationLimit, actuationLimit = _e === void 0 ? 2 : _e, _f = _b.toLowcase, toLowcase = _f === void 0 ? true : _f, _g = _b.actuationLimitAuto, actuationLimitAuto = _g === void 0 ? false : _g, _h = _b.isLoaded, isLoaded = _h === void 0 ? true : _h;
+        var _b = _a === void 0 ? {} : _a, _c = _b.id, id = _c === void 0 ? "" + id_counter++ : _c, _d = _b.gramLen, gramLen = _d === void 0 ? 3 : _d, _e = _b.actuationLimit, actuationLimit = _e === void 0 ? 2 : _e, _f = _b.toLowcase, toLowcase = _f === void 0 ? true : _f, _g = _b.actuationLimitAuto, actuationLimitAuto = _g === void 0 ? false : _g, _h = _b.isLoaded, isLoaded = _h === void 0 ? true : _h, load = _b.load;
         this.indices = new Map();
         this.nGram = n_gram_1.default(gramLen);
         this.options = {
@@ -97,7 +86,9 @@ var NgramIndice = /** @class */ (function () {
             actuationLimit: actuationLimit,
             toLowcase: toLowcase,
             actuationLimitAuto: actuationLimitAuto,
-            isLoaded: isLoaded, id: id
+            isLoaded: isLoaded,
+            id: id,
+            load: load
         };
         return this;
     }
@@ -138,7 +129,8 @@ var NgramIndice = /** @class */ (function () {
         });
     };
     NgramIndice.prototype.serializeOptions = function () {
-        return __assign({}, this.options);
+        var _a = this.options, load = _a.load, options = __rest(_a, ["load"]);
+        return options;
     };
     NgramIndice.prototype.serializeData = function () {
         return __spreadArray([], __read(this.indices));

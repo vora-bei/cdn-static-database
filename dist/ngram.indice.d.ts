@@ -23,7 +23,7 @@ export declare class NgramIndice<T> implements ISpreadIndice<T, string> {
     tokenizr(value: string): string[];
     private load;
     preFilter(tokens: string[]): Promise<Map<T, number>>;
-    find(value: string): Promise<T[]>;
+    find(value: string | string[]): Promise<T[]>;
     postFilter(countResults: Map<T, number>, tokens: string[]): T[];
     private getLimit;
     serialize(): {

@@ -107,8 +107,8 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         const l = this.getLimit(actuationLimitAuto, tokens.length, actuationLimit);
         return countResults;
     }
-    async find(value: string) {
-        const tokens = this.tokenizr(value);
+    async find(value: string | string[]) {
+        const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
         const preResult = await this.preFilter(tokens);
         return this.postFilter(preResult, tokens);
     }
@@ -167,8 +167,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         return result;
     }
     public async findAll(indices: ISpreadIndice<T, string>[], value: string): Promise<T[]> {
-        const { tokenizr } = this;
-        const tokens = Array.isArray(value) ? value.flatMap(v => tokenizr(v)) : tokenizr(value);
+        const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
         const list = await Promise.all(indices.map((indice) => indice.preFilter(tokens)));
         const combineWeights = list.reduce((sum, weights) => {
             weights.forEach((value, key) => {

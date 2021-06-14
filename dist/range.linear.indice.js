@@ -162,16 +162,17 @@ var RangeLinearIndice = /** @class */ (function () {
     };
     RangeLinearIndice.prototype.find = function (value) {
         return __awaiter(this, void 0, void 0, function () {
-            var tokens, weights;
+            var indice, tokens, weights;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0: return [4 /*yield*/, this.load()];
                     case 1:
                         _a.sent();
-                        if (!this.indice) {
+                        indice = this.indice;
+                        if (!indice) {
                             throw new Error("Spread indice doesn't initialized");
                         }
-                        tokens = this.indice.tokenizr(value);
+                        tokens = Array.isArray(value) ? value.flatMap(function (v) { return indice.tokenizr(v); }) : indice.tokenizr(value);
                         weights = __spreadArray([], __read(this.indices)).map(function (_a) {
                             var _b = __read(_a, 2), filter = _b[0], indice = _b[1];
                             var width = tokens.reduce(function (w, token) { return filter.has(token) ? 1 + w : w; }, 0);
@@ -184,7 +185,7 @@ var RangeLinearIndice = /** @class */ (function () {
                             var _b = __read(_a, 2), _ = _b[0], indice = _b[1];
                             return indice;
                         });
-                        return [2 /*return*/, this.indice.findAll(weights, value)];
+                        return [2 /*return*/, indice.findAll(weights, value)];
                 }
             });
         });

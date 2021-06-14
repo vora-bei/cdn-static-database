@@ -66,7 +66,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         });
     }
     serializeOptions(): Object {
-        const {load, ...options} = this.options;
+        const { load, ...options } = this.options;
         return options;
     }
     serializeData(): any[] {
@@ -167,7 +167,8 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         return result;
     }
     public async findAll(indices: ISpreadIndice<T, string>[], value: string): Promise<T[]> {
-        const tokens = this.tokenizr(value);
+        const { tokenizr } = this;
+        const tokens = Array.isArray(value) ? value.flatMap(v => tokenizr(v)) : tokenizr(value);
         const list = await Promise.all(indices.map((indice) => indice.preFilter(tokens)));
         const combineWeights = list.reduce((sum, weights) => {
             weights.forEach((value, key) => {

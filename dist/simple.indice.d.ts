@@ -16,7 +16,7 @@ export declare class SimpleIndice<T, P> implements ISpreadIndice<T, P> {
     tokenizr(value: P): P[];
     private load;
     preFilter(tokens: P[]): Promise<Map<T, number>>;
-    find(value: P): Promise<T[]>;
+    find(value: P | P[]): Promise<T[]>;
     postFilter(countResults: Map<T, number>, tokens: P[]): T[];
     serialize(): {
         data: any[];
@@ -24,7 +24,7 @@ export declare class SimpleIndice<T, P> implements ISpreadIndice<T, P> {
     };
     static deserialize<T, P>(data: any, options?: any): SimpleIndice<T, P>;
     spread(chunkSize?: number): ISpreadIndice<T, P>[];
-    findAll(indices: ISpreadIndice<T, P>[], value: P): Promise<T[]>;
+    findAll(indices: ISpreadIndice<T, P>[], value: P | P[]): Promise<T[]>;
 }
 export {};
 //# sourceMappingURL=simple.indice.d.ts.map

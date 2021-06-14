@@ -37,7 +37,7 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         return [...this.indices].map(([filter, indice], i) => ([[filter.left, filter.right], indice.id]));
     }
     serializeOptions(): ISerializeOptions<T, P> {
-        const {load, ...options} = this.options;
+        const { load, ...options } = this.options;
         return { self: options, spread: { ...this.indice?.serializeOptions(), isLoaded: false } };
     }
 
@@ -83,18 +83,20 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
             throw (Error("option load doesn't implemented"))
         }
     }
-    async find(value: P): Promise<T[]> {
+    async find(value: P | P[]): Promise<T[]> {
         await this.load();
-        if (!this.indice) {
+        const { indice } = this;
+        if (!indice) {
             throw new Error("Spread indice doesn't initialized")
         }
-        const tokens = this.indice.tokenizr(value);
+        const tokens = Array.isArray(value) ? value.flatMap(v => indice.tokenizr(v)) : indice.tokenizr(value);
+
         const weights = [...this.indices].map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
             const width = tokens.reduce((w, token) => filter.has(token) ? 1 + w : w, 0);
             return [width, indice];
         }).filter(([width]) => !!width)
             .map(([_, indice]) => indice);
-        return this.indice.findAll(weights, value);
+        return indice.findAll(weights, value);
     }
 }
 

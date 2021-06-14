@@ -48,14 +48,14 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
         });
     }
     serializeOptions(): Object {
-        const {load, ...options} = this.options;
+        const { load, ...options } = this.options;
         return options;
     }
     serializeData(): any[] {
         return [...this.indices];
     }
     tokenizr(value: P): P[] {
-      return [value]
+        return [value]
     }
     private async load() {
         if (this.options.isLoaded) {
@@ -82,8 +82,9 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
         });
         return countResults;
     }
-    async find(value: P) {
-        const tokens = this.tokenizr(value);
+    async find(value: P|P[]) {
+        const { tokenizr } = this;
+        const tokens = Array.isArray(value) ? value.flatMap(v => tokenizr(v)) : tokenizr(value);
         const preResult = await this.preFilter(tokens);
         return this.postFilter(preResult, tokens);
     }
@@ -135,8 +136,9 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
         }
         return result;
     }
-    public async findAll(indices: ISpreadIndice<T, P>[], value: P): Promise<T[]> {
-        const tokens = this.tokenizr(value);
+    public async findAll(indices: ISpreadIndice<T, P>[], value: P | P[]): Promise<T[]> {
+        const { tokenizr } = this;
+        const tokens = Array.isArray(value) ? value.flatMap(v => tokenizr(v)) : tokenizr(value);
         const list = await Promise.all(indices.map((indice) => indice.preFilter(tokens)));
         const combineWeights = list.reduce((sum, weights) => {
             weights.forEach((value, key) => {

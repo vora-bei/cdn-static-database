@@ -263,11 +263,12 @@ var NgramIndice = /** @class */ (function () {
     };
     NgramIndice.prototype.findAll = function (indices, value) {
         return __awaiter(this, void 0, void 0, function () {
-            var tokens, list, combineWeights;
+            var tokenizr, tokens, list, combineWeights;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        tokens = this.tokenizr(value);
+                        tokenizr = this.tokenizr;
+                        tokens = Array.isArray(value) ? value.flatMap(function (v) { return tokenizr(v); }) : tokenizr(value);
                         return [4 /*yield*/, Promise.all(indices.map(function (indice) { return indice.preFilter(tokens); }))];
                     case 1:
                         list = _a.sent();

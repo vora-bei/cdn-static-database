@@ -92,9 +92,9 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         const tokens = Array.isArray(value) ? value.flatMap(v => indice.tokenizr(v)) : indice.tokenizr(value);
 
         const weights = [...this.indices].map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
-            const width = tokens.reduce((w, token) => filter.has(token) ? 1 + w : w, 0);
-            return [width, indice];
-        }).filter(([width]) => !!width)
+            const weight = tokens.reduce((w, token) => filter.has(token) ? 1 + w : w, 0);
+            return [weight, indice];
+        }).filter(([weight]) => !!weight)
             .map(([_, indice]) => indice);
         return indice.findAll(weights, value);
     }

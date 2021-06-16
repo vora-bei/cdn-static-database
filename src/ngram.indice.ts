@@ -179,4 +179,17 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         return this.postFilter(combineWeights, tokens);
     }
 
+    public * findCursor(indices: ISpreadIndice<T, string>[], value: string) {
+        const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
+        const list =  yield Promise.all(indices.map((indice) => indice.preFilter(tokens)));
+        const combineWeights = list.reduce((sum, weights) => {
+            weights.forEach((value, key) => {
+                const count = sum.get(key) || 0
+                sum.set(key, count + value);
+            })
+            return sum;
+        }, new Map())
+        return this.postFilter(combineWeights, tokens);
+    }
+
 }

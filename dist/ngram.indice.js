@@ -165,7 +165,11 @@ var NgramIndice = /** @class */ (function () {
             });
         });
     };
-    NgramIndice.prototype.preFilter = function (tokens) {
+    NgramIndice.prototype.getIndices = function (token, operator) {
+        return this.indices.get(token);
+    };
+    NgramIndice.prototype.preFilter = function (tokens, operator) {
+        if (operator === void 0) { operator = "$eq"; }
         return __awaiter(this, void 0, void 0, function () {
             var countResults, _a, actuationLimitAuto, actuationLimit, l;
             var _this = this;
@@ -177,7 +181,7 @@ var NgramIndice = /** @class */ (function () {
                     case 1:
                         _b.sent();
                         tokens.forEach(function (token) {
-                            var indices = _this.indices.get(token);
+                            var indices = _this.getIndices(token, operator);
                             if (indices) {
                                 indices.forEach(function (id) {
                                     var count = countResults.get(id) || 0;
@@ -192,15 +196,19 @@ var NgramIndice = /** @class */ (function () {
             });
         });
     };
-    NgramIndice.prototype.find = function (value) {
+    NgramIndice.prototype.find = function (value, operator) {
+        if (operator === void 0) { operator = "$eq"; }
         return __awaiter(this, void 0, void 0, function () {
             var tokens, preResult;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        tokens = Array.isArray(value) ? value.flatMap(function (v) { return _this.tokenizr(v); }) : this.tokenizr(value);
-                        return [4 /*yield*/, this.preFilter(tokens)];
+                        tokens = [];
+                        if (value !== undefined) {
+                            tokens = Array.isArray(value) ? value.flatMap(function (v) { return _this.tokenizr(v); }) : this.tokenizr(value);
+                        }
+                        return [4 /*yield*/, this.preFilter(tokens, operator)];
                     case 1:
                         preResult = _a.sent();
                         return [2 /*return*/, this.postFilter(preResult, tokens)];
@@ -262,7 +270,8 @@ var NgramIndice = /** @class */ (function () {
         }
         return result;
     };
-    NgramIndice.prototype.findAll = function (indices, value) {
+    NgramIndice.prototype.findAll = function (indices, value, operator) {
+        if (operator === void 0) { operator = '$eq'; }
         return __awaiter(this, void 0, void 0, function () {
             var tokens, list, combineWeights;
             var _this = this;
@@ -270,7 +279,7 @@ var NgramIndice = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         tokens = Array.isArray(value) ? value.flatMap(function (v) { return _this.tokenizr(v); }) : this.tokenizr(value);
-                        return [4 /*yield*/, Promise.all(indices.map(function (indice) { return indice.preFilter(tokens); }))];
+                        return [4 /*yield*/, Promise.all(indices.map(function (indice) { return indice.preFilter(tokens, operator); }))];
                     case 1:
                         list = _a.sent();
                         combineWeights = list.reduce(function (sum, weights) {
@@ -284,6 +293,103 @@ var NgramIndice = /** @class */ (function () {
                 }
             });
         });
+    };
+    NgramIndice.prototype.cursorAll = function (indices, value, operator) {
+        var _a;
+        var _this = this;
+        if (operator === void 0) { operator = '$eq'; }
+        var tokens = Array.isArray(value) ? value.flatMap(function (v) { return _this.tokenizr(v); }) : this.tokenizr(value);
+        var list$ = Promise.all(indices.map(function (indice) { return indice.preFilter(tokens, operator); }));
+        var isLoad = false;
+        var index = 0;
+        var self = this;
+        var result;
+        var load = function () { return __awaiter(_this, void 0, void 0, function () {
+            var list, combineWeights;
+            return __generator(this, function (_a) {
+                switch (_a.label) {
+                    case 0:
+                        if (isLoad) {
+                            return [2 /*return*/];
+                        }
+                        return [4 /*yield*/, list$];
+                    case 1:
+                        list = _a.sent();
+                        combineWeights = list.reduce(function (sum, weights) {
+                            weights.forEach(function (value, key) {
+                                var count = sum.get(key) || 0;
+                                sum.set(key, count + value);
+                            });
+                            return sum;
+                        }, new Map());
+                        result = self.postFilter(combineWeights, tokens);
+                        return [2 /*return*/];
+                }
+            });
+        }); };
+        return _a = {},
+            _a[Symbol.asyncIterator] = function () {
+                return {
+                    next: function () {
+                        return __awaiter(this, void 0, void 0, function () {
+                            var value_1;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0: return [4 /*yield*/, load()];
+                                    case 1:
+                                        _a.sent();
+                                        if (index < result.length) {
+                                            value_1 = result[index];
+                                            index++;
+                                            return [2 /*return*/, { done: false, value: value_1 }];
+                                        }
+                                        else {
+                                            return [2 /*return*/, { done: true, value: undefined }];
+                                        }
+                                        return [2 /*return*/];
+                                }
+                            });
+                        });
+                    }
+                };
+            },
+            _a;
+    };
+    NgramIndice.prototype.cursor = function (value, operator) {
+        var _a;
+        var load$ = this.load();
+        var result$ = this.find(value, operator);
+        var index = 0;
+        return _a = {},
+            _a[Symbol.asyncIterator] = function () {
+                return {
+                    next: function () {
+                        return __awaiter(this, void 0, void 0, function () {
+                            var result, value_2;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0: return [4 /*yield*/, load$];
+                                    case 1:
+                                        _a.sent();
+                                        return [4 /*yield*/, result$];
+                                    case 2:
+                                        result = _a.sent();
+                                        if (index < result.length) {
+                                            value_2 = result[index];
+                                            index++;
+                                            return [2 /*return*/, { done: false, value: value_2 }];
+                                        }
+                                        else {
+                                            return [2 /*return*/, { done: true, value: undefined }];
+                                        }
+                                        return [2 /*return*/];
+                                }
+                            });
+                        });
+                    }
+                };
+            },
+            _a;
     };
     return NgramIndice;
 }());

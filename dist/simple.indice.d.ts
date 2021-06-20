@@ -15,8 +15,10 @@ export declare class SimpleIndice<T, P> implements ISpreadIndice<T, P> {
     serializeData(): any[];
     tokenizr(value: P): P[];
     private load;
-    preFilter(tokens: P[]): Promise<Map<T, number>>;
-    find(value: P | P[]): Promise<T[]>;
+    getIndices(token: P, operator: string): T[] | undefined;
+    preFilter(tokens: P[], operator: string): Promise<Map<T, number>>;
+    find(value?: P | P[], operator?: string): Promise<T[]>;
+    cursor(value?: P | P[], operator?: string): AsyncIterable<T>;
     postFilter(countResults: Map<T, number>, tokens: P[]): T[];
     serialize(): {
         data: any[];
@@ -24,7 +26,8 @@ export declare class SimpleIndice<T, P> implements ISpreadIndice<T, P> {
     };
     static deserialize<T, P>(data: any, options?: any): SimpleIndice<T, P>;
     spread(chunkSize?: number): ISpreadIndice<T, P>[];
-    findAll(indices: ISpreadIndice<T, P>[], value: P | P[]): Promise<T[]>;
+    findAll(indices: ISpreadIndice<T, P>[], value: P | P[], operator?: string): Promise<T[]>;
+    cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator?: string): AsyncIterable<T>;
 }
 export {};
 //# sourceMappingURL=simple.indice.d.ts.map

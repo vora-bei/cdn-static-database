@@ -17,6 +17,27 @@ var Range = /** @class */ (function () {
     Range.prototype.has = function (token) {
         return token >= this.left && token <= this.right;
     };
+    Range.prototype.lt = function (token) {
+        return token >= this.right || this.has(token);
+    };
+    Range.prototype.gt = function (token) {
+        return token <= this.left || this.has(token);
+        ;
+    };
+    Range.prototype.test = function (token, operator) {
+        switch (operator) {
+            case '$eq':
+                return this.has(token);
+            case '$lt':
+            case '$lte':
+                return this.lt(token);
+            case '$lt':
+            case '$lte':
+                return this.gt(token);
+            default:
+                return this.has(token);
+        }
+    };
     return Range;
 }());
 exports.Range = Range;

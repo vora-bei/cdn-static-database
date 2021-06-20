@@ -150,7 +150,38 @@ var SimpleIndice = /** @class */ (function () {
             });
         });
     };
-    SimpleIndice.prototype.preFilter = function (tokens) {
+    SimpleIndice.prototype.getIndices = function (token, operator) {
+        var _this = this;
+        switch (operator) {
+            case '$eq':
+                return this.indices.get(token);
+            case '$lte':
+            case '$lt': {
+                var result_1 = [];
+                this.keys.forEach(function (k) {
+                    if (k <= token) {
+                        var ids = _this.indices.get(k);
+                        result_1.push.apply(result_1, __spreadArray([], __read(ids)));
+                    }
+                });
+                return result_1;
+            }
+            case '$gte':
+            case '$gt': {
+                var result_2 = [];
+                this.keys.forEach(function (k) {
+                    if (k >= token) {
+                        var ids = _this.indices.get(k);
+                        result_2.push.apply(result_2, __spreadArray([], __read(ids)));
+                    }
+                });
+                return result_2;
+            }
+            default:
+                return this.indices.get(token);
+        }
+    };
+    SimpleIndice.prototype.preFilter = function (tokens, operator) {
         return __awaiter(this, void 0, void 0, function () {
             var countResults;
             var _this = this;
@@ -162,7 +193,7 @@ var SimpleIndice = /** @class */ (function () {
                     case 1:
                         _a.sent();
                         tokens.forEach(function (token) {
-                            var indices = _this.indices.get(token);
+                            var indices = _this.getIndices(token, operator);
                             if (indices) {
                                 indices.forEach(function (id) {
                                     var count = countResults.get(id) || 0;
@@ -170,26 +201,72 @@ var SimpleIndice = /** @class */ (function () {
                                 });
                             }
                         });
+                        if (!tokens.length) {
+                            return [2 /*return*/, new Map(__spreadArray([], __read(this.indices.values())).flatMap(function (indice) { return indice; })
+                                    .map(function (indice) { return [indice, 1]; }))];
+                        }
                         return [2 /*return*/, countResults];
                 }
             });
         });
     };
-    SimpleIndice.prototype.find = function (value) {
+    SimpleIndice.prototype.find = function (value, operator) {
+        if (operator === void 0) { operator = "$eq"; }
         return __awaiter(this, void 0, void 0, function () {
             var tokens, preResult;
             var _this = this;
             return __generator(this, function (_a) {
                 switch (_a.label) {
                     case 0:
-                        tokens = Array.isArray(value) ? value.flatMap(function (v) { return _this.tokenizr(v); }) : this.tokenizr(value);
-                        return [4 /*yield*/, this.preFilter(tokens)];
+                        tokens = [];
+                        if (value !== undefined) {
+                            tokens = Array.isArray(value) ? value.flatMap(function (v) { return _this.tokenizr(v); }) : this.tokenizr(value);
+                        }
+                        return [4 /*yield*/, this.preFilter(tokens, operator)];
                     case 1:
                         preResult = _a.sent();
                         return [2 /*return*/, this.postFilter(preResult, tokens)];
                 }
             });
         });
+    };
+    SimpleIndice.prototype.cursor = function (value, operator) {
+        var _a;
+        var load$ = this.load();
+        var result$ = this.find(value, operator);
+        var index = 0;
+        return _a = {},
+            _a[Symbol.asyncIterator] = function () {
+                return {
+                    index: 0,
+                    data: new Map(),
+                    next: function () {
+                        return __awaiter(this, void 0, void 0, function () {
+                            var result, value_1;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0: return [4 /*yield*/, load$];
+                                    case 1:
+                                        _a.sent();
+                                        return [4 /*yield*/, result$];
+                                    case 2:
+                                        result = _a.sent();
+                                        if (index < result.length) {
+                                            value_1 = result[index];
+                                            index++;
+                                            return [2 /*return*/, { done: false, value: value_1 }];
+                                        }
+                                        else {
+                                            return [2 /*return*/, { done: true, value: undefined }];
+                                        }
+                                        return [2 /*return*/];
+                                }
+                            });
+                        });
+                    }
+                };
+            },
+            _a;
     };
     SimpleIndice.prototype.postFilter = function (countResults, tokens) {
         var results = __spreadArray([], __read(countResults.entries())).map(function (_a) {
@@ -236,7 +313,8 @@ var SimpleIndice = /** @class */ (function () {
         }
         return result;
     };
-    SimpleIndice.prototype.findAll = function (indices, value) {
+    SimpleIndice.prototype.findAll = function (indices, value, operator) {
+        if (operator === void 0) { operator = '$eq'; }
         return __awaiter(this, void 0, void 0, function () {
             var tokens, list, combineWeights;
             var _this = this;
@@ -244,7 +322,7 @@ var SimpleIndice = /** @class */ (function () {
                 switch (_a.label) {
                     case 0:
                         tokens = Array.isArray(value) ? value.flatMap(function (v) { return _this.tokenizr(v); }) : this.tokenizr(value);
-                        return [4 /*yield*/, Promise.all(indices.map(function (indice) { return indice.preFilter(tokens); }))];
+                        return [4 /*yield*/, Promise.all(indices.map(function (indice) { return indice.preFilter(tokens, operator); }))];
                     case 1:
                         list = _a.sent();
                         combineWeights = list.reduce(function (sum, weights) {
@@ -258,6 +336,59 @@ var SimpleIndice = /** @class */ (function () {
                 }
             });
         });
+    };
+    SimpleIndice.prototype.cursorAll = function (indices, value, operator) {
+        var _a;
+        var _this = this;
+        if (operator === void 0) { operator = '$eq'; }
+        var tokens = [];
+        if (value !== undefined) {
+            tokens = Array.isArray(value) ? value.flatMap(function (v) { return _this.tokenizr(v); }) : this.tokenizr(value);
+        }
+        var result = null;
+        var indiceIndex = 0;
+        var data = new Map();
+        return _a = {},
+            _a[Symbol.asyncIterator] = function () {
+                return {
+                    next: function () {
+                        return __awaiter(this, void 0, void 0, function () {
+                            var item, value_2;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0:
+                                        if (!(result === null)) return [3 /*break*/, 2];
+                                        return [4 /*yield*/, indices[indiceIndex].preFilter(tokens, operator)];
+                                    case 1:
+                                        data = _a.sent();
+                                        result = data.keys();
+                                        _a.label = 2;
+                                    case 2:
+                                        item = result.next();
+                                        if (!item.done) return [3 /*break*/, 4];
+                                        indiceIndex++;
+                                        return [4 /*yield*/, indices[indiceIndex].preFilter(tokens, operator)];
+                                    case 3:
+                                        data = _a.sent();
+                                        result = data.keys();
+                                        item = result.next();
+                                        _a.label = 4;
+                                    case 4:
+                                        if (!item.done) {
+                                            value_2 = item.value;
+                                            return [2 /*return*/, { done: false, value: value_2 }];
+                                        }
+                                        else {
+                                            return [2 /*return*/, { done: true, value: undefined }];
+                                        }
+                                        return [2 /*return*/];
+                                }
+                            });
+                        });
+                    }
+                };
+            },
+            _a;
     };
     return SimpleIndice;
 }());

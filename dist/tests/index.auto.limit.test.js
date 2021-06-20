@@ -51,30 +51,57 @@ var __read = (this && this.__read) || function (o, n) {
     }
     return ar;
 };
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-var bloom_indice_1 = require("../bloom.indice");
+var range_linear_indice_1 = require("../range.linear.indice");
 var ngram_indice_1 = require("../ngram.indice");
-var countries_seed_1 = require("./countries.seed");
+var country_by_continent_json_1 = __importDefault(require("./country-by-continent.json"));
 var utils_1 = require("../utils");
+var simple_indice_1 = require("../simple.indice");
+var db_1 = require("db");
+var schema_1 = require("schema");
 var indices = new ngram_indice_1.NgramIndice({ gramLen: 3, actuationLimit: 2, toLowcase: true, actuationLimitAuto: true, isLoaded: false });
-Object.entries(countries_seed_1.countries).forEach(function (_a) {
-    var _b = __read(_a, 2), key = _b[0], val = _b[1];
-    return indices.add(Number.parseInt(key), val);
-});
-var bloom = new bloom_indice_1.BloomIndice({ indice: indices, id: 'auto_bloom' });
-utils_1.saveSharedIndices(bloom)
-    .then(function () { return utils_1.restoreSharedIndices("auto_bloom", bloom_indice_1.BloomIndice.deserialize, ngram_indice_1.NgramIndice.deserialize); })
-    .then(function (bloomRestored) { return __awaiter(void 0, void 0, void 0, function () {
-    var _a, _b;
-    return __generator(this, function (_c) {
-        switch (_c.label) {
-            case 0:
-                _b = (_a = console).log;
-                return [4 /*yield*/, bloomRestored.find("Аргенnина")];
-            case 1:
-                _b.apply(_a, [_c.sent()]);
-                return [2 /*return*/];
-        }
+country_by_continent_json_1.default.forEach(function (country, key) { return indices.add(key, [country.country, country.continent]); });
+var range = new range_linear_indice_1.RangeLinearIndice({ indice: indices, id: 'text' });
+var primaryIndices = new simple_indice_1.SimpleIndice({ isLoaded: false });
+country_by_continent_json_1.default.forEach(function (country, key) { return primaryIndices.add(key, country); });
+var primaryRange = new range_linear_indice_1.RangeLinearIndice({ indice: primaryIndices, id: 'primary' });
+var simplaeIndices = new simple_indice_1.SimpleIndice({ isLoaded: false });
+country_by_continent_json_1.default.forEach(function (country, key) { return simplaeIndices.add(key, country.continent); });
+var simpleRange = new range_linear_indice_1.RangeLinearIndice({ indice: simplaeIndices, id: 'simple' });
+Promise.all([
+    utils_1.saveSharedIndices(range),
+    utils_1.saveSharedIndices(primaryRange),
+    utils_1.saveSharedIndices(simpleRange)
+]).then(function () { return Promise.all([
+    utils_1.restoreSharedIndices("primary", range_linear_indice_1.RangeLinearIndice.deserialize, simple_indice_1.SimpleIndice.deserialize),
+    utils_1.restoreSharedIndices("text", range_linear_indice_1.RangeLinearIndice.deserialize, ngram_indice_1.NgramIndice.deserialize),
+    utils_1.restoreSharedIndices("simple", range_linear_indice_1.RangeLinearIndice.deserialize, simple_indice_1.SimpleIndice.deserialize),
+]); })
+    .then(function (_a) {
+    var _b = __read(_a, 3), primary = _b[0], text = _b[1], simple = _b[2];
+    return __awaiter(void 0, void 0, void 0, function () {
+        var contries, _c, _d, _e, _f;
+        return __generator(this, function (_g) {
+            switch (_g.label) {
+                case 0:
+                    contries = new db_1.Db(new schema_1.Schema(primary, [
+                        { indice: text, type: schema_1.IndiceType.GLOBAL },
+                        { indice: simple, path: 'continent', type: schema_1.IndiceType.LOCAL }
+                    ]));
+                    _d = (_c = console).log;
+                    return [4 /*yield*/, contries.find({ 'continent': { '$eq': "Oceania" } }, undefined, 0, 20)];
+                case 1:
+                    _d.apply(_c, [_g.sent()]);
+                    _f = (_e = console).log;
+                    return [4 /*yield*/, contries.find({ '$text': "Angola" }, undefined, 0, 20)];
+                case 2:
+                    _f.apply(_e, [_g.sent()]);
+                    return [2 /*return*/];
+            }
+        });
     });
-}); });
+});
 //# sourceMappingURL=index.auto.limit.test.js.map

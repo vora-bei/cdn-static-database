@@ -91,11 +91,14 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
             throw (Error("option load doesn't implemented"))
         }
     }
-    public async preFilter(tokens: string[]): Promise<Map<T, number>> {
+    public getIndices(token: string, operator: string) {
+       return this.indices.get(token);
+    }
+    public async preFilter(tokens: string[], operator: string = "$eq"): Promise<Map<T, number>> {
         const countResults: Map<T, number> = new Map();
         await this.load();
         tokens.forEach((token) => {
-            const indices = this.indices.get(token);
+            const indices = this.getIndices(token, operator);
             if (indices) {
                 indices.forEach((id) => {
                     let count = countResults.get(id) || 0;
@@ -107,9 +110,12 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         const l = this.getLimit(actuationLimitAuto, tokens.length, actuationLimit);
         return countResults;
     }
-    async find(value: string | string[]) {
-        const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
-        const preResult = await this.preFilter(tokens);
+    async find(value?: string | string[], operator: string = "$eq") {
+        let tokens: string[] = []
+        if (value !== undefined) {
+            tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
+        }
+        const preResult = await this.preFilter(tokens, operator);
         return this.postFilter(preResult, tokens);
     }
     public postFilter(countResults: Map<T, number>, tokens: string[]): T[] {
@@ -166,9 +172,9 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         }
         return result;
     }
-    public async findAll(indices: ISpreadIndice<T, string>[], value: string): Promise<T[]> {
+    public async findAll(indices: ISpreadIndice<T, string>[], value: string, operator: string='$eq'): Promise<T[]> {
         const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
-        const list = await Promise.all(indices.map((indice) => indice.preFilter(tokens)));
+        const list = await Promise.all(indices.map((indice) => indice.preFilter(tokens, operator)));
         const combineWeights = list.reduce((sum, weights) => {
             weights.forEach((value, key) => {
                 const count = sum.get(key) || 0
@@ -178,18 +184,66 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         }, new Map())
         return this.postFilter(combineWeights, tokens);
     }
-
-    public * findCursor(indices: ISpreadIndice<T, string>[], value: string) {
+    public cursorAll<AI extends AsyncIterable<T>>(indices: ISpreadIndice<T, string>[], value: string | string[], operator: string = '$eq'): AsyncIterable<T> {
         const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
-        const list =  yield Promise.all(indices.map((indice) => indice.preFilter(tokens)));
-        const combineWeights = list.reduce((sum, weights) => {
-            weights.forEach((value, key) => {
-                const count = sum.get(key) || 0
-                sum.set(key, count + value);
-            })
-            return sum;
-        }, new Map())
-        return this.postFilter(combineWeights, tokens);
+        const list$ =  Promise.all(indices.map((indice) => indice.preFilter(tokens, operator)));
+        let isLoad = false;
+        let index=0;
+        const self = this;
+        let result: T[];
+        const load = async () => {
+            if(isLoad){
+                return;
+            }
+            const list = await list$;
+            const combineWeights = list.reduce((sum, weights) => {
+                weights.forEach((value, key) => {
+                    const count = sum.get(key) || 0
+                    sum.set(key, count + value);
+                })
+                return sum;
+            }, new Map())
+            result = self.postFilter(combineWeights, tokens);
+        }
+        return {
+            [Symbol.asyncIterator]() {
+                return {
+                    async next() {
+                        await load()
+                        if (index < result.length) {
+                            const value = result[index];
+                            index++;
+                            return { done: false, value };
+                        } else {
+                            return { done: true, value: undefined };
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    cursor(value?: string | string[], operator?: string): AsyncIterable<T> {
+        const load$ = this.load();
+        const result$ = this.find(value, operator);
+        let index = 0;
+        return {
+            [Symbol.asyncIterator]() {
+                return {
+                    async next() {
+                        await load$;
+                        const result = await result$;
+                        if (index < result.length) {
+                            const value = result[index];
+                            index++;
+                            return { done: false, value };
+                        } else {
+                            return { done: true, value: undefined };
+                        }
+                    }
+                }
+            }
+        }
     }
 
 }

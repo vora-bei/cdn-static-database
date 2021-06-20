@@ -32,9 +32,9 @@ export const restoreSharedIndices = async <T, P>(
     deserialize: (
         data: any,
         options?: any
-    ) => ISpreadIndice<T, P>
+    ) => ISpreadIndice<T, any>
 
-) => {
+): Promise<ISharedIndice<T, P>> => {
     const load = async (options: { id }) => {
         return JSON.parse((await readFile(`./${id}/chunk_${options.id}.json`)).toString())
     }

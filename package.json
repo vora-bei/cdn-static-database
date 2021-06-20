@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node src/tests/index.linear.test",
+    "start": "ts-node src/tests/db.test.ts",
     "build": "tsc"
 
   },
@@ -25,7 +25,6 @@
   },
   "dependencies": {
     "@types/node": "^15.12.1",
-    "bloom-filters": "^1.3.4",
     "mingo": "^4.1.2",
     "n-gram": "^1.1.2",
     "snowball": "^0.3.1"

@@ -1,18 +1,21 @@
-import { IIndice } from "interfaces";
+import { IIndice, ISharedIndice } from "interfaces";
 
 export enum IndiceType {
     LOCAL,
     GLOBAL,
-    PRIMARY,
 }
 export interface IIndiceOption {
-    indice: IIndice<any, any>;
-    path?: string; type: IndiceType;
-    value: any;
+    indice: ISharedIndice<any, any>;
+    path?: string;
+    type: IndiceType;
+    value?: any;
+    op?: any;
 }
 export class Schema {
+    primaryIndice: ISharedIndice<any, any>;
     indices: IIndiceOption[];
-    constructor(indices: IIndiceOption[]) {
+    constructor(primaryIndice: ISharedIndice<any, any>, indices: IIndiceOption[]) {
         this.indices = indices;
+        this.primaryIndice = primaryIndice;
     }
 }

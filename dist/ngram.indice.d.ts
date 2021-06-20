@@ -22,8 +22,9 @@ export declare class NgramIndice<T> implements ISpreadIndice<T, string> {
     serializeData(): any[];
     tokenizr(value: string): string[];
     private load;
-    preFilter(tokens: string[]): Promise<Map<T, number>>;
-    find(value: string | string[]): Promise<T[]>;
+    getIndices(token: string, operator: string): T[] | undefined;
+    preFilter(tokens: string[], operator?: string): Promise<Map<T, number>>;
+    find(value?: string | string[], operator?: string): Promise<T[]>;
     postFilter(countResults: Map<T, number>, tokens: string[]): T[];
     private getLimit;
     serialize(): {
@@ -32,7 +33,9 @@ export declare class NgramIndice<T> implements ISpreadIndice<T, string> {
     };
     static deserialize<T, P>(data: any, options?: any): NgramIndice<T>;
     spread(chunkSize?: number): ISpreadIndice<T, string>[];
-    findAll(indices: ISpreadIndice<T, string>[], value: string): Promise<T[]>;
+    findAll(indices: ISpreadIndice<T, string>[], value: string, operator?: string): Promise<T[]>;
+    cursorAll<AI extends AsyncIterable<T>>(indices: ISpreadIndice<T, string>[], value: string | string[], operator?: string): AsyncIterable<T>;
+    cursor(value?: string | string[], operator?: string): AsyncIterable<T>;
 }
 export {};
 //# sourceMappingURL=ngram.indice.d.ts.map

@@ -160,7 +160,8 @@ var RangeLinearIndice = /** @class */ (function () {
             });
         });
     };
-    RangeLinearIndice.prototype.find = function (value) {
+    RangeLinearIndice.prototype.find = function (value, operator) {
+        if (operator === void 0) { operator = '$eq'; }
         return __awaiter(this, void 0, void 0, function () {
             var indice, tokens, weights;
             return __generator(this, function (_a) {
@@ -175,20 +176,93 @@ var RangeLinearIndice = /** @class */ (function () {
                         tokens = Array.isArray(value) ? value.flatMap(function (v) { return indice.tokenizr(v); }) : indice.tokenizr(value);
                         weights = __spreadArray([], __read(this.indices)).map(function (_a) {
                             var _b = __read(_a, 2), filter = _b[0], indice = _b[1];
-                            var width = tokens.reduce(function (w, token) { return filter.has(token) ? 1 + w : w; }, 0);
-                            return [width, indice];
+                            var weight = tokens.reduce(function (w, token) { return filter.test(token, operator) ? 1 + w : w; }, 0);
+                            return [weight, indice];
                         }).filter(function (_a) {
-                            var _b = __read(_a, 1), width = _b[0];
-                            return !!width;
+                            var _b = __read(_a, 1), weight = _b[0];
+                            return !!weight;
                         })
                             .map(function (_a) {
                             var _b = __read(_a, 2), _ = _b[0], indice = _b[1];
                             return indice;
                         });
-                        return [2 /*return*/, indice.findAll(weights, value)];
+                        return [2 /*return*/, indice.findAll(weights, value, operator)];
                 }
             });
         });
+    };
+    RangeLinearIndice.prototype.cursor = function (value, operator) {
+        var _a;
+        var _this = this;
+        if (operator === void 0) { operator = '$eq'; }
+        var load$ = this.load();
+        var result$ = this.find(value, operator);
+        var self = this;
+        var cursor;
+        var index = 0;
+        var isFound = false;
+        var find = function () { return __awaiter(_this, void 0, void 0, function () {
+            var indice, tokens, indices;
+            return __generator(this, function (_a) {
+                if (isFound) {
+                    return [2 /*return*/];
+                }
+                indice = self.indice;
+                if (!indice) {
+                    throw new Error("Spread indice doesn't initialized");
+                }
+                tokens = Array.isArray(value) ? value.flatMap(function (v) { return indice.tokenizr(v); }) : indice.tokenizr(value);
+                indices = __spreadArray([], __read(self.indices)).map(function (_a) {
+                    var _b = __read(_a, 2), filter = _b[0], indice = _b[1];
+                    var weight = tokens.reduce(function (w, token) { return filter.test(token, operator) ? 1 + w : w; }, 0);
+                    return [weight, indice];
+                }).filter(function (_a) {
+                    var _b = __read(_a, 1), weight = _b[0];
+                    return !!weight;
+                })
+                    .map(function (_a) {
+                    var _b = __read(_a, 2), _ = _b[0], indice = _b[1];
+                    return indice;
+                });
+                cursor = indice.cursorAll(indices, value, operator);
+                isFound = true;
+                return [2 /*return*/];
+            });
+        }); };
+        return _a = {},
+            _a[Symbol.asyncIterator] = function () {
+                return {
+                    next: function () {
+                        return __awaiter(this, void 0, void 0, function () {
+                            var indice, result, value_1;
+                            return __generator(this, function (_a) {
+                                switch (_a.label) {
+                                    case 0: return [4 /*yield*/, load$];
+                                    case 1:
+                                        _a.sent();
+                                        return [4 /*yield*/, find()];
+                                    case 2:
+                                        _a.sent();
+                                        indice = self.indice;
+                                        return [4 /*yield*/, result$];
+                                    case 3:
+                                        result = _a.sent();
+                                        if (index < result.length) {
+                                            value_1 = result[index];
+                                            index++;
+                                            return [2 /*return*/, { done: false, value: value_1 }];
+                                        }
+                                        else {
+                                            return [2 /*return*/, { done: true, value: undefined }];
+                                        }
+                                        return [2 /*return*/];
+                                }
+                            });
+                        });
+                    }
+                };
+            },
+            _a;
     };
     return RangeLinearIndice;
 }());

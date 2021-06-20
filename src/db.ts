@@ -1,66 +1,107 @@
 import mingo from "mingo";
-import { RawObject } from "mingo/util";
-import { IIndiceOption, IndiceType, Schema } from "schema";
+import { addOperators, OperatorType } from "mingo/core";
+import { intersection, RawObject, isOperator, isArray, isObject } from "mingo/util";
+import { IIndiceOption, IndiceType, Schema } from "./schema";
+addOperators(OperatorType.QUERY, ()=>({ "$text": () => true }))
+
+const comparableOperators = new Set([
+    '$eq', '$gt', '$gte', '$in', '$lt', '$lte', '$ne', '$nin'
+])
+const logicalOperators = new Set([
+    '$and', '$or'
+]);
 
 
 export class Db {
     private schema: Schema;
-    constructor(schema: Schema){
+    constructor(schema: Schema) {
         this.schema = schema;
     }
-    find(criteria?: RawObject, sort?: RawObject, skip?: number, limit?: number){
-        const primaryIndice = this.schema.indices.find(i=> i.type===IndiceType.PRIMARY);
-        let fieldFilterIndices: IIndiceOption[] = [];
-        let fieldSortIndices: IIndiceOption[] = [];
-        let fullTextIndice;
-        if(criteria){
-             fullTextIndice = this.schema.indices.filter(i=> i.type===IndiceType.GLOBAL && criteria['$text'])
-             .map(i=>({...i, value: criteria['$text'], op: '$eq'}))
-             .pop();
-             fieldFilterIndices = this.schema
-             .indices
-             .filter(i=> this.isSimpleIndex(i) && criteria[i.path!])
-             .map(i=>({...i, value: criteria[i.path!], op: '$eq'}));
-        }
-        if(sort){
-             fieldSortIndices = this.schema.indices.filter(i=> (i.type===IndiceType.LOCAL || i.type===IndiceType.PRIMARY) && sort[i.path!]);
-        }
-        return {
-            [Symbol.asyncIterator](){
-                
-                return {
-                    ids: null,
-                    async next() { 
-                        if(!ids){}
-                        if(fieldFilterIndices.length){
-                            const ids: any[][] = await Promise.all(fieldFilterIndices.map(o=> o.indice.find(o.value)));
-                        }
-                        if (this.current <= this.last) {
-                          return { done: false, value: this.current++ };
+    buildIndexSearch(criteria: RawObject, sort?: RawObject, context?: { path?: string }): () => Promise<any[]> {
+        const indices: IIndiceOption[] = [];
+        const subCriterias: (() => Promise<any[]>)[] = [];
+
+        for (const [key, value] of Object.entries(criteria)) {
+            let path = context?.path || undefined;
+            if (logicalOperators.has(key) && isArray(value)) {
+                const logSubCriterias = (value as any[])
+                    .map(subCriteria => this.buildIndexSearch(subCriteria, sort));
+                subCriterias.push(async () => {
+                    const ids: any[][] = await Promise.all(logSubCriterias.map(callback => callback()));
+                    let result = ids[0];
+                    ids.forEach(subres => {
+                        if (key === '$and') {
+                            result = intersection(result, subres);
                         } else {
-                          return { done: true };
+                            result.push(subres)
                         }
-                      }
+                    });
+                    return result;
+                });
+            } else if (key === '$text') {
+                const fullTextIndice = this
+                    .schema
+                    .indices
+                    .filter(i => i.type === IndiceType.GLOBAL && criteria['$text'])
+                    .pop();
+                if (fullTextIndice) {
+                    indices.push({ ...fullTextIndice, value: value as any })
+                }
+                delete criteria['$text']
+            } else if (isOperator(key)) {
+                const indice = this.schema.indices.find(o => o.path === path);
+                console.debug(key, path, indice);
+                if (indice) {
+                    indices.push({ ...indice, value: value as any, op: key })
+                }
+            } else if (isObject(value)) {
+                subCriterias.push(this.buildIndexSearch(value as RawObject, sort, { path: key }))
+            }else if (isObject(value)) {
+                subCriterias.push(this.buildIndexSearch(value as RawObject, sort, { path: key }))
+            } else {
+                const indice = this.schema.indices.find(o => o.path === key);
+                console.debug(key, path, indice);
+                if (indice) {
+                    indices.push({ ...indice, value: value as any, op: '$eq' })
                 }
             }
         }
+        return async () => {
+            const ids = await Promise.all(indices.map(({ indice, op, value }) => indice.find(value, op)));
+            const ids2 = await Promise.all(subCriterias.map(subCriteria => subCriteria()));
+            ids.push(...ids2)
+            let result = ids[0];
+            ids.forEach(subres => {
+                result = intersection(result, subres);
+            });
+            return result;
+        }
+    }
+    async find(criteria: RawObject, sort?: RawObject, skip: number = 0, limit?: number) {
+        const primaryIndice = this.schema.primaryIndice;
+        let searchIds: () => Promise<any[]> = this.buildIndexSearch(criteria, sort);
+        const load = async () => {
+            let ids: any[] | undefined;
+            if (searchIds) {
+                ids = await searchIds()
+            }
+            return primaryIndice.cursor(ids);
+        };
+        let cursor: AsyncIterable<any> = await load();
+        const result: any[] = [];
+        const query = new mingo.Query(criteria);
+        let i = 0;
+        for await (let value of cursor) {
+            console.log(value);
+            if (query.test(value) && i >= skip) {
+                i++;
+                result.push(value)
+                if (limit && i === limit) {
+                    break;
+                }
+            }
+        }
+        return result;
     }
 
-
-    private isSimpleIndex(i: IIndiceOption) {
-        return (i.type === IndiceType.LOCAL || i.type === IndiceType.PRIMARY);
-    }
-} 
-const collection = [];
-const query = new mingo.Query({ score: { $gt: 10 } });
-let cursor = query.find(collection);
-query._compile()
-
-// sort, skip and limit by chaining
-cursor.sort({student_id: 1, score: -1})
-  .skip(100)
-  .limit(100)
-
-  for (let value of cursor) {
-    console.log(value)
-  }
+}

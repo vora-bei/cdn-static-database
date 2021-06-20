@@ -83,14 +83,16 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
             throw (Error("option load doesn't implemented"))
         }
     }
-    async find(value: P | P[], operator: string = '$eq'): Promise<T[]> {
+    async find(value?: P | P[], operator: string = '$eq'): Promise<T[]> {
         await this.load();
         const { indice } = this;
         if (!indice) {
             throw new Error("Spread indice doesn't initialized")
         }
-        const tokens = Array.isArray(value) ? value.flatMap(v => indice.tokenizr(v)) : indice.tokenizr(value);
-
+        let tokens: P[] = []
+        if (value !== undefined) {
+            tokens = Array.isArray(value) ? value.flatMap(v => indice.tokenizr(v)) : indice.tokenizr(value);
+        }
         const weights = [...this.indices].map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
             const weight = tokens.reduce((w, token) => filter.test(token, operator) ? 1 + w : w, 0);
             return [weight, indice];
@@ -98,12 +100,11 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
             .map(([_, indice]) => indice);
         return indice.findAll(weights, value, operator);
     }
-    cursor(value: P | P[], operator: string = '$eq'): AsyncIterable<T> {
+    cursor(value?: P | P[], operator: string = '$eq'): AsyncIterable<T> {
         const load$ = this.load();
-        const result$ = this.find(value, operator);
         const self = this;
         let cursor;
-        let index = 0; 
+        let iterator;
         let isFound = false;
         let find = async () => {
             if (isFound) {
@@ -113,14 +114,18 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
             if (!indice) {
                 throw new Error("Spread indice doesn't initialized")
             }
-            const tokens = Array.isArray(value) ? value.flatMap(v => indice.tokenizr(v)) : indice.tokenizr(value);
+            let tokens: P[] = []
+            if (value !== undefined) {
+                tokens = Array.isArray(value) ? value.flatMap(v => indice.tokenizr(v)) : indice.tokenizr(value);
+            }
             const indices = [...self.indices].map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
                 const weight = tokens.reduce((w, token) => filter.test(token, operator) ? 1 + w : w, 0);
                 return [weight, indice];
-            }).filter(([weight]) => !!weight)
+            }).filter(([weight]) => !!weight || !tokens.length)
                 .map(([_, indice]) => indice);
-            cursor = indice.cursorAll(indices, value, operator)    
+            cursor = indice.cursorAll(indices, value, operator)
             isFound = true;
+            iterator = cursor[Symbol.asyncIterator]()
 
         };
         return {
@@ -129,15 +134,7 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
                     async next() {
                         await load$;
                         await find()
-                        const { indice } = self;
-                        const result = await result$;
-                        if (index < result.length) {
-                            const value = result[index];
-                            index++;
-                            return { done: false, value };
-                        } else {
-                            return { done: true, value: undefined };
-                        }
+                        return await iterator.next();
                     }
                 }
             }

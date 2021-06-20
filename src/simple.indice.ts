@@ -199,8 +199,11 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
         }
         return result;
     }
-    public async findAll(indices: ISpreadIndice<T, P>[], value: P | P[], operator = '$eq'): Promise<T[]> {
-        const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
+    public async findAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator = '$eq'): Promise<T[]> {
+        let tokens: P[] = []
+        if (value !== undefined) {
+            tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
+        }
         const list = await Promise.all(indices.map((indice) => indice.preFilter(tokens, operator)));
         const combineWeights = list.reduce((sum, weights) => {
             weights.forEach((value, key) => {
@@ -229,7 +232,7 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
                             result = data.keys();
                         }
                         let item = result!.next();
-                        if (item.done) {
+                        if (item.done && indiceIndex < indices.length - 1) {
                             indiceIndex++;
                             data = await indices[indiceIndex].preFilter(tokens, operator);
                             result = data.keys();

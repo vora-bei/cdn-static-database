@@ -80,14 +80,11 @@ export class Db {
     async find(criteria: RawObject, sort?: RawObject, skip: number = 0, limit?: number) {
         const primaryIndice = this.schema.primaryIndice;
         let searchIds: () => Promise<any[]> = this.buildIndexSearch(criteria, sort);
-        const load = async () => {
-            let ids: any[] | undefined;
-            if (searchIds) {
-                ids = await searchIds()
-            }
-            return primaryIndice.cursor(ids);
-        };
-        let cursor: AsyncIterable<any> = await load();
+        let ids: any[] | undefined;
+        if (searchIds) {
+            ids = await searchIds()
+        }
+        let cursor = primaryIndice.cursor(ids);
         const result: any[] = [];
         const query = new mingo.Query(criteria);
         let i = 0;

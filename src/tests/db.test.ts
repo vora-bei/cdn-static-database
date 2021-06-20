@@ -50,15 +50,14 @@ Promise.all([
                 { indice: simple, path: 'continent', type: IndiceType.LOCAL }
             ]
         ));
-        console.log('$eq', await contries.find({'continent':{'$eq': "Oceania"}}, undefined, 0, 20))
-        console.log('$lt', await contries.find({'continent':{'$lt': "Oceania"}}, undefined, 0, 20))
-        console.log('$gt', await contries.find({'continent':{'$gt': "Oceania"}}, undefined, 0, 20))
-        console.log('$text', await contries.find({'$text': "Ang", 'continent': 'Africa' }, undefined, 0, 20))
-        console.log('$eq simple', await contries.find({'continent': 'Africa' }, undefined, 0, 20))
-        console.log('missed index', await contries.find({'not': 'Africa' }, undefined, 0, 20))
-       // console.log(await text.find("Аргенnина"));
+        console.log('$eq', await contries.find({ 'continent': { '$eq': "Oceania" } }, undefined, 0, 20))
+        console.log('$lt', await contries.find({ 'continent': { '$lt': "Oceania" } }, undefined, 0, 20))
+        console.log('$gt', await contries.find({ 'continent': { '$gt': "Oceania" } }, undefined, 0, 20))
+        console.log('$text', await contries.find({ '$text': "Ang", 'continent': 'Africa' }, undefined, 0, 20))
+        console.log('$eq simple', await contries.find({ 'continent': 'Africa' }, undefined, 0, 20))
+        console.log('missed index', await contries.find({ 'not': 'Africa' }, undefined, 0, 20))
+        // console.log(await text.find("Аргенnина"));
     });
-
 
 
 

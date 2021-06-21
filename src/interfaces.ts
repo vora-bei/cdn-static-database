@@ -8,7 +8,7 @@ export interface ISerializeIndex {
 export interface IBaseIndice<T, P> {
     id: string;
     find(search: P[] | P, op?: string): Promise<T[]>;
-    cursor(value: P | P[], operator?: string, sort?: 1|-1): AsyncIterable<T>;
+    cursor(value?: P | P[], operator?: string, sort?: 1|-1): AsyncIterable<T>;
 }
 export interface IIndice<T, P> extends ISerializeIndex, IBaseIndice<T, P> {
     tokenizr(search: P): P[];

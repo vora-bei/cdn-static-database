@@ -120,19 +120,19 @@ export class Db {
             if (logicalOperators.has(key) && isArray(value)) {
                 const subIt = (value as any[])
                     .map(subCriteria => this.buildIndexSearch(subCriteria, sort, { indices }));
-                    
-                    () =>{
-                        const result: ResultIndiceSearch[] = subIt.map(it => it());
-                        const greed = key === '$and' ? result.every(({greed})=>greed):result.some(({greed})=>greed);
-                        const missed = key === '$and' ? result.every(({missed})=>missed) : result.some(({missed})=>missed);
-                        const results = result.map(({result})=>result);
-                        const sIs = key === '$and' ? intersectAsyncIterable(results) : combineAsyncIterable(results);
-                        subIterables.push(()=>({
-                            result: sIs,
-                            greed,
-                            missed
-                        }));
-                        }    
+
+                () => {
+                    const result: ResultIndiceSearch[] = subIt.map(it => it());
+                    const greed = key === '$and' ? result.every(({ greed }) => greed) : result.some(({ greed }) => greed);
+                    const missed = key === '$and' ? result.every(({ missed }) => missed) : result.some(({ missed }) => missed);
+                    const results = result.map(({ result }) => result);
+                    const sIs = key === '$and' ? intersectAsyncIterable(results) : combineAsyncIterable(results);
+                    subIterables.push(() => ({
+                        result: sIs,
+                        greed,
+                        missed
+                    }));
+                }
             } else if (key === '$text') {
                 const fullTextIndice = this
                     .schema
@@ -161,44 +161,58 @@ export class Db {
         }
         return () => {
             const simpleIterable = [...indices.values()]
-                .map(({ indice, value, order, op }) => {indice.cursor(value, op, order));
-
-
+                .map(({ indice, value, order, op }) => indice.cursor(value, op, order));
+            const result: ResultIndiceSearch[] = subIterables.map(it => it());
+            const subGreed = result.every(({ greed }) => greed);
+            const missed = result.every(({ missed }) => missed);
+            const results = result.map(({ result }) => result);
             return {
-                result: intersectAsyncIterable([...simpleIterable, ...subIterables.map(it => it())]),
-                greed,
-                missed: !indices.size
+                result: intersectAsyncIterable([...simpleIterable, ...results]),
+                greed: greed && subGreed,
+                missed: !indices.size && missed
             };
         }
     }
     async find(criteria: RawObject, sort?: { [k: string]: 1 | -1 }, skip: number = 0, limit?: number) {
         const primaryIndice = this.schema.primaryIndice;
-        let searchIds: () => AsyncIterable<any> = this.buildIndexSearch(criteria, sort);
-        let ids: AsyncIterable<any>;
-        if (searchIds) {
-            ids = await searchIds()
-        }
-        let cursor = primaryIndice.cursor(ids);
+        let search: ResultIndiceSearch = this.buildIndexSearch(criteria, sort)();
         let result: any[] = [];
         const query = new mingo.Query(criteria);
         let i = 0;
-        for await (let value of cursor) {
-            console.log(value);
-            if (query.test(value) && i >= skip) {
-                i++;
-                result.push(value)
-                if (limit && i === limit) {
-                    break;
+        if (search.missed) {
+            for await (let value of primaryIndice.cursor()) {
+                if (query.test(value) && i >= skip) {
+                    i++;
+                    result.push(value)
+                    if (limit && i === limit && !search.greed) {
+                        break;
+                    }
+                }
+            }
+        } else {
+            for await (let id of search.result) {
+                const [value] = await primaryIndice.find(id)
+                if (query.test(value) && i >= skip) {
+                    i++;
+                    result.push(value)
+                    if (limit && i === limit && !search.greed) {
+                        break;
+                    }
                 }
             }
         }
-        if (sort) {
-            result = new mingo.Query({})
-                .find(result)
-                .sort(sort)
-                .all();
+        let res = new mingo.Query({})
+            .find(result);
+        if (sort && search.greed) {
+            res = res.sort(sort);
         }
-        return result;
+        if (limit && search.greed) {
+            res = res.limit(limit);
+        }
+        if (skip && search.greed) {
+            res = res.skip(skip);
+        }
+        return res.all();
     }
 
 }

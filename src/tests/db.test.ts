@@ -14,9 +14,9 @@ const primaryIndices = new SimpleIndice<object, number>({ isLoaded: false });
 countries.forEach((country, key) => primaryIndices.add(country, key));
 const primaryRange = new RangeLinearIndice<object, number>({ indice: primaryIndices, id: 'primary' });
 
-const simplaeIndices = new SimpleIndice<number, string>({ isLoaded: false });
-countries.forEach((country, key) => simplaeIndices.add(key, country.continent));
-const simpleRange = new RangeLinearIndice<number, string>({ indice: simplaeIndices, id: 'simple' });
+const simpleIndices = new SimpleIndice<number, string>({ isLoaded: false });
+countries.forEach((country, key) => simpleIndices.add(key, country.continent));
+const simpleRange = new RangeLinearIndice<number, string>({ indice: simpleIndices, id: 'simple' });
 
 
 Promise.all([
@@ -56,6 +56,7 @@ Promise.all([
         console.log('$text', await contries.find({ '$text': "Ang", 'continent': 'Africa' }, undefined, 0, 20))
         console.log('$eq simple', await contries.find({ 'continent': 'Africa' }, undefined, 0, 20))
         console.log('missed index', await contries.find({ 'not': 'Africa' }, undefined, 0, 20))
+        console.log('$lte sort', await contries.find({ 'continent': { '$lte': "Oceania" } }, {'continent': 1}, 0, 20))
         // console.log(await text.find("Аргенnина"));
     });
 

@@ -9,6 +9,7 @@ export interface IIndiceOption {
     path?: string;
     type: IndiceType;
     value?: any;
+    order?: -1 | 1;
     op?: any;
 }
 export class Schema {

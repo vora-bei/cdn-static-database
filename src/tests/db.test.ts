@@ -57,7 +57,8 @@ Promise.all([
         console.log('$eq simple', await contries.find({ 'continent': 'Africa' }, undefined, 0, 20))
         console.log('missed index', await contries.find({ 'not': 'Africa' }, undefined, 0, 20))
         console.log('$lte sort', await contries.find({ 'continent': { '$gte': "Oceania" } }, {'continent': 1}, 0, 30))
-        console.log('sort', await contries.find({ }, {'continent': -1}, 0, 100))
+        console.log('sort grid', await contries.find({ }, {'country': -1 }, 0, 100))
+        console.log('sort', await contries.find({ }, {'continent': -1 }, 0, 100))
 
         // console.log(await text.find("Аргенnина"));
     });

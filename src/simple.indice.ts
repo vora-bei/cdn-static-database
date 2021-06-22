@@ -68,14 +68,17 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
             throw (Error("option load doesn't implemented"))
         }
     }
-    public getIndices(token: P, operator: string) {
+    private getIndices(token: P, operator: string, sort: 1 | -1 = 1) {
         switch (operator) {
             case '$eq':
                 return this.indices.get(token);
-            case '$lte':
-            case '$lt': {
+            case '$lte': {
                 const result: T[] = [];
-                this.keys.forEach(k => {
+                const keys = this.keys;
+                if (sort === -1) {
+                    keys.reverse();
+                }
+                keys.forEach(k => {
                     if (k <= token) {
                         const ids = this.indices.get(k)!;
                         result.push(...ids)
@@ -83,11 +86,42 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
                 });
                 return result;
             }
-            case '$gte':
+            case '$lt': {
+                const result: T[] = [];
+                const keys = this.keys;
+                if (sort === -1) {
+                    keys.reverse();
+                }
+                keys.forEach(k => {
+                    if (k < token) {
+                        const ids = this.indices.get(k)!;
+                        result.push(...ids)
+                    }
+                });
+                return result;
+            }
+            case '$gte': {
+                const result: T[] = [];
+                const keys = this.keys;
+                if (sort === -1) {
+                    keys.reverse();
+                }
+                keys.forEach(k => {
+                    if (k >= token) {
+                        const ids = this.indices.get(k)!;
+                        result.push(...ids)
+                    }
+                });
+                return result;
+            }
             case '$gt': {
                 const result: T[] = [];
-                this.keys.forEach(k => {
-                    if (k >= token) {
+                const keys = this.keys;
+                if (sort === -1) {
+                    keys.reverse();
+                }
+                keys.forEach(k => {
+                    if (k > token) {
                         const ids = this.indices.get(k)!;
                         result.push(...ids)
                     }
@@ -98,11 +132,18 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
                 return this.indices.get(token);
         }
     }
-    public async preFilter(tokens: P[], operator: string): Promise<Map<T, number>> {
+    public async preFilter(tokens: P[], operator: string, sort: -1 | 1 = 1): Promise<Map<T, number>> {
         const countResults: Map<T, number> = new Map();
         await this.load();
-        tokens.forEach((token) => {
-            const indices = this.getIndices(token, operator);
+        let t = [...tokens];
+        t.sort((a, b) => {
+            if (a === b) {
+                return 0;
+            }
+            return (a < b ? 1 : -1) * sort
+        })
+        t.forEach((token) => {
+            const indices = this.getIndices(token, operator, sort);
             if (indices) {
                 indices.forEach((id) => {
                     let count = countResults.get(id) || 0;
@@ -111,25 +152,28 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
             }
         });
         if (!tokens.length) {
+            const v = [...this.indices.values()]
+            if (sort === -1) {
+                v.reverse();
+            }
             return new Map(
-                [...this.indices.values()]
-                    .flatMap((indice) => indice)
+                v.flatMap((indice) => indice)
                     .map(indice => [indice, 1])
             )
         }
         return countResults;
     }
-    async find(value?: P | P[], operator: string = "$eq") {
+    async find(value?: P | P[], operator: string = "$eq", sort: -1 | 1 = 1) {
         let tokens: P[] = []
         if (value !== undefined) {
             tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
         }
-        const preResult = await this.preFilter(tokens, operator);
+        const preResult = await this.preFilter(tokens, operator, sort);
         return this.postFilter(preResult, tokens);
     }
-    cursor(value?: P | P[], operator?: string): AsyncIterable<T> {
+    cursor(value?: P | P[], operator?: string, sort: -1 | 1 = 1): AsyncIterable<T> {
         const load$ = this.load();
-        const result$ = this.find(value, operator);
+        const result$ = this.find(value, operator, sort);
         let index = 0;
         return {
             [Symbol.asyncIterator]() {
@@ -184,8 +228,8 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
                     map,
                     options
                 ))
-                size = 0;
-                map = new Map();
+                size = 1;
+                map = new Map([[key, value]]);
             } else {
                 size = size + 1;
                 map.set(key, value);
@@ -199,12 +243,12 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
         }
         return result;
     }
-    public async findAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator = '$eq'): Promise<T[]> {
+    public async findAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator = '$eq', sort: -1 | 1 = 1): Promise<T[]> {
         let tokens: P[] = []
         if (value !== undefined) {
             tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
         }
-        const list = await Promise.all(indices.map((indice) => indice.preFilter(tokens, operator)));
+        const list = await Promise.all(indices.map((indice) => indice.preFilter(tokens, operator, sort)));
         const combineWeights = list.reduce((sum, weights) => {
             weights.forEach((value, key) => {
                 const count = sum.get(key) || 0
@@ -214,7 +258,7 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
         }, new Map())
         return this.postFilter(combineWeights, tokens);
     }
-    public cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator: string = '$eq'): AsyncIterable<T> {
+    public cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator: string = '$eq', sort: -1 | 1 = 1): AsyncIterable<T> {
         let tokens: P[] = []
         if (value !== undefined) {
             tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
@@ -228,13 +272,13 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
                 return {
                     async next() {
                         if (result === null) {
-                            data = await indices[indiceIndex].preFilter(tokens, operator);
+                            data = await indices[indiceIndex].preFilter(tokens, operator, sort);
                             result = data.keys();
                         }
                         let item = result!.next();
                         if (item.done && indiceIndex < indices.length - 1) {
                             indiceIndex++;
-                            data = await indices[indiceIndex].preFilter(tokens, operator);
+                            data = await indices[indiceIndex].preFilter(tokens, operator, sort);
                             result = data.keys();
                             item = result!.next();
                         }

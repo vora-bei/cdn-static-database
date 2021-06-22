@@ -18,7 +18,7 @@ export interface IIndice<T, P> extends ISerializeIndex, IBaseIndice<T, P> {
 export interface ISpreadIndice<T, P> extends IIndice<T, P> {
     spread(chunkSize: number): ISpreadIndice<T, P>[];
     postFilter(countResults: Map<T, number>, tokens: P[]): T[];
-    preFilter(tokens: P[], operator?: string): Promise<Map<T, number>>;
+    preFilter(tokens: P[], operator?: string, sort?: 1|-1): Promise<Map<T, number>>;
     findAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator?: string): Promise<T[]>;
     cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator?: string, sort?: 1|-1): AsyncIterable<T>;
 }

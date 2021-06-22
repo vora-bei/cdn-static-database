@@ -184,7 +184,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         }, new Map())
         return this.postFilter(combineWeights, tokens);
     }
-    public cursorAll<AI extends AsyncIterable<T>>(indices: ISpreadIndice<T, string>[], value: string | string[], operator: string = '$eq'): AsyncIterable<T> {
+    public cursorAll(indices: ISpreadIndice<T, string>[], value: string | string[], operator: string = '$eq'): AsyncIterable<T> {
         const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
         const list$ =  Promise.all(indices.map((indice) => indice.preFilter(tokens, operator)));
         let isLoad = false;

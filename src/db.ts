@@ -1,7 +1,6 @@
 import { ISharedIndice } from "interfaces";
 import mingo from "mingo";
-import { addOperators, OperatorType } from "mingo/core";
-import { intersection, RawObject, isOperator, isArray, isObject } from "mingo/util";
+import {  RawObject, isOperator, isArray, isObject } from "mingo/util";
 import { IIndiceOption, IndiceType, Schema } from "./schema";
 
 const comparableOperators = new Set([
@@ -116,7 +115,6 @@ export class Db {
         }
 
         for (const [key, value] of Object.entries(criteria)) {
-            let path = context?.path || undefined;
             if (logicalOperators.has(key) && isArray(value)) {
                 const subIt = (value as any[])
                     .map(subCriteria => this.buildIndexSearch(subCriteria, sort, { indices }));
@@ -192,6 +190,7 @@ export class Db {
         } else {
             for await (let id of search.result) {
                 const [value] = await primaryIndice.find(id)
+                console.debug(value, id)
                 if (query.test(value) && i >= skip) {
                     i++;
                     result.push(value)

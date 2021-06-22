@@ -8,15 +8,15 @@ import { Schema, IndiceType } from "../schema";
 
 const indices = new NgramIndice<number>({ gramLen: 3, actuationLimit: 2, toLowcase: true, actuationLimitAuto: true, isLoaded: false });
 countries.forEach((country, key) => indices.add(key, [country.country, country.continent]));
-const range = new RangeLinearIndice<number, string>({ indice: indices, id: 'text' });
+const range = new RangeLinearIndice<number, string>({ indice: indices, id: 'text', chunkSize: 30 });
 
 const primaryIndices = new SimpleIndice<object, number>({ isLoaded: false });
 countries.forEach((country, key) => primaryIndices.add(country, key));
-const primaryRange = new RangeLinearIndice<object, number>({ indice: primaryIndices, id: 'primary' });
+const primaryRange = new RangeLinearIndice<object, number>({ indice: primaryIndices, id: 'primary', chunkSize: 30 });
 
 const simpleIndices = new SimpleIndice<number, string>({ isLoaded: false });
 countries.forEach((country, key) => simpleIndices.add(key, country.continent));
-const simpleRange = new RangeLinearIndice<number, string>({ indice: simpleIndices, id: 'simple' });
+const simpleRange = new RangeLinearIndice<number, string>({ indice: simpleIndices, id: 'simple', chunkSize: 30 });
 
 
 Promise.all([
@@ -56,7 +56,9 @@ Promise.all([
         console.log('$text', await contries.find({ '$text': "Angola", 'continent': 'Africa' }, undefined, 0, 20))
         console.log('$eq simple', await contries.find({ 'continent': 'Africa' }, undefined, 0, 20))
         console.log('missed index', await contries.find({ 'not': 'Africa' }, undefined, 0, 20))
-        console.log('$lte sort', await contries.find({ 'continent': { '$lte': "Oceania" } }, {'continent': 1}, 0, 20))
+        console.log('$lte sort', await contries.find({ 'continent': { '$gte': "Oceania" } }, {'continent': 1}, 0, 30))
+        console.log('sort', await contries.find({ }, {'continent': -1}, 0, 100))
+
         // console.log(await text.find("Аргенnина"));
     });
 

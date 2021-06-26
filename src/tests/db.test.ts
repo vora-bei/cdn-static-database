@@ -4,7 +4,7 @@ import countries from "./country-by-continent.json";
 import { saveSharedIndices, restoreSharedIndices } from "../utils";
 import { SimpleIndice } from "../simple.indice";
 import { Db } from "../db";
-import { Schema, IndiceType } from "../schema";
+import { Schema } from "../schema";
 
 const indices = new NgramIndice<number>({ gramLen: 3, actuationLimit: 2, toLowcase: true, actuationLimitAuto: true, isLoaded: false });
 countries.forEach((country, key) => indices.add(key, [country.country, country.continent]));
@@ -46,8 +46,8 @@ Promise.all([
 
         const contries = new Db(new Schema(primary,
             [
-                { indice: text, type: IndiceType.GLOBAL },
-                { indice: simple, path: 'continent', type: IndiceType.LOCAL }
+                { indice: text, path: "$text" },
+                { indice: simple, path: 'continent' }
             ]
         ));
         console.log('$eq', await contries.find({ 'continent': { '$eq': "Oceania" } }, undefined, 0, 20))

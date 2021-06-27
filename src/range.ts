@@ -25,7 +25,11 @@ export class Range<T> {
     test(token: T, operator: string) {
         switch (operator) {
             case '$eq':
+            case '$in':
                 return this.has(token);
+            case '$nin':
+            case '$ne':
+                return !this.has(token);
             case '$lt':
             case '$lte':
                 return this.lt(token);

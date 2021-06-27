@@ -68,69 +68,61 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
             throw (Error("option load doesn't implemented"))
         }
     }
-    private getIndices(token: P, operator: string, sort: 1 | -1 = 1) {
+    private getIndices(tokens: P[], operator: string, sort: 1 | -1 = 1) {
         switch (operator) {
-            case '$eq':
-                return this.indices.get(token);
             case '$lte': {
-                const result: T[] = [];
-                const keys = this.keys;
-                if (sort === -1) {
-                    keys.reverse();
-                }
-                keys.forEach(k => {
-                    if (k <= token) {
-                        const ids = this.indices.get(k)!;
-                        result.push(...ids)
-                    }
-                });
-                return result;
+                return this.getIndicesFullScanOr(tokens, (a, b) => a <= b, sort);
             }
             case '$lt': {
-                const result: T[] = [];
-                const keys = this.keys;
-                if (sort === -1) {
-                    keys.reverse();
-                }
-                keys.forEach(k => {
-                    if (k < token) {
-                        const ids = this.indices.get(k)!;
-                        result.push(...ids)
-                    }
-                });
-                return result;
+                return this.getIndicesFullScanOr(tokens, (a, b) => a < b, sort);
             }
             case '$gte': {
-                const result: T[] = [];
-                const keys = this.keys;
-                if (sort === -1) {
-                    keys.reverse();
-                }
-                keys.forEach(k => {
-                    if (k >= token) {
-                        const ids = this.indices.get(k)!;
-                        result.push(...ids)
-                    }
-                });
-                return result;
+                return this.getIndicesFullScanOr(tokens, (a, b) => a >= b, sort);
             }
             case '$gt': {
-                const result: T[] = [];
-                const keys = this.keys;
-                if (sort === -1) {
-                    keys.reverse();
-                }
-                keys.forEach(k => {
-                    if (k > token) {
-                        const ids = this.indices.get(k)!;
-                        result.push(...ids)
-                    }
-                });
-                return result;
+                return this.getIndicesFullScanOr(tokens, (a, b) => a > b, sort);
             }
+            case '$nin':
+            case '$ne': {
+                return this.getIndicesFullScanAnd(tokens, (a, b) => a != b, sort);
+            }
+            case '$eq':
+            case '$in':
             default:
-                return this.indices.get(token);
+                return tokens.reduce((sum, token) => {
+                    const r = this.indices.get(token);
+                    if (r) {
+                        sum.push(...r);
+                    }
+                    return sum;
+                }, [] as T[]);
         }
+    }
+    public getIndicesFullScanOr(tokens: P[], cond: (a: P, b: P) => boolean, sort: 1 | -1 = 1) {
+        const keys = this.keys;
+        if (sort === -1) {
+            keys.reverse();
+        }
+        return keys.reduce((sum, k) => {
+            if (tokens.some(token => cond(k, token))) {
+                const ids = this.indices.get(k)!;
+                sum.push(...ids)
+            };
+            return sum;
+        }, [] as T[]);
+    }
+    public getIndicesFullScanAnd(tokens: P[], cond: (a: P, b: P) => boolean, sort: 1 | -1 = 1) {
+        const keys = this.keys;
+        if (sort === -1) {
+            keys.reverse();
+        }
+        return keys.reduce((sum, k) => {
+            if (tokens.every(token => cond(k, token))) {
+                const ids = this.indices.get(k)!;
+                sum.push(...ids)
+            };
+            return sum;
+        }, [] as T[]);
     }
     public async preFilter(tokens: P[], operator: string, sort: -1 | 1 = 1): Promise<Map<T, number>> {
         const countResults: Map<T, number> = new Map();
@@ -141,16 +133,14 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
                 return 0;
             }
             return (a < b ? 1 : -1) * sort
-        })
-        t.forEach((token) => {
-            const indices = this.getIndices(token, operator, sort);
-            if (indices) {
-                indices.forEach((id) => {
-                    let count = countResults.get(id) || 0;
-                    countResults.set(id, count + 1);
-                });
-            }
         });
+        const indices = this.getIndices(t, operator, sort);
+        if (indices) {
+            indices.forEach((id) => {
+                let count = countResults.get(id) || 0;
+                countResults.set(id, count + 1);
+            });
+        }
         if (!tokens.length) {
             const v = [...this.indices.values()]
             if (sort === -1) {
@@ -228,10 +218,10 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
                     map,
                     options
                 ))
-                size = 1;
+                size = value.length;
                 map = new Map([[key, value]]);
             } else {
-                size = size + 1;
+                size = size + value.length;
                 map.set(key, value);
             }
         })
@@ -276,7 +266,7 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
                             result = data.keys();
                         }
                         let item = result!.next();
-                        if (item.done && indiceIndex < indices.length - 1) {
+                        while (item.done && indiceIndex < indices.length - 1) {
                             indiceIndex++;
                             data = await indices[indiceIndex].preFilter(tokens, operator, sort);
                             result = data.keys();

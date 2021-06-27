@@ -14,6 +14,7 @@ interface ResultIndiceSearch {
     result: AsyncIterable<any>;
     missed: boolean;
     greed: boolean;
+    paths: Set<string>
 }
 export class Db {
     private schema: Schema;
@@ -34,9 +35,11 @@ export class Db {
     buildIndexSearch(
         criteria: RawObject,
         sort?: { [k: string]: 1 | -1 },
-        context?: { path?: string, indices: Map<ISharedIndice<any, any>, IIndiceOption> }
+        context?: { path?: string, isRoot: boolean, indices: Map<ISharedIndice<any, any>, IIndiceOption> }
     ): () => ResultIndiceSearch {
+        const { isRoot = true, } = context || {}
         const indices: Map<ISharedIndice<any, any>, IIndiceOption> = new Map();
+        const sortIndices: Map<ISharedIndice<any, any>, IIndiceOption> = new Map();
         const subIterables: (() => ResultIndiceSearch)[] = [];
         let greed = false;
         if (sort) {
@@ -44,7 +47,7 @@ export class Db {
             for (const [key, order] of Object.entries(sort)) {
                 const indice = this.schema.indices.find(o => o.path === key);
                 if (indice) {
-                    indices.set(indice.indice, { ...indice, order });
+                    sortIndices.set(indice.indice, { ...indice, order });
                     greed = false;
                 }
             }
@@ -53,18 +56,30 @@ export class Db {
         for (const [key, value] of Object.entries(criteria)) {
             if (logicalOperators.has(key) && isArray(value)) {
                 const subIt = (value as any[])
-                    .map(subCriteria => this.buildIndexSearch(subCriteria, sort, { indices }));
+                    .map(subCriteria => this.buildIndexSearch(subCriteria, sort, { indices, isRoot: false }));
 
                 () => {
+                    const isAnd = key === '$and';
                     const result: ResultIndiceSearch[] = subIt.map(it => it());
-                    const greed = key === '$and' ? result.every(({ greed }) => greed) : result.some(({ greed }) => greed);
-                    const missed = key === '$and' ? result.every(({ missed }) => missed) : result.some(({ missed }) => missed);
+                    const greed = isAnd ? result.every(({ greed }) => greed) : result.some(({ greed }) => greed);
+                    const missed = isAnd ? result.every(({ missed }) => missed) : result.some(({ missed }) => missed);
                     const results = result.map(({ result }) => result);
+                    const paths = new Set([
+                        ...result.reduce((sum, { paths }) => {
+                            paths.forEach((path) => {
+                                sum.set(path, (sum.get(path) || 0) + 1)
+                            })
+                            return sum;
+                        }, new Map<string, number>()).entries()
+                    ].filter(([, count]) => isAnd || count === result.length)
+                        .map(([path]) => path)
+                    );
                     const sIs = key === '$and' ? intersectAsyncIterable(results) : combineAsyncIterable(results);
                     subIterables.push(() => ({
                         result: sIs,
                         greed,
-                        missed
+                        missed,
+                        paths,
                     }));
                 }
             } else if (this.customOperators.has(key)) {
@@ -78,32 +93,52 @@ export class Db {
                 }
                 delete criteria[key]
             } else if (isOperator(key)) {
-                const indiceOptions = this.schema.indices.find(o => o.path === key);
+                const indiceOptions = this.schema.indices.find(o => o.path === context?.path);
                 if (indiceOptions) {
-                    const exists = indices.get(indiceOptions.indice) || {};
-                    indices.set(indiceOptions.indice, { ...exists, ...indiceOptions, value: value as any, op: '$eq' })
+                    const exists = sortIndices.get(indiceOptions.indice) || {};
+                    indices.set(indiceOptions.indice, { ...exists, ...indiceOptions, value: value as any, op: key })
                 }
             } else if (isObject(value)) {
-                subIterables.push(this.buildIndexSearch(value as RawObject, sort, { path: key, indices }))
+                subIterables.push(this.buildIndexSearch(value as RawObject, sort, { path: key, indices, isRoot: false }))
             } else {
                 const indiceOptions = this.schema.indices.find(o => o.path === key);
                 if (indiceOptions) {
-                    const exists = indices.get(indiceOptions.indice) || {};
+                    const exists = sortIndices.get(indiceOptions.indice) || {};
                     indices.set(indiceOptions.indice, { ...exists, ...indiceOptions, value: value as any, op: '$eq' })
                 }
             }
         }
         return () => {
-            const simpleIterable = [...indices.values()]
+            const values = [...indices.values()];
+            const simpleIterable = values
                 .map(({ indice, value, order, op }) => indice.cursor(value, op, order));
-            const result: ResultIndiceSearch[] = subIterables.map(it => it());
-            const subGreed = result.every(({ greed }) => greed);
-            const missed = result.every(({ missed }) => missed);
-            const results = result.map(({ result }) => result);
+            const subResult: ResultIndiceSearch[] = subIterables.map(it => it());
+            const subGreed = subResult.every(({ greed }) => greed);
+            const missed = subResult.every(({ missed }) => missed);
+            const subIterable = subResult.map(({ result }) => result);
+            const subPaths = subResult.reduce((sum, { paths }) => {
+                paths.forEach(path => sum.add(path));
+                return sum;
+            }, new Set<string>());
+            const paths = new Set([...values.map(({ path }) => path!), ...subPaths]);
+            const sortedIterable = [...sortIndices.values()].filter(({ path }) => !paths.has(path!) && isRoot)
+                .map(({ indice, value, order, op }) => indice.cursor(value, op, order));
+            const missedAll = !sortedIterable.length && !indices.size && missed;
+            const greedAll = greed && subGreed;
+            if (isRoot) {
+                console.debug(
+                    `simple ${simpleIterable.length},`,
+                    `sorted ${sortedIterable.length},`,
+                    `sub ${subIterable.length},`,
+                    `greed ${greedAll},`,
+                    `missed ${missedAll},`
+                );
+            }
             return {
-                result: intersectAsyncIterable([...simpleIterable, ...results]),
-                greed: greed && subGreed,
-                missed: !indices.size && missed
+                result: intersectAsyncIterable([...simpleIterable, ...sortedIterable, ...subIterable]),
+                greed: greedAll,
+                missed: missedAll,
+                paths,
             };
         }
     }
@@ -126,7 +161,6 @@ export class Db {
         } else {
             for await (let id of search.result) {
                 const [value] = await primaryIndice.find(id)
-                console.debug(value, id)
                 if (query.test(value) && i >= skip) {
                     i++;
                     result.push(value)

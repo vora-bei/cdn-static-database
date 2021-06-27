@@ -62,6 +62,9 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         indice.indiceDeserialize = deserialize;
         return indice;
     }
+    private filterIndicesByWeight(weight: number, tokens: P[], operator: string) {
+        return !!weight || !tokens.length
+    }
     private async load() {
         if (this.options.isLoaded) {
             return;
@@ -93,12 +96,15 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         if (value !== undefined) {
             tokens = Array.isArray(value) ? value.flatMap(v => indice.tokenizr(v)) : indice.tokenizr(value);
         }
-        const weights = [...this.indices].map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
+        const indices = [...this.indices].map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
             const weight = tokens.reduce((w, token) => filter.test(token, operator) ? 1 + w : w, 0);
             return [weight, indice];
-        }).filter(([weight]) => !!weight)
+        }).filter(([weight]) => this.filterIndicesByWeight(weight, tokens, operator))
             .map(([_, indice]) => indice);
-        return indice.findAll(weights, value, operator);
+        if (sort === -1) {
+            indices.reverse();
+        }
+        return indice.findAll(indices, value, operator);
     }
     cursor(value?: P | P[], operator: string = '$eq', sort: 1 | -1 = 1): AsyncIterable<T> {
         const load$ = this.load();
@@ -106,6 +112,7 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         let cursor;
         let iterator;
         let isFound = false;
+        console.log('range cursor')
         let find = async () => {
             if (isFound) {
                 return;
@@ -121,7 +128,7 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
             let indices = [...self.indices].map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
                 const weight = tokens.reduce((w, token) => filter.test(token, operator) ? 1 + w : w, 0);
                 return [weight, indice];
-            }).filter(([weight]) => !!weight || !tokens.length)
+            }).filter(([weight]) => this.filterIndicesByWeight(weight, tokens, operator))
                 .map(([_, indice]) => indice);
             if (sort === -1) {
                 indices.reverse();

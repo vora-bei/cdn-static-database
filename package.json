@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --coverage",
     "start": "ts-node src/tests/db.test.ts",
     "build": "tsc"
   },
@@ -20,6 +20,9 @@
   },
   "homepage": "https://gitlab.com/vora-bei/gatsby-full-text-search-server-static-index-plugin#readme",
   "devDependencies": {
+    "@types/jest": "^26.0.23",
+    "jest": "^27.0.5",
+    "ts-jest": "^27.0.3",
     "typescript": "^4.3.2"
   },
   "dependencies": {

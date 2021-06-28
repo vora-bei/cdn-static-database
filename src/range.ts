@@ -29,7 +29,7 @@ export class Range<T> {
                 return this.has(token);
             case '$nin':
             case '$ne':
-                return !this.has(token);
+                return true;
             case '$lt':
             case '$lte':
                 return this.lt(token);

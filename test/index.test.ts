@@ -1,7 +1,7 @@
-import { RangeLinearIndice } from "../range.linear.indice";
-import { NgramIndice } from "../ngram.indice";
-import movies from "./movies";
-import { saveSharedIndices, restoreSharedIndices } from "../utils";
+import { RangeLinearIndice } from "../src/range.linear.indice";
+import { NgramIndice } from "../src/ngram.indice";
+import movies from "./__seed__/movies";
+import { saveSharedIndices, restoreSharedIndices } from "../src/utils";
 
 
 

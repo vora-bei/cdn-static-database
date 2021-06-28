@@ -143,7 +143,7 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
                 return {
                     async next() {
                         await load$;
-                        await find()
+                        await find();
                         return await iterator.next();
                     }
                 }

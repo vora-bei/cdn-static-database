@@ -2,3 +2,5 @@ node_modules
 primary
 simple
 text
+default_linear
+coverage

@@ -142,7 +142,7 @@ export class Db {
             };
         }
     }
-    async find(criteria: RawObject, sort?: { [k: string]: 1 | -1 }, skip: number = 0, limit?: number) {
+    async find<T extends any>(criteria: RawObject, sort?: { [k: string]: 1 | -1 }, skip: number = 0, limit?: number) {
         const primaryIndice = this.schema.primaryIndice;
         let search: ResultIndiceSearch = this.buildIndexSearch(criteria, sort)();
         let result: any[] = [];
@@ -181,7 +181,7 @@ export class Db {
         if (skip && search.greed) {
             res = res.skip(skip);
         }
-        return res.all();
+        return res.all() as T[];
     }
 
 }

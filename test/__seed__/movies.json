@@ -1,4 +1,4 @@
-export default [
+[
   "$ aka Dollars",
   "$1,000 a Touchdown",
   "$10 Raise",
@@ -26769,4 +26769,4 @@ export default [
   "Zorro's Fighting Legion",
   "Zotz!",
   "Zyzzyx Road"
-];
+]

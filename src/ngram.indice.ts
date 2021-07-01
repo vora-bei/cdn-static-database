@@ -106,8 +106,6 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
                 });
             }
         });
-        const { actuationLimitAuto, actuationLimit } = this.options;
-        const l = this.getLimit(actuationLimitAuto, tokens.length, actuationLimit);
         return countResults;
     }
     async find(value?: string | string[], operator: string = "$eq") {

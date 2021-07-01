@@ -68,6 +68,34 @@ const expectNinMingo = async (query: any, sort: any, skip: number, count: number
     expect(actual.every((res) => !not.has(res.continent as string))).toBeTruthy()
     expect(actual).toHaveLength(51);
 }
+const expectLtMingo = async (query: any, sort: any, skip: number, count: number) => {
+    const actual = await contriesDb.find<{ continent: string }>(query, sort,
+        skip,
+        count
+    );
+    expect(actual.every((res) => res.continent as string < "Oceania")).toBeTruthy()
+    expect(actual).toHaveLength(20);
+}
+const expectEqMingo = async (query: any, sort: any, skip: number, count: number) => {
+    const actual = await contriesDb.find<{ continent: string }>(query, sort,
+        skip,
+        count
+    );
+    expect(actual.every((res) => res.continent === "Oceania")).toBeTruthy()
+    expect(actual).toHaveLength(20);
+}
+const expectTextMingo = async (query: any, sort: any, skip: number, count: number) => {
+    const actual = await contriesDb.find<{ continent: string, country: string }>(query, sort,
+        skip,
+        count
+    );
+    expect(actual.every((res) => res.continent as string === "Africa")).toBeTruthy()
+    expect(actual.every((res) => ['ang', 'Ang', 'ngo', 'gol', 'ola']
+        .reduce((s, v) => res.country.includes(v) ? s + 1 : s, 0) > 2
+    )
+    ).toBeTruthy()
+    expect(actual).toHaveLength(1);
+}
 
 test('{ continent: { $nin: ["Oceania", "Asia", "Europe", "Antarctica", "Africa"] } }', async () => {
     await expectNinMingo(
@@ -80,21 +108,21 @@ test('{ continent: { $nin: ["Oceania", "Asia", "Europe", "Antarctica", "Africa"]
     );
 });
 test('{ continent: { $eq: "Oceania" } }', async () => {
-    await expectEqualMingo(
+    await expectEqMingo(
         { 'continent': { '$eq': "Oceania" } },
         undefined,
         0,
         20
     );
 });
-// test('{ continent: { $lt: "Oceania" } }', async () => {
-//     await expectEqualMingo(
-//         { continent: { $lt: "Oceania" } },
-//         undefined,
-//         0,
-//         20
-//     );
-// });
+test('{ continent: { $lt: "Oceania" } }', async () => {
+    await expectLtMingo(
+        { continent: { $lt: "Oceania" } },
+        undefined,
+        0,
+        20
+    );
+});
 test('{ continent: { $gt: "Oceania" } }', async () => {
     await expectEqualMingo(
         { continent: { $gt: "Oceania" } },
@@ -103,14 +131,14 @@ test('{ continent: { $gt: "Oceania" } }', async () => {
         20
     );
 });
-// test('{ $text: "Angola", continent: "Africa" }', async () => {
-//     await expectEqualMingo(
-//         { $text: "Angola", continent: "Africa" },
-//         undefined,
-//         0,
-//         20
-//     );
-// });
+test('{ $text: "Angola", continent: "Africa" }', async () => {
+    await expectTextMingo(
+        { $text: "Angoli", continent: {$in: ["Africa"]} },
+        undefined,
+        0,
+        20
+    );
+});
 test('{ continent: "Africa" }', async () => {
     await expectEqualMingo(
         { continent: "Africa" },

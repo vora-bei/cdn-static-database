@@ -7,7 +7,7 @@ import { ISharedIndice } from "../src/interfaces";
 
 let indiceRestored: ISharedIndice<number, string>;
 beforeAll(async () => {
-    const indice = new NgramIndice<number>({ actuationLimitAuto: true, isLoaded: false });
+    const indice = new NgramIndice<number>({ actuationLimit: 4, isLoaded: false });
     movies.forEach((val, key) => indice.add(key, val));
     const linear = new RangeLinearIndice<number, string>({ indice, id: 'default_linear' });
     await saveSharedIndices(linear);
@@ -23,9 +23,9 @@ test('search indices' , async () => {
     const results = await indiceRestored.find("Conquest of Paradise")
     const resMovies =results.map(i=>movies[i]); 
     expect(resMovies.some(text=> text.includes("Paradise"))).toBeTruthy();
-    expect(resMovies.some(text=> text.includes("Parade"))).toBeTruthy();
+    expect(resMovies.some(text=> text.includes("Parad"))).toBeTruthy();
     expect(resMovies.some(text=> text.includes("Conquest"))).toBeTruthy();
-    expect(results).toHaveLength(66)
+    expect(results).toHaveLength(70)
 });
 
 

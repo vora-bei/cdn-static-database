@@ -8,7 +8,7 @@ const readFile = util.promisify(fs.readFile);
 const mkdir = util.promisify(fs.mkdir);
 const exists = util.promisify(fs.exists);
 
-export const saveSharedIndices = async <T, P>(indice: ISharedIndice<T, P>, publicPath: string= '.') => {
+export const saveSharedIndices = async <T, P>(indice: ISharedIndice<T, P>, publicPath: string = '.') => {
     const dir = join(publicPath, indice.id);
     const existDir = await exists(dir);
     if (!existDir) {
@@ -85,8 +85,12 @@ export async function* intersectAsyncIterable(iterable: AsyncIterable<any>[]) {
     const asyncIterators = Array.from(iterable, o => o[Symbol.asyncIterator]());
     const results: any[] = [];
 
-    const combineResults: Map<number, Set<any>> = new Map();
     let count = asyncIterators.length;
+    const combineResults: Map<number, Set<any>> = new Map(
+        new Array(count)
+            .fill(undefined)
+            .map((_, i) => ([i, new Set()]))
+    );
     const never = new Promise(() => { });
     function getNext(asyncIterator, index) {
         return asyncIterator.next().then(result => ({

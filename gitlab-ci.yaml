@@ -8,5 +8,9 @@ test-unit:
     - npm run test
     - npm run build
   artifacts:
-    reports:
-      cobertura: coverage/cobertura-coverage.xml
+    when: always
+    paths:
+      # save both cypress artifacts and coverage results
+      - coverage
+      - dist
+    expire_in: 10 days

@@ -2,12 +2,14 @@ image: node
 
 stages:
   - build
-build:
+test-unit:
   stage: build
   script: 
     - npm ci --also=dev 
     - npm run test
     - npm run build
   artifacts:
-    reports:
-      cobertura: coverage/cobertura-coverage.xml
+    when: always
+    paths:
+      - coverage
+    expire_in: 30 days

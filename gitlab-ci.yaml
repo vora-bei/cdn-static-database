@@ -3,12 +3,9 @@ image: node
 stages:
   - install
   - test-unit
-install:
-  stage: install
-  script: npm ci --also=dev
 test-unit:
   stage: test-unit
-  script: npm run test
+  script: npm ci --also=dev && npm run test
   artifacts:
     when: always
     paths:

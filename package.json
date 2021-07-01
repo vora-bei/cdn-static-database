@@ -4,7 +4,7 @@
   "description": "",
   "main": "dist/index.js",
   "scripts": {
-    "test": "npx jest --coverage",
+    "test": "npm jest --coverage",
     "start": "ts-node src/tests/db.test.ts",
     "build": "tsc"
   },

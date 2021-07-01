@@ -1,8 +1,11 @@
 image: node
 
 stages:
+  - install
   - test-unit
-
+install:
+  stage: install
+  script: npm ci
 test-unit:
   stage: test-unit
   script: npm run test

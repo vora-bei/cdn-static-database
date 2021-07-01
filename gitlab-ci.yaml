@@ -5,7 +5,7 @@ stages:
   - test-unit
 install:
   stage: install
-  script: npm ci
+  script: npm ci --also=dev
 test-unit:
   stage: test-unit
   script: npm run test

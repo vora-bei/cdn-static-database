@@ -13,3 +13,5 @@ test-unit:
     paths:
       - coverage
     expire_in: 30 days
+    reports:
+      cobertura: coverage/cobertura-coverage.xml

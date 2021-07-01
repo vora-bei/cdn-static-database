@@ -7,6 +7,13 @@ test-unit:
     - npm ci --also=dev 
     - npm run test
     - npm run build
+  coverage: /All files[^|]*\|[^|]*\s+([\d\.]+)/
   artifacts:
+    when: always
+    paths:
+      # save both cypress artifacts and coverage results
+      - coverage
+      - dist
+    expire_in: 10 days
     reports:
       cobertura: coverage/cobertura-coverage.xml

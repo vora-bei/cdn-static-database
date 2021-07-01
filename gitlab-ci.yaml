@@ -9,9 +9,5 @@ test-unit:
     - npm run test
     - npm run build
   artifacts:
-    when: always
-    paths:
-      - coverage
-    expire_in: 30 days
     reports:
       cobertura: coverage/cobertura-coverage.xml

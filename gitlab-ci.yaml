@@ -1,0 +1,13 @@
+image: node
+
+stages:
+  - test-unit
+
+test-unit:
+  stage: test-unit
+  script: npm run test:unit
+  artifacts:
+    when: always
+    paths:
+      - coverage
+    expire_in: 30 days

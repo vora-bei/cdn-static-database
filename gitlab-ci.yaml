@@ -7,6 +7,7 @@ test-unit:
     - npm ci --also=dev 
     - npm run test
     - npm run build
+  coverage: /All files[^|]*\|[^|]*\s+([\d\.]+)/
   artifacts:
     when: always
     paths:

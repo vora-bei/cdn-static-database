@@ -2,5 +2,5 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   modulePathIgnorePatterns: ["__seed__", "dist"],
-  coverageReporters: ['text-summary', 'lcov', 'cobertura']
+  coverageReporters: ['text-summary', 'lcov', 'cobertura', 'jest-junit']
 };

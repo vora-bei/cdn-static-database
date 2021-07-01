@@ -11,9 +11,8 @@ test-unit:
   artifacts:
     when: always
     paths:
-      # save both cypress artifacts and coverage results
       - coverage
       - dist
     expire_in: 10 days
     reports:
-      cobertura: coverage/cobertura-coverage.xml
+      junit: junit.xml

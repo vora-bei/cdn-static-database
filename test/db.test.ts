@@ -2,7 +2,7 @@ import { RangeLinearIndice } from "../src/range.linear.indice";
 import { NgramIndice } from "../src/ngram.indice";
 import mingo from "mingo"
 import countries from "./__seed__/country-by-continent.json";
-import { saveSharedIndices, restoreSharedIndices } from "../src/utils";
+import { saveSharedIndices, restoreSharedIndices } from "../src/utils.ssr";
 import { SimpleIndice } from "../src/simple.indice";
 import { Db } from "../src/db";
 import { Schema } from "../src/schema";

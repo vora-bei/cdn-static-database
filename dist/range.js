@@ -27,7 +27,11 @@ var Range = /** @class */ (function () {
     Range.prototype.test = function (token, operator) {
         switch (operator) {
             case '$eq':
+            case '$in':
                 return this.has(token);
+            case '$nin':
+            case '$ne':
+                return true;
             case '$lt':
             case '$lte':
                 return this.lt(token);

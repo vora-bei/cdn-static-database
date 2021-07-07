@@ -29,9 +29,10 @@ export declare class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         id: string;
         load(options: object): Promise<any>;
     }, deserialize: (options: object) => ISpreadIndice<T, P>): ISharedIndice<T, P>;
+    private filterIndicesByWeight;
     private load;
-    find(value: P | P[], operator?: string): Promise<T[]>;
-    cursor(value: P | P[], operator?: string): AsyncIterable<T>;
+    find(value?: P | P[], operator?: string, sort?: 1 | -1): Promise<T[]>;
+    cursor(value?: P | P[], operator?: string, sort?: 1 | -1): AsyncIterable<T>;
 }
 export {};
 //# sourceMappingURL=range.linear.indice.d.ts.map

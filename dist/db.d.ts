@@ -1,11 +1,26 @@
+import { ISharedIndice } from "interfaces";
 import { RawObject } from "mingo/util";
-import { Schema } from "./schema";
+import { IIndiceOption, Schema } from "./schema";
+interface ResultIndiceSearch {
+    result: AsyncIterable<any>;
+    missed: boolean;
+    greed: boolean;
+    paths: Set<string>;
+}
 export declare class Db {
     private schema;
+    private customOperators;
     constructor(schema: Schema);
-    buildIndexSearch(criteria: RawObject, sort?: RawObject, context?: {
+    buildIndexSearch(criteria: RawObject, sort?: {
+        [k: string]: 1 | -1;
+    }, context?: {
         path?: string;
-    }): () => Promise<any[]>;
-    find(criteria: RawObject, sort?: RawObject, skip?: number, limit?: number): Promise<any[]>;
+        isRoot: boolean;
+        indices: Map<ISharedIndice<any, any>, IIndiceOption>;
+    }): () => ResultIndiceSearch;
+    find<T extends any>(criteria: RawObject, sort?: {
+        [k: string]: 1 | -1;
+    }, skip?: number, limit?: number): Promise<T[]>;
 }
+export {};
 //# sourceMappingURL=db.d.ts.map

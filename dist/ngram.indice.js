@@ -171,15 +171,15 @@ var NgramIndice = /** @class */ (function () {
     NgramIndice.prototype.preFilter = function (tokens, operator) {
         if (operator === void 0) { operator = "$eq"; }
         return __awaiter(this, void 0, void 0, function () {
-            var countResults, _a, actuationLimitAuto, actuationLimit, l;
+            var countResults;
             var _this = this;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            return __generator(this, function (_a) {
+                switch (_a.label) {
                     case 0:
                         countResults = new Map();
                         return [4 /*yield*/, this.load()];
                     case 1:
-                        _b.sent();
+                        _a.sent();
                         tokens.forEach(function (token) {
                             var indices = _this.getIndices(token, operator);
                             if (indices) {
@@ -189,8 +189,6 @@ var NgramIndice = /** @class */ (function () {
                                 });
                             }
                         });
-                        _a = this.options, actuationLimitAuto = _a.actuationLimitAuto, actuationLimit = _a.actuationLimit;
-                        l = this.getLimit(actuationLimitAuto, tokens.length, actuationLimit);
                         return [2 /*return*/, countResults];
                 }
             });

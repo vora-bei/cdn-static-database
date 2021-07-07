@@ -91,10 +91,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Db = void 0;
 var mingo_1 = __importDefault(require("mingo"));
-var core_1 = require("mingo/core");
 var util_1 = require("mingo/util");
-var schema_1 = require("./schema");
-core_1.addOperators(core_1.OperatorType.QUERY, function () { return ({ "$text": function () { return true; } }); });
+var utils_1 = require("./utils");
 var comparableOperators = new Set([
     '$eq', '$gt', '$gte', '$in', '$lt', '$lte', '$ne', '$nin'
 ]);
@@ -103,175 +101,292 @@ var logicalOperators = new Set([
 ]);
 var Db = /** @class */ (function () {
     function Db(schema) {
+        this.customOperators = new Set([]);
         this.schema = schema;
+        var operators = this
+            .schema
+            .indices
+            .map(function (_a) {
+            var path = _a.path;
+            return path;
+        })
+            .filter(function (path) { return path && path.startsWith('$'); })
+            .filter(function (path) { return !comparableOperators.has(path); })
+            .filter(function (path) { return !logicalOperators.has(path); });
+        this.customOperators = new Set(operators);
     }
     Db.prototype.buildIndexSearch = function (criteria, sort, context) {
-        var e_1, _a;
+        var e_1, _a, e_2, _b;
         var _this = this;
-        var indices = [];
-        var subCriterias = [];
-        var _loop_1 = function (key, value) {
-            var path = (context === null || context === void 0 ? void 0 : context.path) || undefined;
-            if (logicalOperators.has(key) && util_1.isArray(value)) {
-                var logSubCriterias_1 = value
-                    .map(function (subCriteria) { return _this.buildIndexSearch(subCriteria, sort); });
-                subCriterias.push(function () { return __awaiter(_this, void 0, void 0, function () {
-                    var ids, result;
-                    return __generator(this, function (_a) {
-                        switch (_a.label) {
-                            case 0: return [4 /*yield*/, Promise.all(logSubCriterias_1.map(function (callback) { return callback(); }))];
-                            case 1:
-                                ids = _a.sent();
-                                result = ids[0];
-                                ids.forEach(function (subres) {
-                                    if (key === '$and') {
-                                        result = util_1.intersection(result, subres);
-                                    }
-                                    else {
-                                        result.push(subres);
-                                    }
-                                });
-                                return [2 /*return*/, result];
-                        }
-                    });
-                }); });
+        var _c = (context || {}).isRoot, isRoot = _c === void 0 ? true : _c;
+        var indices = new Map();
+        var sortIndices = new Map();
+        var subIterables = [];
+        var greed = false;
+        if (sort) {
+            greed = true;
+            var _loop_1 = function (key, order) {
+                var indice = this_1.schema.indices.find(function (o) { return o.path === key; });
+                if (indice) {
+                    sortIndices.set(indice.indice, __assign(__assign({}, indice), { order: order }));
+                    greed = false;
+                }
+            };
+            var this_1 = this;
+            try {
+                for (var _d = __values(Object.entries(sort)), _e = _d.next(); !_e.done; _e = _d.next()) {
+                    var _f = __read(_e.value, 2), key = _f[0], order = _f[1];
+                    _loop_1(key, order);
+                }
             }
-            else if (key === '$text') {
-                var fullTextIndice = this_1.schema
+            catch (e_1_1) { e_1 = { error: e_1_1 }; }
+            finally {
+                try {
+                    if (_e && !_e.done && (_a = _d.return)) _a.call(_d);
+                }
+                finally { if (e_1) throw e_1.error; }
+            }
+        }
+        var _loop_2 = function (key, value) {
+            if (logicalOperators.has(key) && util_1.isArray(value)) {
+                var subIt_1 = value
+                    .map(function (subCriteria) { return _this.buildIndexSearch(subCriteria, sort, { indices: indices, isRoot: false }); });
+                (function () {
+                    var isAnd = key === '$and';
+                    var result = subIt_1.map(function (it) { return it(); });
+                    var greed = isAnd ? result.every(function (_a) {
+                        var greed = _a.greed;
+                        return greed;
+                    }) : result.some(function (_a) {
+                        var greed = _a.greed;
+                        return greed;
+                    });
+                    var missed = isAnd ? result.every(function (_a) {
+                        var missed = _a.missed;
+                        return missed;
+                    }) : result.some(function (_a) {
+                        var missed = _a.missed;
+                        return missed;
+                    });
+                    var results = result.map(function (_a) {
+                        var result = _a.result;
+                        return result;
+                    });
+                    var paths = new Set(__spreadArray([], __read(result.reduce(function (sum, _a) {
+                        var paths = _a.paths;
+                        paths.forEach(function (path) {
+                            sum.set(path, (sum.get(path) || 0) + 1);
+                        });
+                        return sum;
+                    }, new Map()).entries())).filter(function (_a) {
+                        var _b = __read(_a, 2), count = _b[1];
+                        return isAnd || count === result.length;
+                    })
+                        .map(function (_a) {
+                        var _b = __read(_a, 1), path = _b[0];
+                        return path;
+                    }));
+                    var sIs = key === '$and' ? utils_1.intersectAsyncIterable(results) : utils_1.combineAsyncIterable(results);
+                    subIterables.push(function () { return ({
+                        result: sIs,
+                        greed: greed,
+                        missed: missed,
+                        paths: paths,
+                    }); });
+                });
+            }
+            else if (this_2.customOperators.has(key)) {
+                var fullTextIndice = this_2.schema
                     .indices
-                    .filter(function (i) { return i.type === schema_1.IndiceType.GLOBAL && criteria['$text']; })
+                    .filter(function (i) { return i.path === key; })
                     .pop();
                 if (fullTextIndice) {
-                    indices.push(__assign(__assign({}, fullTextIndice), { value: value }));
+                    indices.set(fullTextIndice.indice, __assign(__assign({}, fullTextIndice), { value: value }));
                 }
-                delete criteria['$text'];
+                delete criteria[key];
             }
             else if (util_1.isOperator(key)) {
-                var indice = this_1.schema.indices.find(function (o) { return o.path === path; });
-                console.debug(key, path, indice);
-                if (indice) {
-                    indices.push(__assign(__assign({}, indice), { value: value, op: key }));
+                var indiceOptions = this_2.schema.indices.find(function (o) { return o.path === (context === null || context === void 0 ? void 0 : context.path); });
+                if (indiceOptions) {
+                    var exists = sortIndices.get(indiceOptions.indice) || {};
+                    indices.set(indiceOptions.indice, __assign(__assign(__assign({}, exists), indiceOptions), { value: value, op: key }));
                 }
             }
             else if (util_1.isObject(value)) {
-                subCriterias.push(this_1.buildIndexSearch(value, sort, { path: key }));
-            }
-            else if (util_1.isObject(value)) {
-                subCriterias.push(this_1.buildIndexSearch(value, sort, { path: key }));
+                subIterables.push(this_2.buildIndexSearch(value, sort, { path: key, indices: indices, isRoot: false }));
             }
             else {
-                var indice = this_1.schema.indices.find(function (o) { return o.path === key; });
-                console.debug(key, path, indice);
-                if (indice) {
-                    indices.push(__assign(__assign({}, indice), { value: value, op: '$eq' }));
+                var indiceOptions = this_2.schema.indices.find(function (o) { return o.path === key; });
+                if (indiceOptions) {
+                    var exists = sortIndices.get(indiceOptions.indice) || {};
+                    indices.set(indiceOptions.indice, __assign(__assign(__assign({}, exists), indiceOptions), { value: value, op: '$eq' }));
                 }
             }
         };
-        var this_1 = this;
+        var this_2 = this;
         try {
-            for (var _b = __values(Object.entries(criteria)), _c = _b.next(); !_c.done; _c = _b.next()) {
-                var _d = __read(_c.value, 2), key = _d[0], value = _d[1];
-                _loop_1(key, value);
+            for (var _g = __values(Object.entries(criteria)), _h = _g.next(); !_h.done; _h = _g.next()) {
+                var _j = __read(_h.value, 2), key = _j[0], value = _j[1];
+                _loop_2(key, value);
             }
         }
-        catch (e_1_1) { e_1 = { error: e_1_1 }; }
+        catch (e_2_1) { e_2 = { error: e_2_1 }; }
         finally {
             try {
-                if (_c && !_c.done && (_a = _b.return)) _a.call(_b);
+                if (_h && !_h.done && (_b = _g.return)) _b.call(_g);
             }
-            finally { if (e_1) throw e_1.error; }
+            finally { if (e_2) throw e_2.error; }
         }
-        return function () { return __awaiter(_this, void 0, void 0, function () {
-            var ids, ids2, result;
-            return __generator(this, function (_a) {
-                switch (_a.label) {
-                    case 0: return [4 /*yield*/, Promise.all(indices.map(function (_a) {
-                            var indice = _a.indice, op = _a.op, value = _a.value;
-                            return indice.find(value, op);
-                        }))];
-                    case 1:
-                        ids = _a.sent();
-                        return [4 /*yield*/, Promise.all(subCriterias.map(function (subCriteria) { return subCriteria(); }))];
-                    case 2:
-                        ids2 = _a.sent();
-                        ids.push.apply(ids, __spreadArray([], __read(ids2)));
-                        result = ids[0];
-                        ids.forEach(function (subres) {
-                            result = util_1.intersection(result, subres);
-                        });
-                        return [2 /*return*/, result];
-                }
+        return function () {
+            var values = __spreadArray([], __read(indices.values()));
+            var simpleIterable = values
+                .map(function (_a) {
+                var indice = _a.indice, value = _a.value, order = _a.order, op = _a.op;
+                return indice.cursor(value, op, order);
             });
-        }); };
+            var subResult = subIterables.map(function (it) { return it(); });
+            var subGreed = subResult.every(function (_a) {
+                var greed = _a.greed;
+                return greed;
+            });
+            var missed = subResult.every(function (_a) {
+                var missed = _a.missed;
+                return missed;
+            });
+            var subIterable = subResult.map(function (_a) {
+                var result = _a.result;
+                return result;
+            });
+            var subPaths = subResult.reduce(function (sum, _a) {
+                var paths = _a.paths;
+                paths.forEach(function (path) { return sum.add(path); });
+                return sum;
+            }, new Set());
+            var paths = new Set(__spreadArray(__spreadArray([], __read(values.map(function (_a) {
+                var path = _a.path;
+                return path;
+            }))), __read(subPaths)));
+            var sortedIterable = __spreadArray([], __read(sortIndices.values())).filter(function (_a) {
+                var path = _a.path;
+                return !paths.has(path) && isRoot;
+            })
+                .map(function (_a) {
+                var indice = _a.indice, value = _a.value, order = _a.order, op = _a.op;
+                return indice.cursor(value, op, order);
+            });
+            var missedAll = !sortedIterable.length && !indices.size && missed;
+            var greedAll = greed && subGreed;
+            if (isRoot) {
+                console.debug("simple " + simpleIterable.length + ",", "sorted " + sortedIterable.length + ",", "sub " + subIterable.length + ",", "greed " + greedAll + ",", "missed " + missedAll + ",");
+            }
+            return {
+                result: utils_1.intersectAsyncIterable(__spreadArray(__spreadArray(__spreadArray([], __read(simpleIterable)), __read(sortedIterable)), __read(subIterable))),
+                greed: greedAll,
+                missed: missedAll,
+                paths: paths,
+            };
+        };
     };
     Db.prototype.find = function (criteria, sort, skip, limit) {
-        var e_2, _a;
+        var e_3, _a, e_4, _b;
         if (skip === void 0) { skip = 0; }
         return __awaiter(this, void 0, void 0, function () {
-            var primaryIndice, searchIds, load, cursor, result, query, i, cursor_1, cursor_1_1, value, e_2_1;
-            var _this = this;
-            return __generator(this, function (_b) {
-                switch (_b.label) {
+            var primaryIndice, search, result, query, i, _c, _d, value, e_3_1, _e, _f, id, _g, value, e_4_1, res;
+            return __generator(this, function (_h) {
+                switch (_h.label) {
                     case 0:
                         primaryIndice = this.schema.primaryIndice;
-                        searchIds = this.buildIndexSearch(criteria, sort);
-                        load = function () { return __awaiter(_this, void 0, void 0, function () {
-                            var ids;
-                            return __generator(this, function (_a) {
-                                switch (_a.label) {
-                                    case 0:
-                                        if (!searchIds) return [3 /*break*/, 2];
-                                        return [4 /*yield*/, searchIds()];
-                                    case 1:
-                                        ids = _a.sent();
-                                        _a.label = 2;
-                                    case 2: return [2 /*return*/, primaryIndice.cursor(ids)];
-                                }
-                            });
-                        }); };
-                        return [4 /*yield*/, load()];
-                    case 1:
-                        cursor = _b.sent();
+                        search = this.buildIndexSearch(criteria, sort)();
                         result = [];
                         query = new mingo_1.default.Query(criteria);
                         i = 0;
-                        _b.label = 2;
-                    case 2:
-                        _b.trys.push([2, 7, 8, 13]);
-                        cursor_1 = __asyncValues(cursor);
-                        _b.label = 3;
-                    case 3: return [4 /*yield*/, cursor_1.next()];
-                    case 4:
-                        if (!(cursor_1_1 = _b.sent(), !cursor_1_1.done)) return [3 /*break*/, 6];
-                        value = cursor_1_1.value;
-                        console.log(value);
+                        if (!search.missed) return [3 /*break*/, 13];
+                        _h.label = 1;
+                    case 1:
+                        _h.trys.push([1, 6, 7, 12]);
+                        _c = __asyncValues(primaryIndice.cursor());
+                        _h.label = 2;
+                    case 2: return [4 /*yield*/, _c.next()];
+                    case 3:
+                        if (!(_d = _h.sent(), !_d.done)) return [3 /*break*/, 5];
+                        value = _d.value;
                         if (query.test(value) && i >= skip) {
                             i++;
                             result.push(value);
-                            if (limit && i === limit) {
-                                return [3 /*break*/, 6];
+                            if (limit && i === limit && !search.greed) {
+                                return [3 /*break*/, 5];
                             }
                         }
-                        _b.label = 5;
-                    case 5: return [3 /*break*/, 3];
-                    case 6: return [3 /*break*/, 13];
+                        _h.label = 4;
+                    case 4: return [3 /*break*/, 2];
+                    case 5: return [3 /*break*/, 12];
+                    case 6:
+                        e_3_1 = _h.sent();
+                        e_3 = { error: e_3_1 };
+                        return [3 /*break*/, 12];
                     case 7:
-                        e_2_1 = _b.sent();
-                        e_2 = { error: e_2_1 };
-                        return [3 /*break*/, 13];
+                        _h.trys.push([7, , 10, 11]);
+                        if (!(_d && !_d.done && (_a = _c.return))) return [3 /*break*/, 9];
+                        return [4 /*yield*/, _a.call(_c)];
                     case 8:
-                        _b.trys.push([8, , 11, 12]);
-                        if (!(cursor_1_1 && !cursor_1_1.done && (_a = cursor_1.return))) return [3 /*break*/, 10];
-                        return [4 /*yield*/, _a.call(cursor_1)];
-                    case 9:
-                        _b.sent();
-                        _b.label = 10;
-                    case 10: return [3 /*break*/, 12];
-                    case 11:
-                        if (e_2) throw e_2.error;
+                        _h.sent();
+                        _h.label = 9;
+                    case 9: return [3 /*break*/, 11];
+                    case 10:
+                        if (e_3) throw e_3.error;
                         return [7 /*endfinally*/];
-                    case 12: return [7 /*endfinally*/];
-                    case 13: return [2 /*return*/, result];
+                    case 11: return [7 /*endfinally*/];
+                    case 12: return [3 /*break*/, 25];
+                    case 13:
+                        _h.trys.push([13, 19, 20, 25]);
+                        _e = __asyncValues(search.result);
+                        _h.label = 14;
+                    case 14: return [4 /*yield*/, _e.next()];
+                    case 15:
+                        if (!(_f = _h.sent(), !_f.done)) return [3 /*break*/, 18];
+                        id = _f.value;
+                        return [4 /*yield*/, primaryIndice.find(id)];
+                    case 16:
+                        _g = __read.apply(void 0, [_h.sent(), 1]), value = _g[0];
+                        if (query.test(value) && i >= skip) {
+                            i++;
+                            result.push(value);
+                            if (limit && i === limit && !search.greed) {
+                                return [3 /*break*/, 18];
+                            }
+                        }
+                        _h.label = 17;
+                    case 17: return [3 /*break*/, 14];
+                    case 18: return [3 /*break*/, 25];
+                    case 19:
+                        e_4_1 = _h.sent();
+                        e_4 = { error: e_4_1 };
+                        return [3 /*break*/, 25];
+                    case 20:
+                        _h.trys.push([20, , 23, 24]);
+                        if (!(_f && !_f.done && (_b = _e.return))) return [3 /*break*/, 22];
+                        return [4 /*yield*/, _b.call(_e)];
+                    case 21:
+                        _h.sent();
+                        _h.label = 22;
+                    case 22: return [3 /*break*/, 24];
+                    case 23:
+                        if (e_4) throw e_4.error;
+                        return [7 /*endfinally*/];
+                    case 24: return [7 /*endfinally*/];
+                    case 25:
+                        res = new mingo_1.default.Query({})
+                            .find(result);
+                        if (sort && search.greed) {
+                            res = res.sort(sort);
+                        }
+                        if (limit && search.greed) {
+                            res = res.limit(limit);
+                        }
+                        if (skip && search.greed) {
+                            res = res.skip(skip);
+                        }
+                        return [2 /*return*/, res.all()];
                 }
             });
         });

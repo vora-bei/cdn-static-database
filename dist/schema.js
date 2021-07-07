@@ -1,11 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Schema = exports.IndiceType = void 0;
-var IndiceType;
-(function (IndiceType) {
-    IndiceType[IndiceType["LOCAL"] = 0] = "LOCAL";
-    IndiceType[IndiceType["GLOBAL"] = 1] = "GLOBAL";
-})(IndiceType = exports.IndiceType || (exports.IndiceType = {}));
+exports.Schema = void 0;
 var Schema = /** @class */ (function () {
     function Schema(primaryIndice, indices) {
         this.indices = indices;

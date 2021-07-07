@@ -34,7 +34,7 @@ export declare class NgramIndice<T> implements ISpreadIndice<T, string> {
     static deserialize<T, P>(data: any, options?: any): NgramIndice<T>;
     spread(chunkSize?: number): ISpreadIndice<T, string>[];
     findAll(indices: ISpreadIndice<T, string>[], value: string, operator?: string): Promise<T[]>;
-    cursorAll<AI extends AsyncIterable<T>>(indices: ISpreadIndice<T, string>[], value: string | string[], operator?: string): AsyncIterable<T>;
+    cursorAll(indices: ISpreadIndice<T, string>[], value: string | string[], operator?: string): AsyncIterable<T>;
     cursor(value?: string | string[], operator?: string): AsyncIterable<T>;
 }
 export {};

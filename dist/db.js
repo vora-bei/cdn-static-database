@@ -287,7 +287,6 @@ var Db = /** @class */ (function () {
             };
         };
     };
-    Db.prototype.postProcessor = function () { };
     Db.prototype.find = function (criteria, sort, skip, limit) {
         var e_3, _a, e_4, _b;
         if (skip === void 0) { skip = 0; }
@@ -297,6 +296,7 @@ var Db = /** @class */ (function () {
             return __generator(this, function (_j) {
                 switch (_j.label) {
                     case 0:
+                        console.time('find');
                         chunkSize = limit || 20;
                         primaryIndice = this.schema.primaryIndice;
                         search = this.buildIndexSearch(criteria, sort)();
@@ -437,6 +437,7 @@ var Db = /** @class */ (function () {
                         if (skip && search.greed) {
                             res = res.skip(skip);
                         }
+                        console.timeEnd('find');
                         return [2 /*return*/, res.all()];
                 }
             });

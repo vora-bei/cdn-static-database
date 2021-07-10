@@ -142,8 +142,8 @@ export class Db {
             };
         }
     }
-    private postProcessor() { }
     async find<T extends any>(criteria: RawObject, sort?: { [k: string]: 1 | -1 }, skip: number = 0, limit?: number) {
+        console.time('find')
         const chunkSize = limit || 20;
         const primaryIndice = this.schema.primaryIndice;
         let search: ResultIndiceSearch = this.buildIndexSearch(criteria, sort)();
@@ -209,6 +209,7 @@ export class Db {
         if (skip && search.greed) {
             res = res.skip(skip);
         }
+        console.timeEnd('find')
         return res.all() as T[];
     }
 

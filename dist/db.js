@@ -287,28 +287,31 @@ var Db = /** @class */ (function () {
             };
         };
     };
+    Db.prototype.postProcessor = function () { };
     Db.prototype.find = function (criteria, sort, skip, limit) {
         var e_3, _a, e_4, _b;
         if (skip === void 0) { skip = 0; }
         return __awaiter(this, void 0, void 0, function () {
-            var primaryIndice, search, result, query, i, _c, _d, value, e_3_1, _e, _f, id, _g, value, e_4_1, res;
-            return __generator(this, function (_h) {
-                switch (_h.label) {
+            var chunkSize, primaryIndice, search, result, query, i, _c, _d, value, e_3_1, ids, _e, _f, id, values, values_1, values_1_1, value, e_4_1, values, values_2, values_2_1, value, res;
+            var e_5, _g, e_6, _h;
+            return __generator(this, function (_j) {
+                switch (_j.label) {
                     case 0:
+                        chunkSize = limit || 20;
                         primaryIndice = this.schema.primaryIndice;
                         search = this.buildIndexSearch(criteria, sort)();
                         result = [];
                         query = new mingo_1.default.Query(criteria);
                         i = 0;
                         if (!search.missed) return [3 /*break*/, 13];
-                        _h.label = 1;
+                        _j.label = 1;
                     case 1:
-                        _h.trys.push([1, 6, 7, 12]);
+                        _j.trys.push([1, 6, 7, 12]);
                         _c = __asyncValues(primaryIndice.cursor());
-                        _h.label = 2;
+                        _j.label = 2;
                     case 2: return [4 /*yield*/, _c.next()];
                     case 3:
-                        if (!(_d = _h.sent(), !_d.done)) return [3 /*break*/, 5];
+                        if (!(_d = _j.sent(), !_d.done)) return [3 /*break*/, 5];
                         value = _d.value;
                         if (query.test(value) && i >= skip) {
                             i++;
@@ -317,64 +320,112 @@ var Db = /** @class */ (function () {
                                 return [3 /*break*/, 5];
                             }
                         }
-                        _h.label = 4;
+                        _j.label = 4;
                     case 4: return [3 /*break*/, 2];
                     case 5: return [3 /*break*/, 12];
                     case 6:
-                        e_3_1 = _h.sent();
+                        e_3_1 = _j.sent();
                         e_3 = { error: e_3_1 };
                         return [3 /*break*/, 12];
                     case 7:
-                        _h.trys.push([7, , 10, 11]);
+                        _j.trys.push([7, , 10, 11]);
                         if (!(_d && !_d.done && (_a = _c.return))) return [3 /*break*/, 9];
                         return [4 /*yield*/, _a.call(_c)];
                     case 8:
-                        _h.sent();
-                        _h.label = 9;
+                        _j.sent();
+                        _j.label = 9;
                     case 9: return [3 /*break*/, 11];
                     case 10:
                         if (e_3) throw e_3.error;
                         return [7 /*endfinally*/];
                     case 11: return [7 /*endfinally*/];
-                    case 12: return [3 /*break*/, 25];
+                    case 12: return [3 /*break*/, 28];
                     case 13:
-                        _h.trys.push([13, 19, 20, 25]);
+                        ids = [];
+                        _j.label = 14;
+                    case 14:
+                        _j.trys.push([14, 20, 21, 26]);
                         _e = __asyncValues(search.result);
-                        _h.label = 14;
-                    case 14: return [4 /*yield*/, _e.next()];
-                    case 15:
-                        if (!(_f = _h.sent(), !_f.done)) return [3 /*break*/, 18];
-                        id = _f.value;
-                        return [4 /*yield*/, primaryIndice.find(id)];
+                        _j.label = 15;
+                    case 15: return [4 /*yield*/, _e.next()];
                     case 16:
-                        _g = __read.apply(void 0, [_h.sent(), 1]), value = _g[0];
-                        if (query.test(value) && i >= skip) {
-                            i++;
-                            result.push(value);
-                            if (limit && i === limit && !search.greed) {
-                                return [3 /*break*/, 18];
+                        if (!(_f = _j.sent(), !_f.done)) return [3 /*break*/, 19];
+                        id = _f.value;
+                        ids.push(id);
+                        if (!(ids.length >= chunkSize)) return [3 /*break*/, 18];
+                        return [4 /*yield*/, primaryIndice.find(ids)];
+                    case 17:
+                        values = _j.sent();
+                        try {
+                            for (values_1 = (e_5 = void 0, __values(values)), values_1_1 = values_1.next(); !values_1_1.done; values_1_1 = values_1.next()) {
+                                value = values_1_1.value;
+                                if (query.test(value)) {
+                                    i++;
+                                    if (i >= skip) {
+                                        result.push(value);
+                                    }
+                                    if (limit && i === limit && !search.greed) {
+                                        ids = [];
+                                        return [3 /*break*/, 19];
+                                    }
+                                }
                             }
                         }
-                        _h.label = 17;
-                    case 17: return [3 /*break*/, 14];
-                    case 18: return [3 /*break*/, 25];
-                    case 19:
-                        e_4_1 = _h.sent();
-                        e_4 = { error: e_4_1 };
-                        return [3 /*break*/, 25];
+                        catch (e_5_1) { e_5 = { error: e_5_1 }; }
+                        finally {
+                            try {
+                                if (values_1_1 && !values_1_1.done && (_g = values_1.return)) _g.call(values_1);
+                            }
+                            finally { if (e_5) throw e_5.error; }
+                        }
+                        ids = [];
+                        _j.label = 18;
+                    case 18: return [3 /*break*/, 15];
+                    case 19: return [3 /*break*/, 26];
                     case 20:
-                        _h.trys.push([20, , 23, 24]);
-                        if (!(_f && !_f.done && (_b = _e.return))) return [3 /*break*/, 22];
-                        return [4 /*yield*/, _b.call(_e)];
+                        e_4_1 = _j.sent();
+                        e_4 = { error: e_4_1 };
+                        return [3 /*break*/, 26];
                     case 21:
-                        _h.sent();
-                        _h.label = 22;
-                    case 22: return [3 /*break*/, 24];
-                    case 23:
+                        _j.trys.push([21, , 24, 25]);
+                        if (!(_f && !_f.done && (_b = _e.return))) return [3 /*break*/, 23];
+                        return [4 /*yield*/, _b.call(_e)];
+                    case 22:
+                        _j.sent();
+                        _j.label = 23;
+                    case 23: return [3 /*break*/, 25];
+                    case 24:
                         if (e_4) throw e_4.error;
                         return [7 /*endfinally*/];
-                    case 24: return [7 /*endfinally*/];
-                    case 25:
+                    case 25: return [7 /*endfinally*/];
+                    case 26:
+                        if (!ids.length) return [3 /*break*/, 28];
+                        return [4 /*yield*/, primaryIndice.find(ids)];
+                    case 27:
+                        values = _j.sent();
+                        try {
+                            for (values_2 = __values(values), values_2_1 = values_2.next(); !values_2_1.done; values_2_1 = values_2.next()) {
+                                value = values_2_1.value;
+                                if (query.test(value)) {
+                                    i++;
+                                    if (i >= skip) {
+                                        result.push(value);
+                                    }
+                                    if (limit && i === limit && !search.greed) {
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        catch (e_6_1) { e_6 = { error: e_6_1 }; }
+                        finally {
+                            try {
+                                if (values_2_1 && !values_2_1.done && (_h = values_2.return)) _h.call(values_2);
+                            }
+                            finally { if (e_6) throw e_6.error; }
+                        }
+                        _j.label = 28;
+                    case 28:
                         res = new mingo_1.default.Query({})
                             .find(result);
                         if (sort && search.greed) {

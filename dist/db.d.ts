@@ -18,6 +18,7 @@ export declare class Db {
         isRoot: boolean;
         indices: Map<ISharedIndice<any, any>, IIndiceOption>;
     }): () => ResultIndiceSearch;
+    private postProcessor;
     find<T extends any>(criteria: RawObject, sort?: {
         [k: string]: 1 | -1;
     }, skip?: number, limit?: number): Promise<T[]>;

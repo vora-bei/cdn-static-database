@@ -142,7 +142,9 @@ export class Db {
             };
         }
     }
+    private postProcessor() { }
     async find<T extends any>(criteria: RawObject, sort?: { [k: string]: 1 | -1 }, skip: number = 0, limit?: number) {
+        const chunkSize = limit || 20;
         const primaryIndice = this.schema.primaryIndice;
         let search: ResultIndiceSearch = this.buildIndexSearch(criteria, sort)();
         let result: any[] = [];
@@ -159,16 +161,42 @@ export class Db {
                 }
             }
         } else {
+            let ids: any[] = [];
+            loop:
             for await (let id of search.result) {
-                const [value] = await primaryIndice.find(id)
-                if (query.test(value) && i >= skip) {
-                    i++;
-                    result.push(value)
-                    if (limit && i === limit && !search.greed) {
-                        break;
+                ids.push(id);
+                if (ids.length >= chunkSize) {
+                    const values = await primaryIndice.find(ids);
+                    for (let value of values) {
+                        if (query.test(value)) {
+                            i++;
+                            if (i >= skip) {
+                                result.push(value)
+                            }
+                            if (limit && i === limit && !search.greed) {
+                                ids = [];
+                                break loop;
+                            }
+                        }
+                    }
+                    ids = [];
+                }
+            }
+            if (ids.length) {
+                const values = await primaryIndice.find(ids);
+                for (let value of values) {
+                    if (query.test(value)) {
+                        i++;
+                        if (i >= skip) {
+                            result.push(value)
+                        }
+                        if (limit && i === limit && !search.greed) {
+                            break;
+                        }
                     }
                 }
             }
+
         }
         let res = new mingo.Query({})
             .find(result);

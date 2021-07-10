@@ -202,6 +202,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
                 return sum;
             }, new Map())
             result = self.postFilter(combineWeights, tokens);
+            isLoad = true;
         }
         return {
             [Symbol.asyncIterator]() {

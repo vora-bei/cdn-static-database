@@ -321,6 +321,7 @@ var NgramIndice = /** @class */ (function () {
                             return sum;
                         }, new Map());
                         result = self.postFilter(combineWeights, tokens);
+                        isLoad = true;
                         return [2 /*return*/];
                 }
             });

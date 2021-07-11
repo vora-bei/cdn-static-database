@@ -25,7 +25,6 @@ const saveSharedIndices = async (indice, publicPath = '.') => {
 exports.saveSharedIndices = saveSharedIndices;
 const restoreSharedIndices = async (id, deserializeShared, deserialize) => {
     const load = async (options) => {
-        console.debug('load', options.id);
         return JSON.parse((await readFile(`./${id}/chunk_${options.id}.json`)).toString());
     };
     const jsonRaw = await readFile(`./${id}/index.json`);

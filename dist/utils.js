@@ -23,9 +23,7 @@ async function* combineAsyncIterable(iterable) {
             }
             else {
                 nextPromises[index] = getNext(asyncIterators[index], index);
-                for (let value of result.value.chunk) {
-                    yield value;
-                }
+                yield result.value;
             }
         }
     }
@@ -56,15 +54,16 @@ async function* intersectAsyncIterable(iterable) {
             }
             else {
                 const combineResult = combineResults.get(index);
-                console.log('_________', index, result.value);
                 nextPromises[index] = getNext(asyncIterators[index], index);
-                for (let v of result.value.chunk) {
+                let subResults = [];
+                for (let v of result.value) {
                     combineResult.add(v);
                     if ([...combineResults.values()].every(c => c.has(v))) {
                         [...combineResults.values()].forEach(c => c.delete(v));
-                        yield v;
+                        subResults.push(v);
                     }
                 }
+                yield subResults;
             }
         }
     }

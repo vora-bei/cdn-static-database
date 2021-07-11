@@ -90,7 +90,6 @@ class RangeLinearIndice {
         let cursor;
         let iterator;
         let isFound = false;
-        console.log('range cursor');
         let find = async () => {
             if (isFound) {
                 return;

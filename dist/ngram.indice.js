@@ -188,31 +188,7 @@ class NgramIndice {
                     async next() {
                         if (!isLoad) {
                             await load();
-                            console.log('++++', result);
-                            return { done: false, value: { chunk: result } };
-                        }
-                        else {
-                            return { done: true, value: undefined };
-                        }
-                    }
-                };
-            }
-        };
-    }
-    cursor(value, operator) {
-        const load$ = this.load();
-        const result$ = this.find(value, operator);
-        let index = 0;
-        return {
-            [Symbol.asyncIterator]() {
-                return {
-                    async next() {
-                        await load$;
-                        const result = await result$;
-                        if (index < result.length) {
-                            const value = result[index];
-                            index++;
-                            return { done: false, value };
+                            return { done: false, value: result };
                         }
                         else {
                             return { done: true, value: undefined };

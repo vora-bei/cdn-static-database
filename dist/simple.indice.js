@@ -156,31 +156,6 @@ class SimpleIndice {
         const preResult = await this.preFilter(tokens, operator, sort);
         return this.postFilter(preResult, tokens);
     }
-    cursor(value, operator, sort = 1) {
-        const load$ = this.load();
-        const result$ = this.find(value, operator, sort);
-        let index = 0;
-        return {
-            [Symbol.asyncIterator]() {
-                return {
-                    index: 0,
-                    data: new Map(),
-                    async next() {
-                        await load$;
-                        const result = await result$;
-                        if (index < result.length) {
-                            const value = result[index];
-                            index++;
-                            return { done: false, value };
-                        }
-                        else {
-                            return { done: true, value: undefined };
-                        }
-                    }
-                };
-            }
-        };
-    }
     postFilter(countResults, tokens) {
         const results = [...countResults.entries()]
             .map(([id]) => id);
@@ -245,25 +220,27 @@ class SimpleIndice {
         let result = null;
         let indiceIndex = 0;
         let data = new Map();
+        const chunkSize = 20;
+        const self = this;
         return {
             [Symbol.asyncIterator]() {
                 return {
                     async next() {
-                        if (indiceIndex === 0) {
+                        if (indiceIndex === 0 && !result) {
                             data = await indices[indiceIndex].preFilter(tokens, operator, sort);
                             result = [...data.keys()];
+                            result.reverse();
                         }
                         while (!(result === null || result === void 0 ? void 0 : result.length) && indiceIndex < indices.length - 1) {
                             indiceIndex++;
                             data = await indices[indiceIndex].preFilter(tokens, operator, sort);
                             result = [...data.keys()];
+                            result.reverse();
                         }
                         if (result && result.length) {
-                            const value = result;
-                            result = null;
-                            indiceIndex++;
-                            console.log('++++', value);
-                            return { done: false, value: { chunk: value } };
+                            const currentChunkSize = Math.min(chunkSize, result.length);
+                            const value = result.splice(-currentChunkSize, currentChunkSize);
+                            return { done: false, value };
                         }
                         else {
                             return { done: true, value: undefined };

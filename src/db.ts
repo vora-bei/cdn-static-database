@@ -168,7 +168,7 @@ export class Db {
             for await (let subIds of search.result) {
                 ids.push(...subIds);
                 if (ids.length >= chunkSize) {
-                    const values = await primaryIndice.find(ids);
+                    const values = await primaryIndice.find(ids.splice(0, chunkSize));
                     for (let value of values) {
                         if (query.test(value)) {
                             i++;

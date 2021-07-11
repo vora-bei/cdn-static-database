@@ -43,7 +43,6 @@ export async function* combineAsyncIterable(iterable: AsyncIterable<any[]>[]) {
 export async function* intersectAsyncIterable(iterable: AsyncIterable<any[]>[]) {
     const asyncIterators = Array.from(iterable, o => o[Symbol.asyncIterator]());
     const results: any[] = [];
-
     let count = asyncIterators.length;
     const combineResults: Map<number, Set<any>> = new Map(
         new Array(count)
@@ -64,7 +63,9 @@ export async function* intersectAsyncIterable(iterable: AsyncIterable<any[]>[]) 
                 let subResults: any[] = [];
                 for (let v of result.value) {
                     combineResult.add(v);
-                    if ([...combineResults.values()].every(c => c.has(v))) {
+                    if(iterable.length===1){
+                        subResults.push(v);
+                    } else if ([...combineResults.values()].every(c => c.has(v))) {
                         [...combineResults.values()].forEach(c => c.delete(v));
                         subResults.push(v);
                     }

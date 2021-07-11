@@ -29,7 +29,9 @@ export declare class SimpleIndice<T, P> implements ISpreadIndice<T, P> {
     static deserialize<T, P>(data: any, options?: any): SimpleIndice<T, P>;
     spread(chunkSize?: number): ISpreadIndice<T, P>[];
     findAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator?: string, sort?: -1 | 1): Promise<T[]>;
-    cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator?: string, sort?: -1 | 1): AsyncIterable<T>;
+    cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator?: string, sort?: -1 | 1): AsyncIterable<{
+        chunk: T[];
+    }>;
 }
 export {};
 //# sourceMappingURL=simple.indice.d.ts.map

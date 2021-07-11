@@ -161,30 +161,6 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
         const preResult = await this.preFilter(tokens, operator, sort);
         return this.postFilter(preResult, tokens);
     }
-    cursor(value?: P | P[], operator?: string, sort: -1 | 1 = 1): AsyncIterable<T> {
-        const load$ = this.load();
-        const result$ = this.find(value, operator, sort);
-        let index = 0;
-        return {
-            [Symbol.asyncIterator]() {
-                return {
-                    index: 0,
-                    data: new Map<any, any>(),
-                    async next() {
-                        await load$;
-                        const result = await result$;
-                        if (index < result.length) {
-                            const value = result[index];
-                            index++;
-                            return { done: false, value };
-                        } else {
-                            return { done: true, value: undefined };
-                        }
-                    }
-                }
-            }
-        }
-    }
     public postFilter(countResults: Map<T, number>, tokens: P[]): T[] {
         const results = [...countResults.entries()]
             .map(([id]) => id);
@@ -248,33 +224,35 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
         }, new Map())
         return this.postFilter(combineWeights, tokens);
     }
-    public cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator: string = '$eq', sort: -1 | 1 = 1): AsyncIterable<T> {
+    public cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator: string = '$eq', sort: -1 | 1 = 1): AsyncIterable<T[]> {
         let tokens: P[] = []
         if (value !== undefined) {
             tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
         }
-        let result: IterableIterator<T> | null = null;
+        let result: T[] | null = null;
         let indiceIndex = 0;
         let data = new Map<T, number>();
-
+        const chunkSize = 20;
+        const self= this;
         return {
             [Symbol.asyncIterator]() {
                 return {
                     async next() {
-                        if (result === null) {
+                        if (indiceIndex === 0 && !result) {
                             data = await indices[indiceIndex].preFilter(tokens, operator, sort);
-                            result = data.keys();
+                            result = [...data.keys()];
+                            result.reverse();
                         }
-                        let item = result!.next();
-                        while (item.done && indiceIndex < indices.length - 1) {
+                        while (!result?.length && indiceIndex < indices.length - 1) {
                             indiceIndex++;
                             data = await indices[indiceIndex].preFilter(tokens, operator, sort);
-                            result = data.keys();
-                            item = result!.next();
+                            result = [...data.keys()];
+                            result.reverse();
                         }
-                        if (!item.done) {
-                            const value = item.value;
-                            return { done: false, value };
+                        if (result && result.length) {
+                            const currentChunkSize = Math.min(chunkSize, result.length);
+                            const value = result.splice(-currentChunkSize, currentChunkSize);
+                            return { done: false, value  };
                         } else {
                             return { done: true, value: undefined };
                         }

@@ -151,20 +151,22 @@ export class Db {
         const query = new mingo.Query(criteria);
         let i = 0;
         if (search.missed) {
-            for await (let value of primaryIndice.cursor()) {
-                if (query.test(value) && i >= skip) {
-                    i++;
-                    result.push(value)
-                    if (limit && i === limit && !search.greed) {
-                        break;
+            for await (let values of primaryIndice.cursor()) {
+                for(let value of values){
+                    if (query.test(value) && i >= skip) {
+                        i++;
+                        result.push(value)
+                        if (limit && i === limit && !search.greed) {
+                            break;
+                        }
                     }
                 }
             }
         } else {
             let ids: any[] = [];
             loop:
-            for await (let id of search.result) {
-                ids.push(id);
+            for await (let subIds of search.result) {
+                ids.push(...subIds);
                 if (ids.length >= chunkSize) {
                     const values = await primaryIndice.find(ids);
                     for (let value of values) {

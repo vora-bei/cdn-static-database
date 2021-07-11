@@ -182,11 +182,10 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         }, new Map())
         return this.postFilter(combineWeights, tokens);
     }
-    public cursorAll(indices: ISpreadIndice<T, string>[], value: string | string[], operator: string = '$eq'): AsyncIterable<T> {
+    public cursorAll(indices: ISpreadIndice<T, string>[], value: string | string[], operator: string = '$eq'): AsyncIterable<T[]> {
         const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
         const list$ =  Promise.all(indices.map((indice) => indice.preFilter(tokens, operator)));
         let isLoad = false;
-        let index=0;
         const self = this;
         let result: T[];
         const load = async () => {
@@ -208,11 +207,9 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
             [Symbol.asyncIterator]() {
                 return {
                     async next() {
-                        await load()
-                        if (index < result.length) {
-                            const value = result[index];
-                            index++;
-                            return { done: false, value };
+                        if (!isLoad) {
+                            await load()
+                            return { done: false, value: result };
                         } else {
                             return { done: true, value: undefined };
                         }
@@ -221,28 +218,4 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
             }
         }
     }
-
-    cursor(value?: string | string[], operator?: string): AsyncIterable<T> {
-        const load$ = this.load();
-        const result$ = this.find(value, operator);
-        let index = 0;
-        return {
-            [Symbol.asyncIterator]() {
-                return {
-                    async next() {
-                        await load$;
-                        const result = await result$;
-                        if (index < result.length) {
-                            const value = result[index];
-                            index++;
-                            return { done: false, value };
-                        } else {
-                            return { done: true, value: undefined };
-                        }
-                    }
-                }
-            }
-        }
-    }
-
 }

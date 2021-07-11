@@ -106,13 +106,12 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         }
         return indice.findAll(indices, value, operator);
     }
-    cursor(value?: P | P[], operator: string = '$eq', sort: 1 | -1 = 1): AsyncIterable<T> {
+    cursor(value?: P | P[], operator: string = '$eq', sort: 1 | -1 = 1): AsyncIterable<T[]> {
         const load$ = this.load();
         const self = this;
         let cursor;
         let iterator;
         let isFound = false;
-        console.log('range cursor')
         let find = async () => {
             if (isFound) {
                 return;

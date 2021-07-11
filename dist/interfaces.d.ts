@@ -21,7 +21,9 @@ export interface ISpreadIndice<T, P> extends IIndice<T, P> {
     postFilter(countResults: Map<T, number>, tokens: P[]): T[];
     preFilter(tokens: P[], operator?: string, sort?: 1 | -1): Promise<Map<T, number>>;
     findAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator?: string): Promise<T[]>;
-    cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator?: string, sort?: 1 | -1): AsyncIterable<T>;
+    cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator?: string, sort?: 1 | -1): AsyncIterable<{
+        chunk: T[];
+    }>;
 }
 export interface ISharedIndice<T, P> extends IBaseIndice<T, P>, ISerializeIndex {
     indices: Map<any, ISpreadIndice<T, P>>;

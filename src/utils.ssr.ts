@@ -38,7 +38,6 @@ export const restoreSharedIndices = async <T, P>(
 
 ): Promise<ISharedIndice<T, P>> => {
     const load = async (options: { id }) => {
-        console.debug('load', options.id);
         return JSON.parse((await readFile(`./${id}/chunk_${options.id}.json`)).toString())
     }
     const jsonRaw = await readFile(`./${id}/index.json`);

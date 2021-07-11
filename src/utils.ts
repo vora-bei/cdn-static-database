@@ -1,15 +1,24 @@
-export async function* combineAsyncIterable(iterable: AsyncIterable<any>[]) {
+
+ function getNext(asyncIterator: AsyncIterator<any[]>, index) {
+    return asyncIterator.next().then(result => ({
+        index,
+        result,
+    }));
+}
+const never:  Promise<{
+    index: any;
+    result: IteratorResult< any[], any>;
+}> = new Promise(() => { });
+
+export async function* combineAsyncIterable(iterable: AsyncIterable<any[]>[]) {
     const asyncIterators = Array.from(iterable, o => o[Symbol.asyncIterator]());
     const results: any[] = [];
     let count = asyncIterators.length;
-    const never = new Promise(() => { });
-    function getNext(asyncIterator, index) {
-        return asyncIterator.next().then(result => ({
-            index,
-            result,
-        }));
-    }
-    const nextPromises = asyncIterators.map(getNext);
+   
+    const nextPromises: Promise<{
+        index: any;
+        result: IteratorResult<any[], any>;
+    }>[] = asyncIterators.map(getNext);
     try {
         while (count) {
             const { index, result } = await Promise.race(nextPromises);
@@ -31,7 +40,7 @@ export async function* combineAsyncIterable(iterable: AsyncIterable<any>[]) {
     return results;
 }
 
-export async function* intersectAsyncIterable(iterable: AsyncIterable<any>[]) {
+export async function* intersectAsyncIterable(iterable: AsyncIterable<any[]>[]) {
     const asyncIterators = Array.from(iterable, o => o[Symbol.asyncIterator]());
     const results: any[] = [];
 
@@ -41,13 +50,6 @@ export async function* intersectAsyncIterable(iterable: AsyncIterable<any>[]) {
             .fill(undefined)
             .map((_, i) => ([i, new Set()]))
     );
-    const never = new Promise(() => { });
-    function getNext(asyncIterator, index) {
-        return asyncIterator.next().then(result => ({
-            index,
-            result,
-        }));
-    }
     const nextPromises = asyncIterators.map(getNext);
     try {
         while (count) {
@@ -57,14 +59,18 @@ export async function* intersectAsyncIterable(iterable: AsyncIterable<any>[]) {
                 results[index] = result.value; //what's return is question
                 count--;
             } else {
-                const combineResult = combineResults.get(index) || new Set();
-                combineResult.add(result.value);
-                combineResults.set(index, combineResult);
-                if ([...combineResults.values()].every(c => c.has(result.value))) {
-                    [...combineResults.values()].forEach(c => c.delete(result.value))
-                    yield result.value;
-                }
+                const combineResult = combineResults.get(index)!;
                 nextPromises[index] = getNext(asyncIterators[index], index);
+                let subResults: any[] = [];
+                for (let v of result.value) {
+                    combineResult.add(v);
+                    if ([...combineResults.values()].every(c => c.has(v))) {
+                        [...combineResults.values()].forEach(c => c.delete(v));
+                        subResults.push(v);
+                    }
+                     
+                }
+                yield subResults;             
             }
         }
     } finally {

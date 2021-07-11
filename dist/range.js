@@ -1,30 +1,30 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.Range = void 0;
-class Range {
-    constructor(left, right) {
+var Range = /** @class */ (function () {
+    function Range(left, right) {
         this.left = left;
         this.right = right;
     }
-    static fromKeys(indexes) {
-        const { left, right } = indexes.reduce((sum, val) => {
-            let left = sum.left === null ? val : sum.left;
-            let right = sum.right === null ? val : sum.right;
+    Range.fromKeys = function (indexes) {
+        var _a = indexes.reduce(function (sum, val) {
+            var left = sum.left === null ? val : sum.left;
+            var right = sum.right === null ? val : sum.right;
             return { left: left > val ? val : left, right: right < val ? val : right };
-        }, { left: null, right: null });
+        }, { left: null, right: null }), left = _a.left, right = _a.right;
         return new Range(left, right);
-    }
-    has(token) {
+    };
+    Range.prototype.has = function (token) {
         return token >= this.left && token <= this.right;
-    }
-    lt(token) {
+    };
+    Range.prototype.lt = function (token) {
         return token >= this.right || this.has(token);
-    }
-    gt(token) {
+    };
+    Range.prototype.gt = function (token) {
         return token <= this.left || this.has(token);
         ;
-    }
-    test(token, operator) {
+    };
+    Range.prototype.test = function (token, operator) {
         switch (operator) {
             case '$eq':
             case '$in':
@@ -41,7 +41,8 @@ class Range {
             default:
                 return this.has(token);
         }
-    }
-}
+    };
+    return Range;
+}());
 exports.Range = Range;
 //# sourceMappingURL=range.js.map

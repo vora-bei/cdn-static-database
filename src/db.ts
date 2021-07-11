@@ -175,7 +175,7 @@ export class Db {
                             if (i >= skip) {
                                 result.push(value)
                             }
-                            if (limit && i === limit && !search.greed) {
+                            if (limit && i === limit - 1 && !search.greed) {
                                 ids = [];
                                 break loop;
                             }

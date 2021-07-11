@@ -169,7 +169,10 @@ function intersectAsyncIterable(iterable) {
                     subResults = [];
                     _loop_1 = function (v) {
                         combineResult.add(v);
-                        if (__spread(combineResults.values()).every(function (c) { return c.has(v); })) {
+                        if (iterable.length === 1) {
+                            subResults.push(v);
+                        }
+                        else if (__spread(combineResults.values()).every(function (c) { return c.has(v); })) {
                             __spread(combineResults.values()).forEach(function (c) { return c.delete(v); });
                             subResults.push(v);
                         }

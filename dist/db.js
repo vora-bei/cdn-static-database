@@ -364,7 +364,7 @@ var Db = /** @class */ (function () {
                         subIds = _f.value;
                         ids.push.apply(ids, __spread(subIds));
                         if (!(ids.length >= chunkSize)) return [3 /*break*/, 18];
-                        return [4 /*yield*/, primaryIndice.find(ids)];
+                        return [4 /*yield*/, primaryIndice.find(ids.splice(0, chunkSize))];
                     case 17:
                         values = _k.sent();
                         try {
@@ -375,7 +375,7 @@ var Db = /** @class */ (function () {
                                     if (i >= skip) {
                                         result.push(value);
                                     }
-                                    if (limit && i === limit && !search.greed) {
+                                    if (limit && i === limit - 1 && !search.greed) {
                                         ids = [];
                                         return [3 /*break*/, 19];
                                     }

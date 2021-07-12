@@ -167,6 +167,7 @@ class NgramIndice {
         let isLoad = false;
         const self = this;
         let result;
+        const chunkSize = 20;
         const load = async () => {
             if (isLoad) {
                 return;
@@ -180,15 +181,18 @@ class NgramIndice {
                 return sum;
             }, new Map());
             result = self.postFilter(combineWeights, tokens);
+            result.reverse();
             isLoad = true;
         };
         return {
             [Symbol.asyncIterator]() {
                 return {
                     async next() {
-                        if (!isLoad) {
+                        if (!result || result.length) {
                             await load();
-                            return { done: false, value: result };
+                            const currentChunkSize = Math.min(chunkSize, result.length);
+                            const value = result.splice(-currentChunkSize, currentChunkSize);
+                            return { done: false, value };
                         }
                         else {
                             return { done: true, value: undefined };

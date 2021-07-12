@@ -66,7 +66,9 @@ async function* intersectAsyncIterable(iterable) {
                         subResults.push(v);
                     }
                 }
-                yield subResults;
+                if (subResults.length) {
+                    yield subResults;
+                }
             }
         }
     }

@@ -182,10 +182,19 @@ class SimpleIndice {
         let map = new Map();
         this.keys.forEach((key) => {
             const value = this.indices.get(key);
-            if (size > chunkSize) {
+            if (size >= chunkSize) {
                 result.push(SimpleIndice.deserialize(map, options));
                 size = value.length;
                 map = new Map([[key, value]]);
+            }
+            else if (size + value.length > chunkSize) {
+                while (value.length) {
+                    const leftValue = value.splice(0, chunkSize - size);
+                    map.set(key, leftValue);
+                    result.push(SimpleIndice.deserialize(map, options));
+                    map = new Map();
+                    size = 0;
+                }
             }
             else {
                 size = size + value.length;

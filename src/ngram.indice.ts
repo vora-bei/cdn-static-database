@@ -150,13 +150,24 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         let map = new Map<string, T[]>();
         this.keys.forEach((key) => {
             const value = this.indices.get(key)!;
-            if (size > chunkSize) {
+            if (size >= chunkSize) {
                 result.push(NgramIndice.deserialize<T, string>(
                     map,
                     options
                 ))
-                size = 0;
-                map = new Map();
+                size = value.length;
+                map = new Map([[key, value]]);
+            } else if(size + value.length > chunkSize) {
+                while(value.length) {
+                    const leftValue = value.splice(0, chunkSize - size);
+                    map.set(key, leftValue);
+                    result.push(NgramIndice.deserialize<T, string>(
+                        map,
+                        options
+                    ));
+                    map = new Map();
+                    size = 0;
+                }
             } else {
                 size = size + value.length;
                 map.set(key, value);

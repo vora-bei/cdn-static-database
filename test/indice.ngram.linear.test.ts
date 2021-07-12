@@ -25,7 +25,7 @@ test('search indices' , async () => {
     expect(resMovies.some(text=> text.includes("Paradise"))).toBeTruthy();
     expect(resMovies.some(text=> text.includes("Parad"))).toBeTruthy();
     expect(resMovies.some(text=> text.includes("Conquest"))).toBeTruthy();
-    expect(results).toHaveLength(70)
+    expect(results).toHaveLength(86)
 });
 
 

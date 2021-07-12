@@ -69,9 +69,10 @@ export async function* intersectAsyncIterable(iterable: AsyncIterable<any[]>[]) 
                         [...combineResults.values()].forEach(c => c.delete(v));
                         subResults.push(v);
                     }
-                     
                 }
-                yield subResults;             
+                if(subResults.length){
+                    yield subResults;
+                }        
             }
         }
     } finally {

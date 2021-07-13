@@ -173,32 +173,53 @@ class NgramIndice {
     }
     cursorAll(indices, value, operator = '$eq') {
         const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
-        const list$ = Promise.all(indices.map((indice) => indice.preFilter(tokens, operator)));
+        let count = indices.length;
+        const $promises = indices.map((indice) => indice.preFilter(tokens, operator))
+            .map(($subResult, index) => {
+            return $subResult.then(result => ({
+                index,
+                result,
+            }));
+        });
         let isLoad = false;
+        let allLoad = false;
         const self = this;
-        let result;
+        let result = [];
+        let duplicates = new Set();
         const chunkSize = 20;
+        let subResults = [];
         const load = async () => {
+            const never = new Promise(() => { });
             if (isLoad) {
                 return;
             }
-            const list = await list$;
-            const combineWeights = list.reduce((sum, weights) => {
-                weights.forEach((value, key) => {
-                    const count = sum.get(key) || 0;
-                    sum.set(key, count + value);
-                });
-                return sum;
-            }, new Map());
-            result = self.postFilter(combineWeights, tokens);
-            result.reverse();
             isLoad = true;
+            while (count) {
+                const { index, result: res } = await Promise.race($promises);
+                count--;
+                subResults[index] = res;
+                $promises[index] = never;
+                const combineWeights = subResults
+                    .filter(e => !!e)
+                    .reduce((sum, weights) => {
+                    weights.forEach((value, key) => {
+                        const weight = sum.get(key) || 0;
+                        sum.set(key, weight + value);
+                    });
+                    return sum;
+                }, new Map());
+                const subResult = self.postFilter(combineWeights, tokens)
+                    .filter(r => !duplicates.has(r));
+                subResult.reverse();
+                result = [...subResult, ...result];
+            }
+            allLoad = true;
         };
         return {
             [Symbol.asyncIterator]() {
                 return {
                     async next() {
-                        if (!result || result.length) {
+                        if (!allLoad) {
                             await load();
                             const currentChunkSize = Math.min(chunkSize, result.length);
                             const value = result.splice(-currentChunkSize, currentChunkSize);

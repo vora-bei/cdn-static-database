@@ -206,52 +206,37 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
                 }));
             });
 
-        let isLoad = false;
-        let allLoad = false;
         const self = this;
         let result: T[] = [];
         let duplicates: Set<T> = new Set();
-        const chunkSize = 20;
         let subResults: Map<T, number>[] = [];
-        const load = async () => {
-            const never: Promise<{
-                index: any;
-                result: Map<T, number>;
-            }> = new Promise(() => { });
-            if (isLoad) {
-                return;
-            }
-            isLoad = true;
-            while (count) {
-                const { index, result: res } = await Promise.race($promises);
-                count--;
-                subResults[index] = res;
-                $promises[index] = never;
-                const combineWeights = subResults
-                    .filter(e => !!e)
-                    .reduce((sum, weights) => {
-                        weights.forEach((value, key) => {
-                            const weight = sum.get(key) || 0
-                            sum.set(key, weight + value);
-                        })
-                        return sum;
-                    }, new Map());
-                const subResult = self.postFilter(combineWeights, tokens)
-                    .filter(r => !duplicates.has(r));
-                subResult.reverse()
-                result = [...subResult, ...result];
-            }
-            allLoad = true;
-        }
+        const never: Promise<{
+            index: any;
+            result: Map<T, number>;
+        }> = new Promise(() => { });
         return {
             [Symbol.asyncIterator]() {
                 return {
                     async next() {
-                        if (!allLoad) {
-                            await load()
-                            const currentChunkSize = Math.min(chunkSize, result.length);
-                            const value = result.splice(-currentChunkSize, currentChunkSize);
-                            return { done: false, value };
+                        if (count > 0) {
+                            const { index, result: res } = await Promise.race($promises);
+                            count--;
+                            subResults[index] = res;
+                            $promises[index] = never;
+                            const combineWeights = subResults
+                                .filter(e => !!e)
+                                .reduce((sum, weights) => {
+                                    weights.forEach((value, key) => {
+                                        const weight = sum.get(key) || 0
+                                        sum.set(key, weight + value);
+                                    })
+                                    return sum;
+                                }, new Map());
+                            const subResult = self.postFilter(combineWeights, tokens)
+                                .filter(r => !duplicates.has(r));
+                            subResult.reverse()
+                            result = [...subResult, ...result];
+                            return { done: false, value: result };
                         } else {
                             return { done: true, value: undefined };
                         }

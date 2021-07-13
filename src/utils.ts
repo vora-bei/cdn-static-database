@@ -63,7 +63,7 @@ export async function* intersectAsyncIterable(iterable: AsyncIterable<any[]>[]) 
                 let subResults: any[] = [];
                 for (let v of result.value) {
                     combineResult.add(v);
-                    if(iterable.length===1){
+                    if(iterable.length === 1){
                         subResults.push(v);
                     } else if ([...combineResults.values()].every(c => c.has(v))) {
                         [...combineResults.values()].forEach(c => c.delete(v));

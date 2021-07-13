@@ -184,7 +184,7 @@ class NgramIndice {
         const self = this;
         let result = [];
         let duplicates = new Set();
-        let subResults = [];
+        let combineWeights = new Map();
         const never = new Promise(() => { });
         return {
             [Symbol.asyncIterator]() {
@@ -193,16 +193,11 @@ class NgramIndice {
                         if (count > 0) {
                             const { index, result: res } = await Promise.race($promises);
                             count--;
-                            subResults[index] = res;
                             $promises[index] = never;
-                            const combineWeights = subResults
-                                .filter(e => !!e)
-                                .reduce((sum, weights) => {
-                                weights.forEach((value, key) => {
-                                    const weight = sum.get(key) || 0;
-                                    sum.set(key, weight + value);
-                                });
-                                return sum;
+                            res
+                                .forEach((weight, key) => {
+                                const value = combineWeights.get(key) || 0;
+                                combineWeights.set(key, weight + value);
                             }, new Map());
                             const subResult = self.postFilter(combineWeights, tokens)
                                 .filter(r => !duplicates.has(r));

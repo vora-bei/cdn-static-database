@@ -209,7 +209,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         const self = this;
         let result: T[] = [];
         let duplicates: Set<T> = new Set();
-        let subResults: Map<T, number>[] = [];
+        let combineWeights: Map<T, number> = new Map();
         const never: Promise<{
             index: any;
             result: Map<T, number>;
@@ -221,16 +221,11 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
                         if (count > 0) {
                             const { index, result: res } = await Promise.race($promises);
                             count--;
-                            subResults[index] = res;
                             $promises[index] = never;
-                            const combineWeights = subResults
-                                .filter(e => !!e)
-                                .reduce((sum, weights) => {
-                                    weights.forEach((value, key) => {
-                                        const weight = sum.get(key) || 0
-                                        sum.set(key, weight + value);
-                                    })
-                                    return sum;
+                            res
+                                .forEach((weight, key) => {
+                                    const value = combineWeights.get(key) || 0;
+                                    combineWeights.set(key, weight + value);
                                 }, new Map());
                             const subResult = self.postFilter(combineWeights, tokens)
                                 .filter(r => !duplicates.has(r));

@@ -22,7 +22,11 @@ export const restoreSharedIndices = async <T, P>(
         return response.json();
     }
     const load = async (options: { id: T }) => {
-        const response = await fetch(`${baseUrl}/${id}/index.json`);
+        const response = await fetch(`${baseUrl}/${id}/index.json`, {
+            method: 'GET',
+            credentials: 'include',
+            mode: 'no-cors',
+        });
         return response.json();
     }
     return deserializeShared(

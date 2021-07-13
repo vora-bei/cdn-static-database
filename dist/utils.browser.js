@@ -7,7 +7,11 @@ const restoreSharedIndices = async ({ id, baseUrl, deserialize, deserializeShare
         return response.json();
     };
     const load = async (options) => {
-        const response = await fetch(`${baseUrl}/${id}/index.json`);
+        const response = await fetch(`${baseUrl}/${id}/index.json`, {
+            method: 'GET',
+            credentials: 'include',
+            mode: 'no-cors',
+        });
         return response.json();
     };
     return deserializeShared({ id, load }, (options) => deserialize({ ...options, load: loadChunk }));

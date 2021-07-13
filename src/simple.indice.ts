@@ -183,7 +183,7 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
     }
     public spread(chunkSize: number = CHUNK_SIZE_DEFAULT): ISpreadIndice<T, P>[] {
         const { id, ...options } = this.options;
-
+        const chunkSizeMax = chunkSize * 10;
         const result: ISpreadIndice<T, P>[] = [];
         let size = 0;
         let map = new Map<P, T[]>();
@@ -196,9 +196,9 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
                 ))
                 size = value.length;
                 map = new Map([[key, value]]);
-            } else if(size + value.length > chunkSize) {
+            } else if(size + value.length > chunkSizeMax) {
                 while(value.length) {
-                    const leftValue = value.splice(0, chunkSize - size);
+                    const leftValue = value.splice(0, chunkSizeMax - size);
                     map.set(key, leftValue);
                     result.push(SimpleIndice.deserialize<T, P>(
                         map,

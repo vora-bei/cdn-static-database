@@ -144,7 +144,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
     }
     public spread(chunkSize: number = CHUNK_SIZE_DEFAULT): ISpreadIndice<T, string>[] {
         const { id, ...options } = this.options;
-
+        const chunkSizeMax = chunkSize * 10;
         const result: ISpreadIndice<T, string>[] = [];
         let size = 0;
         let map = new Map<string, T[]>();
@@ -157,9 +157,9 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
                 ))
                 size = value.length;
                 map = new Map([[key, value]]);
-            } else if(size + value.length > chunkSize) {
+            } else if(size + value.length >  chunkSizeMax) {
                 while(value.length) {
-                    const leftValue = value.splice(0, chunkSize - size);
+                    const leftValue = value.splice(0, chunkSizeMax - size);
                     map.set(key, leftValue);
                     result.push(NgramIndice.deserialize<T, string>(
                         map,

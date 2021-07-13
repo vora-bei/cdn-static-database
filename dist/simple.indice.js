@@ -177,6 +177,7 @@ class SimpleIndice {
     }
     spread(chunkSize = CHUNK_SIZE_DEFAULT) {
         const { id, ...options } = this.options;
+        const chunkSizeMax = chunkSize * 10;
         const result = [];
         let size = 0;
         let map = new Map();
@@ -187,9 +188,9 @@ class SimpleIndice {
                 size = value.length;
                 map = new Map([[key, value]]);
             }
-            else if (size + value.length > chunkSize) {
+            else if (size + value.length > chunkSizeMax) {
                 while (value.length) {
-                    const leftValue = value.splice(0, chunkSize - size);
+                    const leftValue = value.splice(0, chunkSizeMax - size);
                     map.set(key, leftValue);
                     result.push(SimpleIndice.deserialize(map, options));
                     map = new Map();

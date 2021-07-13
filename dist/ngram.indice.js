@@ -182,7 +182,7 @@ class NgramIndice {
             }));
         });
         const self = this;
-        let result = [];
+        let subResult = [];
         let duplicates = new Set();
         let combineWeights = new Map();
         const never = new Promise(() => { });
@@ -190,7 +190,8 @@ class NgramIndice {
             [Symbol.asyncIterator]() {
                 return {
                     async next() {
-                        if (count > 0) {
+                        subResult = [];
+                        while (count > 0) {
                             const { index, result: res } = await Promise.race($promises);
                             count--;
                             $promises[index] = never;
@@ -199,15 +200,14 @@ class NgramIndice {
                                 const value = combineWeights.get(key) || 0;
                                 combineWeights.set(key, weight + value);
                             }, new Map());
-                            const subResult = self.postFilter(combineWeights, tokens)
+                            subResult = self.postFilter(combineWeights, tokens)
                                 .filter(r => !duplicates.has(r));
                             subResult.reverse();
-                            result = [...subResult, ...result];
-                            return { done: false, value: result };
+                            if (subResult.length) {
+                                return { done: false, value: subResult };
+                            }
                         }
-                        else {
-                            return { done: true, value: undefined };
-                        }
+                        return { done: true, value: undefined };
                     }
                 };
             }

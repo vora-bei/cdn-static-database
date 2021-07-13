@@ -207,7 +207,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
             });
 
         const self = this;
-        let result: T[] = [];
+        let subResult: T[] = [];
         let duplicates: Set<T> = new Set();
         let combineWeights: Map<T, number> = new Map();
         const never: Promise<{
@@ -218,7 +218,8 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
             [Symbol.asyncIterator]() {
                 return {
                     async next() {
-                        if (count > 0) {
+                        subResult = [];
+                        while (count > 0) {
                             const { index, result: res } = await Promise.race($promises);
                             count--;
                             $promises[index] = never;
@@ -227,14 +228,15 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
                                     const value = combineWeights.get(key) || 0;
                                     combineWeights.set(key, weight + value);
                                 }, new Map());
-                            const subResult = self.postFilter(combineWeights, tokens)
+                            subResult = self.postFilter(combineWeights, tokens)
                                 .filter(r => !duplicates.has(r));
-                            subResult.reverse()
-                            result = [...subResult, ...result];
-                            return { done: false, value: result };
-                        } else {
-                            return { done: true, value: undefined };
-                        }
+                            subResult.reverse();
+                            if(subResult.length){
+                                return { done: false, value: subResult };
+                            }
+                        } 
+                        return { done: true, value: undefined };
+                        
                     }
                 }
             }

@@ -17,6 +17,15 @@ class Range {
     has(token) {
         return token >= this.left && token <= this.right;
     }
+    match(token) {
+        const match = `${token}`.match(/\/^[\w\d]+/);
+        if (!match) {
+            return false;
+        }
+        const m = match[0];
+        return (m >= `${this.left}` || `${this.left}`.startsWith(m))
+            && (m <= `${this.right}` || `${this.right}`.startsWith(m));
+    }
     lt(token) {
         return token >= this.right || this.has(token);
     }
@@ -38,6 +47,8 @@ class Range {
             case '$lt':
             case '$lte':
                 return this.gt(token);
+            case '$regex':
+                return this.match(`${token}`);
             default:
                 return this.has(token);
         }

@@ -8,7 +8,7 @@ const mingo_1 = __importDefault(require("mingo"));
 const util_1 = require("mingo/util");
 const utils_1 = require("./utils");
 const comparableOperators = new Set([
-    '$eq', '$gt', '$gte', '$in', '$lt', '$lte', '$ne', '$nin'
+    '$eq', '$gt', '$gte', '$in', '$lt', '$lte', '$ne', '$nin', '$regex'
 ]);
 const logicalOperators = new Set([
     '$and', '$or'
@@ -82,7 +82,7 @@ class Db {
                 delete criteria[key];
             }
             else if (util_1.isOperator(key)) {
-                const indiceOptions = this.schema.indices.find(o => o.path === (context === null || context === void 0 ? void 0 : context.path));
+                const indiceOptions = this.schema.indices.find(o => this.testIndice(o, key, value, context === null || context === void 0 ? void 0 : context.path));
                 if (indiceOptions) {
                     const exists = sortIndices.get(indiceOptions.indice) || {};
                     indices.set(indiceOptions.indice, { ...exists, ...indiceOptions, value: value, op: key });
@@ -197,6 +197,14 @@ class Db {
         }
         console.timeEnd('find');
         return res.all();
+    }
+    testIndice(indice, key, value, path) {
+        const pathEqual = indice.path === path;
+        if (key !== '$regex') {
+            return pathEqual;
+        }
+        const regex = value.toString();
+        return !!regex.match(/\/^[\w\d]+/);
     }
 }
 exports.Db = Db;

@@ -16,6 +16,15 @@ export class Range<T> {
     public has(token: T): boolean {
         return token >= this.left && token <= this.right;
     }
+    public match(token: string): boolean {
+        const match = `${token}`.match(/\/^[\w\d]+/);
+        if (!match) {
+            return false;
+        }
+        const m = match[0];
+        return (m >= `${this.left}` || `${this.left}`.startsWith(m))
+            && (m <= `${this.right}` || `${this.right}`.startsWith(m));
+    }
     public lt(token: T): boolean {
         return token >= this.right || this.has(token);
     }
@@ -36,6 +45,8 @@ export class Range<T> {
             case '$lt':
             case '$lte':
                 return this.gt(token);
+            case '$regex':
+                return this.match(`${token}`);
             default:
                 return this.has(token);
         }

@@ -147,6 +147,15 @@ test('{ continent: "Africa" }', async () => {
         20
     );
 });
+test('{ continent: " regex Africa" }', async () => {
+    debugger;
+    await expectEqualMingo(
+        { continent: { $regex: "/^Africa/" }},
+        undefined,
+        0,
+        20
+    );
+});
 test('{ not: "Africa" }', async () => {
     await expectEqualMingo(
         { not: "Africa" },
@@ -155,14 +164,14 @@ test('{ not: "Africa" }', async () => {
         20
     );
 });
-// test('{ continent: { $gte: "Oceania" } }, { continent: 1 }', async () => {
-//     await expectEqualMingo(
-//         { continent: { $gte: "Oceania" } },
-//         { continent: 1 },
-//         0,
-//         20
-//     );
-// });
+test('{ continent: { $gte: "Oceania" } }, { continent: 1 }', async () => {
+    await expectEqualMingo(
+        { continent: { $gte: "Oceania" } },
+        { continent: 1 },
+        0,
+        20
+    );
+});
 test('{}, { country: -1 }', async () => {
     await expectEqualMingo(
         {},

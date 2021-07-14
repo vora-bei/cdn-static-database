@@ -5,7 +5,7 @@ import { IIndiceOption, Schema } from "./schema";
 import { combineAsyncIterable, intersectAsyncIterable } from './utils'
 
 const comparableOperators = new Set([
-    '$eq', '$gt', '$gte', '$in', '$lt', '$lte', '$ne', '$nin'
+    '$eq', '$gt', '$gte', '$in', '$lt', '$lte', '$ne', '$nin','$regex'
 ])
 const logicalOperators = new Set([
     '$and', '$or'
@@ -30,7 +30,6 @@ export class Db {
             .filter((path) => !comparableOperators.has(path))
             .filter((path) => !logicalOperators.has(path));
         this.customOperators = new Set(operators)
-
     }
     buildIndexSearch(
         criteria: RawObject,
@@ -93,7 +92,7 @@ export class Db {
                 }
                 delete criteria[key]
             } else if (isOperator(key)) {
-                const indiceOptions = this.schema.indices.find(o => o.path === context?.path);
+                const indiceOptions = this.schema.indices.find(o => this.testIndice(o, key, value, context?.path!));
                 if (indiceOptions) {
                     const exists = sortIndices.get(indiceOptions.indice) || {};
                     indices.set(indiceOptions.indice, { ...exists, ...indiceOptions, value: value as any, op: key })
@@ -213,6 +212,15 @@ export class Db {
         }
         console.timeEnd('find')
         return res.all() as T[];
+    }
+
+    private testIndice( indice: IIndiceOption, key: string, value: any, path: string) {
+        const pathEqual = indice.path === path;
+        if(key !== '$regex'){
+            return pathEqual;
+        }
+        const regex = (value as string).toString();
+        return !!regex.match(/\/^[\w\d]+/);
     }
 
 }

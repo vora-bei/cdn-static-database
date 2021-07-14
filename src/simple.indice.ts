@@ -82,6 +82,9 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
             case '$gt': {
                 return this.getIndicesFullScanOr(tokens, (a, b) => a > b, sort);
             }
+            case '$regex': {
+                return this.getIndicesFullScanOr(tokens, (a, b) =>new RegExp(`${b}`).test(`${a}`), sort);
+            }
             case '$nin':
             case '$ne': {
                 return this.getIndicesFullScanAnd(tokens, (a, b) => a != b, sort);
@@ -96,6 +99,7 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
                     }
                     return sum;
                 }, [] as T[]);
+                
         }
     }
     public getIndicesFullScanOr(tokens: P[], cond: (a: P, b: P) => boolean, sort: 1 | -1 = 1) {

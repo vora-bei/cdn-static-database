@@ -204,7 +204,7 @@ class Db {
             return pathEqual;
         }
         const regex = value.toString();
-        return !!regex.match(/\/^[\w\d]+/);
+        return pathEqual && !!regex.match(/\^[\w\d]+/);
     }
 }
 exports.Db = Db;

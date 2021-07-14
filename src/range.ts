@@ -17,13 +17,14 @@ export class Range<T> {
         return token >= this.left && token <= this.right;
     }
     public match(token: string): boolean {
-        const match = `${token}`.match(/\/^[\w\d]+/);
+        const match = `${token}`.match(/\^([\w\d]+)/);
         if (!match) {
             return false;
         }
-        const m = match[0];
-        return (m >= `${this.left}` || `${this.left}`.startsWith(m))
+        const m = match[1];
+        const result = (m >= `${this.left}` || `${this.left}`.startsWith(m))
             && (m <= `${this.right}` || `${this.right}`.startsWith(m));
+        return result;    
     }
     public lt(token: T): boolean {
         return token >= this.right || this.has(token);

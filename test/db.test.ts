@@ -148,9 +148,8 @@ test('{ continent: "Africa" }', async () => {
     );
 });
 test('{ continent: " regex Africa" }', async () => {
-    debugger;
     await expectEqualMingo(
-        { continent: { $regex: "/^Africa/" }},
+        { continent: { $regex: "^Afr" }},
         undefined,
         0,
         20

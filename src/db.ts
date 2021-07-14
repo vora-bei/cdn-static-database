@@ -220,7 +220,7 @@ export class Db {
             return pathEqual;
         }
         const regex = (value as string).toString();
-        return !!regex.match(/\/^[\w\d]+/);
+        return pathEqual && !!regex.match(/\^[\w\d]+/);
     }
 
 }

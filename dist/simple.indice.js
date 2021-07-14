@@ -78,7 +78,9 @@ class SimpleIndice {
                 return this.getIndicesFullScanOr(tokens, (a, b) => a > b, sort);
             }
             case '$regex': {
-                return this.getIndicesFullScanOr(tokens, (a, b) => new RegExp(`${b}`).test(`${a}`), sort);
+                return this.getIndicesFullScanOr(tokens, (a, b) => {
+                    return new RegExp(`${b}`).test(`${a}`);
+                }, sort);
             }
             case '$nin':
             case '$ne': {

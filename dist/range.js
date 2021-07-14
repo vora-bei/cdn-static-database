@@ -18,13 +18,14 @@ class Range {
         return token >= this.left && token <= this.right;
     }
     match(token) {
-        const match = `${token}`.match(/\/^[\w\d]+/);
+        const match = `${token}`.match(/\^([\w\d]+)/);
         if (!match) {
             return false;
         }
-        const m = match[0];
-        return (m >= `${this.left}` || `${this.left}`.startsWith(m))
+        const m = match[1];
+        const result = (m >= `${this.left}` || `${this.left}`.startsWith(m))
             && (m <= `${this.right}` || `${this.right}`.startsWith(m));
+        return result;
     }
     lt(token) {
         return token >= this.right || this.has(token);

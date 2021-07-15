@@ -21,6 +21,7 @@ export declare class Db {
     find<T extends any>(criteria: RawObject, sort?: {
         [k: string]: 1 | -1;
     }, skip?: number, limit?: number): Promise<T[]>;
+    private indiceCursor;
     private testIndice;
 }
 export {};

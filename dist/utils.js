@@ -1,12 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.intersectAsyncIterable = exports.combineAsyncIterable = void 0;
+exports.intersectAsyncIterable = exports.combineAsyncIterable = exports.getNext = void 0;
 function getNext(asyncIterator, index) {
     return asyncIterator.next().then(result => ({
         index,
         result,
     }));
 }
+exports.getNext = getNext;
 const never = new Promise(() => { });
 async function* combineAsyncIterable(iterable) {
     const asyncIterators = Array.from(iterable, o => o[Symbol.asyncIterator]());

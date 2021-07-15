@@ -15,7 +15,7 @@ beforeAll(async () => {
     const range = new RangeLinearIndice<number, string>({ indice: indices, id: 'text', chunkSize: 30 });
 
     const primaryIndices = new SimpleIndice<object, number>({ isLoaded: false });
-    countries.forEach((country, key) => primaryIndices.add(country, key));
+    countries.forEach((country, key) => primaryIndices.add({ ...country, id: key }, key));
     const primaryRange = new RangeLinearIndice<object, number>({ indice: primaryIndices, id: 'primary', chunkSize: 30 });
 
     const simpleIndices = new SimpleIndice<number, string>({ isLoaded: false });
@@ -43,7 +43,9 @@ beforeAll(async () => {
             SimpleIndice.deserialize
         ),
     ]);
-    contriesDb = new Db(new Schema(primary,
+    contriesDb = new Db(new Schema(
+        'id',
+        primary,
         [
             { indice: text, path: "$text" },
             { indice: simple, path: 'continent' }
@@ -131,6 +133,13 @@ test('{ continent: { $gt: "Oceania" } }', async () => {
         0,
         20
     );
+});
+test('{ id: {$lt: 10} }', async () => {
+    const result = await contriesDb.find({ id: { $lt: 10 } }, undefined,
+        0,
+        20
+    )
+    expect(result).toHaveLength(10)
 });
 test('{ $text: "Angola", continent: "Africa" }', async () => {
     await expectTextMingo(

@@ -2,10 +2,10 @@ import { ISharedIndice } from "interfaces";
 import mingo from "mingo";
 import { RawObject, isOperator, isArray, isObject } from "mingo/util";
 import { IIndiceOption, Schema } from "./schema";
-import { combineAsyncIterable, intersectAsyncIterable } from './utils'
+import { combineAsyncIterable, getNext, intersectAsyncIterable } from './utils'
 
 const comparableOperators = new Set([
-    '$eq', '$gt', '$gte', '$in', '$lt', '$lte', '$ne', '$nin','$regex'
+    '$eq', '$gt', '$gte', '$in', '$lt', '$lte', '$ne', '$nin', '$regex'
 ])
 const logicalOperators = new Set([
     '$and', '$or'
@@ -110,7 +110,9 @@ export class Db {
         return () => {
             const values = [...indices.values()];
             const simpleIterable = values
-                .map(({ indice, value, order, op }) => indice.cursor(value, op, order));
+                .map(({ indice, value, order, op }) => {
+                    return this.indiceCursor(indice, value, order, op);
+                });
             const subResult: ResultIndiceSearch[] = subIterables.map(it => it());
             const subGreed = subResult.every(({ greed }) => greed);
             const missed = subResult.every(({ missed }) => missed);
@@ -121,7 +123,7 @@ export class Db {
             }, new Set<string>());
             const paths = new Set([...values.map(({ path }) => path!), ...subPaths]);
             const sortedIterable = [...sortIndices.values()].filter(({ path }) => !paths.has(path!) && isRoot)
-                .map(({ indice, value, order, op }) => indice.cursor(value, op, order));
+                .map(({ indice, value, order, op }) => this.indiceCursor(indice, value, order, op));
             const missedAll = !sortedIterable.length && !indices.size && missed;
             const greedAll = greed && subGreed;
             if (isRoot) {
@@ -141,6 +143,7 @@ export class Db {
             };
         }
     }
+
     async find<T extends any>(criteria: RawObject, sort?: { [k: string]: 1 | -1 }, skip: number = 0, limit?: number) {
         console.time('find')
         const chunkSize = limit || 20;
@@ -151,7 +154,7 @@ export class Db {
         let i = 0;
         if (search.missed) {
             for await (let values of primaryIndice.cursor()) {
-                for(let value of values){
+                for (let value of values) {
                     if (query.test(value) && i >= skip) {
                         i++;
                         result.push(value)
@@ -214,7 +217,30 @@ export class Db {
         return res.all() as T[];
     }
 
-    private testIndice( options: IIndiceOption, key: string, value: any, path: string) {
+    private indiceCursor(indice: ISharedIndice<any, any>, value: any, order?: 1 | -1, op?: string): AsyncIterable<any[]> {
+        const { idAttr } = this.schema;
+        const iterator = indice.cursor(value, op, order);
+        if (this.schema.primaryIndice !== indice) {
+            return iterator;
+        }
+        return {
+            [Symbol.asyncIterator]() {
+                return {
+                    async next() {
+                        const { result } = await getNext(iterator[Symbol.asyncIterator](), 0);
+                        if (!result.done) {
+                            return { done: false, value: result.value.map((it) => it[idAttr]) };
+                        } else {
+                            return { done: true, value: undefined };
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    private testIndice(options: IIndiceOption, key: string, value: any, path: string) {
         const pathEqual = options.path === path;
         return pathEqual && options.indice.testIndice(key, value);
     }

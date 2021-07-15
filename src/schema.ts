@@ -10,8 +10,10 @@ export interface IIndiceOption {
 export class Schema {
     primaryIndice: ISharedIndice<any, any>;
     indices: IIndiceOption[];
-    constructor(primaryIndice: ISharedIndice<any, any>, indices: IIndiceOption[]) {
-        this.indices = indices;
+    idAttr: string;
+    constructor(idAttr: string, primaryIndice: ISharedIndice<any, any>, indices: IIndiceOption[]) {
+        this.indices = [...indices, {indice: primaryIndice, path: idAttr}];
         this.primaryIndice = primaryIndice;
+        this.idAttr = idAttr;
     }
 }

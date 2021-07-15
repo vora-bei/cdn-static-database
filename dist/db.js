@@ -102,7 +102,9 @@ class Db {
         return () => {
             const values = [...indices.values()];
             const simpleIterable = values
-                .map(({ indice, value, order, op }) => indice.cursor(value, op, order));
+                .map(({ indice, value, order, op }) => {
+                return this.indiceCursor(indice, value, order, op);
+            });
             const subResult = subIterables.map(it => it());
             const subGreed = subResult.every(({ greed }) => greed);
             const missed = subResult.every(({ missed }) => missed);
@@ -113,7 +115,7 @@ class Db {
             }, new Set());
             const paths = new Set([...values.map(({ path }) => path), ...subPaths]);
             const sortedIterable = [...sortIndices.values()].filter(({ path }) => !paths.has(path) && isRoot)
-                .map(({ indice, value, order, op }) => indice.cursor(value, op, order));
+                .map(({ indice, value, order, op }) => this.indiceCursor(indice, value, order, op));
             const missedAll = !sortedIterable.length && !indices.size && missed;
             const greedAll = greed && subGreed;
             if (isRoot) {
@@ -197,6 +199,28 @@ class Db {
         }
         console.timeEnd('find');
         return res.all();
+    }
+    indiceCursor(indice, value, order, op) {
+        const { idAttr } = this.schema;
+        const iterator = indice.cursor(value, op, order);
+        if (this.schema.primaryIndice !== indice) {
+            return iterator;
+        }
+        return {
+            [Symbol.asyncIterator]() {
+                return {
+                    async next() {
+                        const { result } = await utils_1.getNext(iterator[Symbol.asyncIterator](), 0);
+                        if (!result.done) {
+                            return { done: false, value: result.value.map((it) => it[idAttr]) };
+                        }
+                        else {
+                            return { done: true, value: undefined };
+                        }
+                    }
+                };
+            }
+        };
     }
     testIndice(options, key, value, path) {
         const pathEqual = options.path === path;

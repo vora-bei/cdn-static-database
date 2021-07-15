@@ -1,5 +1,5 @@
 
- function getNext(asyncIterator: AsyncIterator<any[]>, index) {
+ export function getNext(asyncIterator: AsyncIterator<any[]>, index) {
     return asyncIterator.next().then(result => ({
         index,
         result,

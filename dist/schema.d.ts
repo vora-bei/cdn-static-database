@@ -9,6 +9,7 @@ export interface IIndiceOption {
 export declare class Schema {
     primaryIndice: ISharedIndice<any, any>;
     indices: IIndiceOption[];
-    constructor(primaryIndice: ISharedIndice<any, any>, indices: IIndiceOption[]);
+    idAttr: string;
+    constructor(idAttr: string, primaryIndice: ISharedIndice<any, any>, indices: IIndiceOption[]);
 }
 //# sourceMappingURL=schema.d.ts.map

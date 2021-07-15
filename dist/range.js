@@ -18,13 +18,24 @@ class Range {
         return token >= this.left && token <= this.right;
     }
     match(token) {
-        const match = `${token}`.match(/\^([\w\d]+)/);
+        let source;
+        let ignoreCase = false;
+        if (token instanceof RegExp) {
+            source = token.source;
+            ignoreCase = token.ignoreCase;
+        }
+        else {
+            source = token.toString();
+        }
+        const match = source.match(/\^([\w\d]+)/);
         if (!match) {
             return false;
         }
-        const m = match[1];
-        const result = (m >= `${this.left}` || `${this.left}`.startsWith(m))
-            && (m <= `${this.right}` || `${this.right}`.startsWith(m));
+        const m = ignoreCase ? match[1].toLowerCase() : match[1];
+        const left = ignoreCase ? `${this.left}`.toLowerCase() : `${this.left}`;
+        const right = ignoreCase ? `${this.right}`.toLowerCase() : `${this.right}`;
+        const result = (m >= left || left.startsWith(m))
+            && (m <= right || right.startsWith(m));
         return result;
     }
     lt(token) {
@@ -49,7 +60,7 @@ class Range {
             case '$lte':
                 return this.gt(token);
             case '$regex':
-                return this.match(`${token}`);
+                return this.match(token);
             default:
                 return this.has(token);
         }

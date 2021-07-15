@@ -198,13 +198,9 @@ class Db {
         console.timeEnd('find');
         return res.all();
     }
-    testIndice(indice, key, value, path) {
-        const pathEqual = indice.path === path;
-        if (key !== '$regex') {
-            return pathEqual;
-        }
-        const regex = value.toString();
-        return pathEqual && !!regex.match(/\^[\w\d]+/);
+    testIndice(options, key, value, path) {
+        const pathEqual = options.path === path;
+        return pathEqual && options.indice.testIndice(key, value);
     }
 }
 exports.Db = Db;

@@ -25,5 +25,6 @@ export interface ISpreadIndice<T, P> extends IIndice<T, P> {
 export interface ISharedIndice<T, P> extends IBaseIndice<T, P>, ISerializeIndex {
     indices: Map<any, ISpreadIndice<T, P>>;
     cursor(value?: P | P[], operator?: string, sort?: 1 | -1): AsyncIterable<T[]>;
+    testIndice(key: string, value: any): boolean;
 }
 //# sourceMappingURL=interfaces.d.ts.map

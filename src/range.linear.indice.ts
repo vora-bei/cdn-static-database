@@ -40,6 +40,17 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         const { load, ...options } = this.options;
         return { self: options, spread: { ...this.indice?.serializeOptions(), isLoaded: false } };
     }
+    testIndice( key: string, value: any) {
+        if(key !== '$regex'){
+            return true;
+        }
+        let source: string;
+        if(value instanceof RegExp){
+            source = value.source
+        }
+        source = (value as string).toString();
+        return !!source.match(/\^[\w\d]+/);
+    }
 
     static deserialize<T, P>(
         data: [[P, P], T][],

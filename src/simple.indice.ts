@@ -84,7 +84,8 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
             }
             case '$regex': {
                 return this.getIndicesFullScanOr(tokens, (a, b) => {
-                   return new RegExp(`${b}`).test(`${a}`)
+                   const regexp = b instanceof RegExp? b: new RegExp(`${b}`);
+                   return regexp.test(`${a}`)
                 }, sort);
 
             }
@@ -256,7 +257,7 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
             [Symbol.asyncIterator]() {
                 return {
                     async next() {
-                        if (indiceIndex === 0 && !result) {
+                        if (indiceIndex === 0 && !result && indiceIndex <= indices.length - 1) {
                             data = await indices[indiceIndex].preFilter(tokens, operator, sort);
                             result = [...data.keys()];
                             result.reverse();

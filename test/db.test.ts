@@ -57,6 +57,7 @@ const expectEqualMingo = async (query: any, sort: any, skip: number, count: numb
         skip,
         count
     )
+    expect(actual.length).toBeGreaterThan(0)
     expect(actual).toEqual(new mingo.Query(query).find(actual).sort(sort).limit(count).all());
 }
 const expectNinMingo = async (query: any, sort: any, skip: number, count: number) => {
@@ -133,7 +134,7 @@ test('{ continent: { $gt: "Oceania" } }', async () => {
 });
 test('{ $text: "Angola", continent: "Africa" }', async () => {
     await expectTextMingo(
-        { $text: "Angoli", continent: {$in: ["Africa"]} },
+        { $text: "Angoli", continent: { $in: ["Africa"] } },
         undefined,
         0,
         20
@@ -147,21 +148,35 @@ test('{ continent: "Africa" }', async () => {
         20
     );
 });
+test('{ continent: " regex Africa string" }', async () => {
+    await expectEqualMingo(
+        { continent: { $regex: "^Afr" } },
+        undefined,
+        0,
+        20
+    );
+});
 test('{ continent: " regex Africa" }', async () => {
     await expectEqualMingo(
-        { continent: { $regex: "^Afr" }},
+        { continent: { $regex: /^afr/i } },
         undefined,
         0,
         20
     );
 });
 test('{ not: "Africa" }', async () => {
-    await expectEqualMingo(
-        { not: "Africa" },
-        undefined,
+    const result = await contriesDb.find({ continent: { $regex: /^afa/i } }, undefined,
         0,
         20
-    );
+    )
+    expect(result).toHaveLength(0)
+});
+test('{ not: "Africa" }', async () => {
+    const result = await contriesDb.find({ not: "Africa" }, undefined,
+        0,
+        20
+    )
+    expect(result).toHaveLength(0)
 });
 test('{ continent: { $gte: "Oceania" } }, { continent: 1 }', async () => {
     await expectEqualMingo(
@@ -187,6 +202,10 @@ test('{}, { country: -1 }', async () => {
 //         20
 //     );
 // });
+test('{}, { continent: -1 }', async () => {
+    expect(true).toEqual(new mingo.Query({ a: /^abc/ }).test({ a: 'abc' }));
+
+});
 test('{ continent: { $in: ["Oceania", "Asia"] } }', async () => {
     await expectEqualMingo(
         { continent: { $in: ["Oceania", "Asia"] } },

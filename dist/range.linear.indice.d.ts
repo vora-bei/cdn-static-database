@@ -24,6 +24,7 @@ export declare class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
     };
     serializeData(): (string | P[])[][];
     serializeOptions(): ISerializeOptions<T, P>;
+    testIndice(key: string, value: any): boolean;
     static deserialize<T, P>(data: [[P, P], T][], options: ISerializeOptions<T, P>, deserialize: (data: any, options?: any) => ISpreadIndice<T, P>): ISharedIndice<T, P>;
     static lazy<T, P>(options: {
         id: string;

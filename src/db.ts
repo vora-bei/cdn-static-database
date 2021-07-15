@@ -214,13 +214,9 @@ export class Db {
         return res.all() as T[];
     }
 
-    private testIndice( indice: IIndiceOption, key: string, value: any, path: string) {
-        const pathEqual = indice.path === path;
-        if(key !== '$regex'){
-            return pathEqual;
-        }
-        const regex = (value as string).toString();
-        return pathEqual && !!regex.match(/\^[\w\d]+/);
+    private testIndice( options: IIndiceOption, key: string, value: any, path: string) {
+        const pathEqual = options.path === path;
+        return pathEqual && options.indice.testIndice(key, value);
     }
 
 }

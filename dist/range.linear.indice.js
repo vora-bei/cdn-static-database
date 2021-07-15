@@ -27,6 +27,17 @@ class RangeLinearIndice {
         const { load, ...options } = this.options;
         return { self: options, spread: { ...(_a = this.indice) === null || _a === void 0 ? void 0 : _a.serializeOptions(), isLoaded: false } };
     }
+    testIndice(key, value) {
+        if (key !== '$regex') {
+            return true;
+        }
+        let source;
+        if (value instanceof RegExp) {
+            source = value.source;
+        }
+        source = value.toString();
+        return !!source.match(/\^[\w\d]+/);
+    }
     static deserialize(data, options, deserialize) {
         const indices = new Map(data.map(([[left, right], id]) => {
             return [new range_1.Range(left, right), deserialize({ ...options.spread, id })];

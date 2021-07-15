@@ -16,15 +16,26 @@ export class Range<T> {
     public has(token: T): boolean {
         return token >= this.left && token <= this.right;
     }
-    public match(token: string): boolean {
-        const match = `${token}`.match(/\^([\w\d]+)/);
+    public match(token: any): boolean {
+        let source: string;
+        let ignoreCase = false;
+        if (token instanceof RegExp) {
+            source = token.source
+            ignoreCase = token.ignoreCase;
+        } else {
+            source = (token as string).toString();
+        }
+
+        const match = source.match(/\^([\w\d]+)/);
         if (!match) {
             return false;
         }
-        const m = match[1];
-        const result = (m >= `${this.left}` || `${this.left}`.startsWith(m))
-            && (m <= `${this.right}` || `${this.right}`.startsWith(m));
-        return result;    
+        const m = ignoreCase ? match[1].toLowerCase() : match[1];
+        const left = ignoreCase ?`${this.left}`.toLowerCase():`${this.left}`;
+        const right = ignoreCase ?`${this.right}`.toLowerCase():`${this.right}`;
+        const result = (m >= left || left.startsWith(m))
+            && (m <= right || right.startsWith(m));
+        return result;
     }
     public lt(token: T): boolean {
         return token >= this.right || this.has(token);
@@ -47,7 +58,7 @@ export class Range<T> {
             case '$lte':
                 return this.gt(token);
             case '$regex':
-                return this.match(`${token}`);
+                return this.match(token);
             default:
                 return this.has(token);
         }

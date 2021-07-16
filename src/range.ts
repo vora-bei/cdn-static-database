@@ -7,8 +7,8 @@ export class Range<T> {
     }
     static fromKeys<P>(indexes: P[]): Range<P> {
         const { left, right } = indexes.reduce<{ left: P | null, right: P | null }>((sum, val) => {
-            let left = sum.left === null ? val : sum.left;
-            let right = sum.right === null ? val : sum.right;
+            const left = sum.left === null ? val : sum.left;
+            const right = sum.right === null ? val : sum.right;
             return { left: left > val ? val : left, right: right < val ? val : right }
         }, { left: null, right: null });
         return new Range(left!, right!)

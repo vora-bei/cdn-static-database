@@ -10,14 +10,14 @@ const readFile = util.promisify(fs.readFile);
 const mkdir = util.promisify(fs.mkdir);
 const exists = util.promisify(fs.exists);
 
-export const saveSharedIndices = async <T, P>(indice: ISharedIndice<T, P>, publicPath: string = '.') => {
+export const saveSharedIndices = async <T, P>(indice: ISharedIndice<T, P>, publicPath = '.') => {
     const dir = join(publicPath, indice.id);
     const existDir = await exists(dir);
     if (!existDir) {
         await mkdir(dir)
     }
     await writeFile(join(dir, 'index.json'), JSON.stringify(indice.serialize()))
-    for (let [_, v] of indice.indices) {
+    for (const [_, v] of indice.indices) {
         await writeFile(
             join(dir, `chunk_${v.id}.json`),
             JSON.stringify({ data: v.serializeData(), options: { id: v.id } })

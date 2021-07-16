@@ -39,7 +39,7 @@ export class Db {
             path?: string,
             isRoot: boolean,
             indices: Map<ISharedIndice<any, any>, IIndiceOption>,
-            caches?: Map<any, object>
+            caches?: Map<any, Record<string, unknown>>
         }
     ): () => ResultIndiceSearch {
         const { isRoot = true, caches = new Map() } = context || {}
@@ -99,7 +99,7 @@ export class Db {
                 }
                 delete criteria[key]
             } else if (isOperator(key)) {
-                const indiceOptions = this.schema.indices.find(o => this.testIndice(o, key, value, context?.path!));
+                const indiceOptions = this.schema.indices.find(o => this.testIndice(o, key, value, context?.path));
                 if (indiceOptions) {
                     const exists = sortIndices.get(indiceOptions.indice) || {};
                     indices.set(indiceOptions.indice, { ...exists, ...indiceOptions, value: value as any, op: key })
@@ -152,19 +152,19 @@ export class Db {
         }
     }
 
-    async find<T extends any>(criteria: RawObject, sort?: { [k: string]: 1 | -1 }, skip: number = 0, limit?: number) {
+    async find<T extends any>(criteria: RawObject, sort?: { [k: string]: 1 | -1 }, skip = 0, limit?: number) {
         console.time('find')
         const chunkSize = limit || 20;
         const primaryIndice = this.schema.primaryIndice;
-        let search: ResultIndiceSearch = this.buildIndexSearch(criteria, sort)();
-        let result: any[] = [];
+        const search: ResultIndiceSearch = this.buildIndexSearch(criteria, sort)();
+        const result: any[] = [];
         const query = new mingo.Query(criteria);
         let i = 0;
         const caches = search.caches.values();
         const isEnough = () => limit && i === limit && !search.greed
         if (search.missed) {
-            for await (let values of primaryIndice.cursor()) {
-                for (let value of values) {
+            for await (const values of primaryIndice.cursor()) {
+                for (const value of values) {
                     if (query.test(value) && i >= skip) {
                         i++;
                         result.push(value)
@@ -176,7 +176,7 @@ export class Db {
             }
         } else {
             let ids: any[] = [];
-            for (let value of caches) {
+            for (const value of caches) {
                 if (query.test(value)) {
                     i++;
                     if (i >= skip) {
@@ -190,12 +190,12 @@ export class Db {
             }
             if (!isEnough()) {
                 loop:
-                for await (let subIds of search.result) {
+                for await (const subIds of search.result) {
                     ids.push(...subIds);
                     if (ids.length >= chunkSize) {
                         const searchIds = ids.filter(id => !search.caches.has(id));
                         const values = await primaryIndice.find(searchIds.splice(0, chunkSize));
-                        for (let value of [...values]) {
+                        for (const value of [...values]) {
                             if (query.test(value)) {
                                 i++;
                                 if (i >= skip) {
@@ -212,7 +212,7 @@ export class Db {
                 }
                 if (ids.length) {
                     const values = await primaryIndice.find(ids);
-                    for (let value of values) {
+                    for (const value of values) {
                         if (query.test(value)) {
                             i++;
                             if (i >= skip) {
@@ -242,7 +242,7 @@ export class Db {
         return res.all() as T[];
     }
 
-    private indiceCursor(indice: ISharedIndice<any, any>, value: any, caches: Map<any, object>, order?: 1 | -1, op?: string): AsyncIterable<any[]> {
+    private indiceCursor(indice: ISharedIndice<any, any>, value: any, caches: Map<any, Record<string, unknown>>, order?: 1 | -1, op?: string): AsyncIterable<any[]> {
         const { idAttr } = this.schema;
         const iterator = indice.cursor(value, op, order);
         if (this.schema.primaryIndice !== indice) {
@@ -266,7 +266,7 @@ export class Db {
 
     }
 
-    private testIndice(options: IIndiceOption, key: string, value: any, path: string) {
+    private testIndice(options: IIndiceOption, key: string, value: any, path?  : string) {
         const pathEqual = options.path === path;
         return pathEqual && options.indice.testIndice(key, value);
     }

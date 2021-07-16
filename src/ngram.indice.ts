@@ -2,7 +2,7 @@ import nGram from "n-gram";
 import { ISpreadIndice } from "./interfaces"
 const CHUNK_SIZE_DEFAULT = 100;
 const AUTO_LIMIT_FIND_PERCENT = 40;
-interface IOptions {
+interface IOptions extends Record<string, unknown> {
     id?: string;
     gramLen: number;
     actuationLimit: number;
@@ -30,7 +30,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         return keys;
     }
     public get id() {
-        return this.options.id!!;
+        return this.options.id!;
     }
     constructor({
         id = `${id_counter++}`,
@@ -66,7 +66,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
             this.indices.set(token, index);
         });
     }
-    serializeOptions(): Object {
+    serializeOptions(): IOptions {
         const { load, ...options } = this.options;
         return options;
     }
@@ -95,21 +95,21 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
     public getIndices(token: string, operator: string) {
         return this.indices.get(token);
     }
-    public async preFilter(tokens: string[], operator: string = "$eq"): Promise<Map<T, number>> {
+    public async preFilter(tokens: string[], operator = "$eq"): Promise<Map<T, number>> {
         const countResults: Map<T, number> = new Map();
         await this.load();
         tokens.forEach((token) => {
             const indices = this.getIndices(token, operator);
             if (indices) {
                 indices.forEach((id) => {
-                    let count = countResults.get(id) || 0;
+                    const count = countResults.get(id) || 0;
                     countResults.set(id, count + 1);
                 });
             }
         });
         return countResults;
     }
-    async find(value?: string | string[], operator: string = "$eq") {
+    async find(value?: string | string[], operator = "$eq") {
         let tokens: string[] = []
         if (value !== undefined) {
             tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
@@ -182,7 +182,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         }
         return result;
     }
-    public async findAll(indices: ISpreadIndice<T, string>[], value: string, operator: string = '$eq'): Promise<T[]> {
+    public async findAll(indices: ISpreadIndice<T, string>[], value: string, operator = '$eq'): Promise<T[]> {
         const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
         const list = await Promise.all(indices.map((indice) => indice.preFilter(tokens, operator)));
         const combineWeights = list.reduce((sum, weights) => {
@@ -194,7 +194,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         }, new Map())
         return this.postFilter(combineWeights, tokens);
     }
-    public cursorAll(indices: ISpreadIndice<T, string>[], value: string | string[], operator: string = '$eq'): AsyncIterable<T[]> {
+    public cursorAll(indices: ISpreadIndice<T, string>[], value: string | string[], operator = '$eq'): AsyncIterable<T[]> {
         const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
 
         let count = indices.length;
@@ -206,14 +206,17 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
                 }));
             });
 
-        const self = this;
+        let { postFilter } = this;
+        postFilter = postFilter.bind(this)
         let subResult: T[] = [];
-        let duplicates: Set<T> = new Set();
-        let combineWeights: Map<T, number> = new Map();
+        const duplicates: Set<T> = new Set();
+        const combineWeights: Map<T, number> = new Map();
         const never: Promise<{
             index: any;
             result: Map<T, number>;
-        }> = new Promise(() => { });
+        }> = new Promise(() => {
+            // do nothing.
+        });
         return {
             [Symbol.asyncIterator]() {
                 return {
@@ -228,15 +231,15 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
                                     const value = combineWeights.get(key) || 0;
                                     combineWeights.set(key, weight + value);
                                 }, new Map());
-                            subResult = self.postFilter(combineWeights, tokens)
+                            subResult = postFilter(combineWeights, tokens)
                                 .filter(r => !duplicates.has(r));
                             subResult.reverse();
-                            if(subResult.length){
+                            if (subResult.length) {
                                 return { done: false, value: subResult };
                             }
-                        } 
+                        }
                         return { done: true, value: undefined };
-                        
+
                     }
                 }
             }

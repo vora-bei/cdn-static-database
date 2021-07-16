@@ -6,7 +6,8 @@
   "scripts": {
     "test": "jest --coverage",
     "start": "ts-node src/tests/db.test.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "lint": "eslint './src/**/*.{js,ts}' --quiet --fix"
   },
   "repository": {
     "type": "git",
@@ -21,6 +22,9 @@
   "homepage": "https://gitlab.com/vora-bei/gatsby-full-text-search-server-static-index-plugin#readme",
   "devDependencies": {
     "@types/jest": "^26.0.23",
+    "@typescript-eslint/eslint-plugin": "^4.28.3",
+    "@typescript-eslint/parser": "^4.28.3",
+    "eslint": "^7.30.0",
     "jest": "^27.0.5",
     "jest-junit": "^12.2.0",
     "ts-jest": "^27.0.3",
@@ -28,8 +32,11 @@
   },
   "dependencies": {
     "@types/node": "^15.12.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^3.4.0",
     "mingo": "^4.1.2",
     "n-gram": "^1.1.2",
+    "prettier": "^2.3.2",
     "snowball": "^0.3.1"
   }
 }

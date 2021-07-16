@@ -10,7 +10,7 @@ interface IOptions<T, P> {
     load?(options: any): Promise<any>;
 }
 
-interface ISerializeOptions<T, P> {
+interface ISerializeOptions<T, P> extends Record<string, unknown> {
     self: IOptions<T, P>;
     spread?: any;
 }
@@ -18,10 +18,10 @@ let id_counter = 1;
 export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
     public indices: Map<Range<P>, ISpreadIndice<T, P>> = new Map();
     private indice?: ISpreadIndice<T, P>;
-    private indiceDeserialize?: (options: object) => ISpreadIndice<T, P>
+    private indiceDeserialize?: (options: Record<string, unknown>) => ISpreadIndice<T, P>
     public options: IOptions<T, P>;
     public get id() {
-        return this.options.id!!;
+        return this.options.id!;
     }
     constructor({ indice, chunkSize = DEFAULT_CHUNK_ZIZE, id = `${id_counter++}`, isLoaded = true, load }: Partial<IOptions<T, P>>) {
         if (indice) {
@@ -66,8 +66,8 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         return indice;
     }
     static lazy<T, P>(
-        options: { id: string, load(options: object): Promise<any> },
-        deserialize: (options: object) => ISpreadIndice<T, P>
+        options: { id: string, load(options: Record<string, unknown>): Promise<any> },
+        deserialize: (options: Record<string, unknown>) => ISpreadIndice<T, P>
     ): ISharedIndice<T, P> {
         const indice = new RangeLinearIndice<T, P>({ ...options, isLoaded: false });
         indice.indiceDeserialize = deserialize;
@@ -97,7 +97,7 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
             throw (Error("option load doesn't implemented"))
         }
     }
-    async find(value?: P | P[], operator: string = '$eq', sort: 1 | -1 = 1): Promise<T[]> {
+    async find(value?: P | P[], operator = '$eq', sort: 1 | -1 = 1): Promise<T[]> {
         await this.load();
         const { indice } = this;
         if (!indice) {
@@ -117,17 +117,16 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         }
         return indice.findAll(indices, value, operator);
     }
-    cursor(value?: P | P[], operator: string = '$eq', sort: 1 | -1 = 1): AsyncIterable<T[]> {
+    cursor(value?: P | P[], operator = '$eq', sort: 1 | -1 = 1): AsyncIterable<T[]> {
         const load$ = this.load();
-        const self = this;
+        const { indice, indices } = this;
         let cursor;
         let iterator;
         let isFound = false;
-        let find = async () => {
+        const find = async () => {
             if (isFound) {
                 return;
             }
-            const { indice } = self;
             if (!indice) {
                 throw new Error("Spread indice doesn't initialized")
             }
@@ -135,15 +134,15 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
             if (value !== undefined) {
                 tokens = Array.isArray(value) ? value.flatMap(v => indice.tokenizr(v)) : indice.tokenizr(value);
             }
-            let indices = [...self.indices].map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
+            const filteredIndices = [...indices].map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
                 const weight = tokens.reduce((w, token) => filter.test(token, operator) ? 1 + w : w, 0);
                 return [weight, indice];
             }).filter(([weight]) => this.filterIndicesByWeight(weight, tokens, operator))
                 .map(([_, indice]) => indice);
             if (sort === -1) {
-                indices.reverse();
+                filteredIndices.reverse();
             }
-            cursor = indice.cursorAll(indices, value, operator, sort)
+            cursor = indice.cursorAll(filteredIndices, value, operator, sort)
             isFound = true;
             iterator = cursor[Symbol.asyncIterator]()
 

@@ -1,7 +1,7 @@
 
 export interface ISerializeIndex {
-    serialize(): { data: any, options: Object };
-    serializeOptions(): Object;
+    serialize(): { data: any, options: Record<string, unknown> };
+    serializeOptions(): Record<string, unknown>;
     serializeData(): any[];
 }
 

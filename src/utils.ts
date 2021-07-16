@@ -8,7 +8,9 @@
 const never:  Promise<{
     index: any;
     result: IteratorResult< any[], any>;
-}> = new Promise(() => { });
+}> = new Promise(() => { 
+    // do nothing
+});
 
 export async function* combineAsyncIterable(iterable: AsyncIterable<any[]>[]) {
     const asyncIterators = Array.from(iterable, o => o[Symbol.asyncIterator]());
@@ -60,8 +62,8 @@ export async function* intersectAsyncIterable(iterable: AsyncIterable<any[]>[]) 
             } else {
                 const combineResult = combineResults.get(index)!;
                 nextPromises[index] = getNext(asyncIterators[index], index);
-                let subResults: any[] = [];
-                for (let v of result.value) {
+                const subResults: any[] = [];
+                for (const v of result.value) {
                     combineResult.add(v);
                     if(iterable.length === 1){
                         subResults.push(v);

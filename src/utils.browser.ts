@@ -5,10 +5,10 @@ interface IOptions<T, P> {
     id: string,
     baseUrl: string,
     deserializeShared: (
-        options: { id: string, load(options: object): Promise<any> },
-        deserialize: (data: any, options?: any) => ISpreadIndice<T, P>) => ISharedIndice<T, P>,
+        options: { id: string, load(options: Record<string, unknown>): Promise<any> },
+        deserialize: (data: any, options?: Record<string, unknown>) => ISpreadIndice<T, P>) => ISharedIndice<T, P>,
     deserialize: (
-        options: object
+        options: Record<string, unknown>
     ) => ISpreadIndice<T, P>
 }
 

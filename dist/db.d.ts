@@ -6,6 +6,7 @@ interface ResultIndiceSearch {
     missed: boolean;
     greed: boolean;
     paths: Set<string>;
+    caches: Map<any, RawObject>;
 }
 export declare class Db {
     private schema;
@@ -17,6 +18,7 @@ export declare class Db {
         path?: string;
         isRoot: boolean;
         indices: Map<ISharedIndice<any, any>, IIndiceOption>;
+        caches?: Map<any, object>;
     }): () => ResultIndiceSearch;
     find<T extends any>(criteria: RawObject, sort?: {
         [k: string]: 1 | -1;

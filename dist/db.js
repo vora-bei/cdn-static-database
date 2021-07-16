@@ -27,7 +27,7 @@ class Db {
         this.customOperators = new Set(operators);
     }
     buildIndexSearch(criteria, sort, context) {
-        const { isRoot = true, } = context || {};
+        const { isRoot = true, caches = new Map() } = context || {};
         const indices = new Map();
         const sortIndices = new Map();
         const subIterables = [];
@@ -45,7 +45,7 @@ class Db {
         for (const [key, value] of Object.entries(criteria)) {
             if (logicalOperators.has(key) && util_1.isArray(value)) {
                 const subIt = value
-                    .map(subCriteria => this.buildIndexSearch(subCriteria, sort, { indices, isRoot: false }));
+                    .map(subCriteria => this.buildIndexSearch(subCriteria, sort, { indices, isRoot: false, caches }));
                 () => {
                     const isAnd = key === '$and';
                     const result = subIt.map(it => it());
@@ -63,6 +63,7 @@ class Db {
                         .map(([path]) => path));
                     const sIs = key === '$and' ? utils_1.intersectAsyncIterable(results) : utils_1.combineAsyncIterable(results);
                     subIterables.push(() => ({
+                        caches,
                         result: sIs,
                         greed,
                         missed,
@@ -89,7 +90,7 @@ class Db {
                 }
             }
             else if (util_1.isObject(value)) {
-                subIterables.push(this.buildIndexSearch(value, sort, { path: key, indices, isRoot: false }));
+                subIterables.push(this.buildIndexSearch(value, sort, { path: key, indices, isRoot: false, caches }));
             }
             else {
                 const indiceOptions = this.schema.indices.find(o => o.path === key);
@@ -103,7 +104,7 @@ class Db {
             const values = [...indices.values()];
             const simpleIterable = values
                 .map(({ indice, value, order, op }) => {
-                return this.indiceCursor(indice, value, order, op);
+                return this.indiceCursor(indice, value, caches, order, op);
             });
             const subResult = subIterables.map(it => it());
             const subGreed = subResult.every(({ greed }) => greed);
@@ -115,7 +116,7 @@ class Db {
             }, new Set());
             const paths = new Set([...values.map(({ path }) => path), ...subPaths]);
             const sortedIterable = [...sortIndices.values()].filter(({ path }) => !paths.has(path) && isRoot)
-                .map(({ indice, value, order, op }) => this.indiceCursor(indice, value, order, op));
+                .map(({ indice, value, order, op }) => this.indiceCursor(indice, value, caches, order, op));
             const missedAll = !sortedIterable.length && !indices.size && missed;
             const greedAll = greed && subGreed;
             if (isRoot) {
@@ -126,6 +127,7 @@ class Db {
                 greed: greedAll,
                 missed: missedAll,
                 paths,
+                caches
             };
         };
     }
@@ -137,13 +139,15 @@ class Db {
         let result = [];
         const query = new mingo_1.default.Query(criteria);
         let i = 0;
+        const caches = search.caches.values();
+        const isEnough = () => limit && i === limit && !search.greed;
         if (search.missed) {
             for await (let values of primaryIndice.cursor()) {
                 for (let value of values) {
                     if (query.test(value) && i >= skip) {
                         i++;
                         result.push(value);
-                        if (limit && i === limit && !search.greed) {
+                        if (isEnough()) {
                             break;
                         }
                     }
@@ -152,10 +156,41 @@ class Db {
         }
         else {
             let ids = [];
-            loop: for await (let subIds of search.result) {
-                ids.push(...subIds);
-                if (ids.length >= chunkSize) {
-                    const values = await primaryIndice.find(ids.splice(0, chunkSize));
+            for (let value of caches) {
+                if (query.test(value)) {
+                    i++;
+                    if (i >= skip) {
+                        result.push(value);
+                    }
+                    if (isEnough()) {
+                        ids = [];
+                        break;
+                    }
+                }
+            }
+            if (!isEnough()) {
+                loop: for await (let subIds of search.result) {
+                    ids.push(...subIds);
+                    if (ids.length >= chunkSize) {
+                        const searchIds = ids.filter(id => !search.caches.has(id));
+                        const values = await primaryIndice.find(searchIds.splice(0, chunkSize));
+                        for (let value of [...values]) {
+                            if (query.test(value)) {
+                                i++;
+                                if (i >= skip) {
+                                    result.push(value);
+                                }
+                                if (isEnough()) {
+                                    ids = [];
+                                    break loop;
+                                }
+                            }
+                        }
+                        ids = [];
+                    }
+                }
+                if (ids.length) {
+                    const values = await primaryIndice.find(ids);
                     for (let value of values) {
                         if (query.test(value)) {
                             i++;
@@ -163,24 +198,8 @@ class Db {
                                 result.push(value);
                             }
                             if (limit && i === limit && !search.greed) {
-                                ids = [];
-                                break loop;
+                                break;
                             }
-                        }
-                    }
-                    ids = [];
-                }
-            }
-            if (ids.length) {
-                const values = await primaryIndice.find(ids);
-                for (let value of values) {
-                    if (query.test(value)) {
-                        i++;
-                        if (i >= skip) {
-                            result.push(value);
-                        }
-                        if (limit && i === limit && !search.greed) {
-                            break;
                         }
                     }
                 }
@@ -200,7 +219,7 @@ class Db {
         console.timeEnd('find');
         return res.all();
     }
-    indiceCursor(indice, value, order, op) {
+    indiceCursor(indice, value, caches, order, op) {
         const { idAttr } = this.schema;
         const iterator = indice.cursor(value, op, order);
         if (this.schema.primaryIndice !== indice) {
@@ -212,6 +231,7 @@ class Db {
                     async next() {
                         const { result } = await utils_1.getNext(iterator[Symbol.asyncIterator](), 0);
                         if (!result.done) {
+                            result.value.forEach(it => caches.set(it[idAttr], it));
                             return { done: false, value: result.value.map((it) => it[idAttr]) };
                         }
                         else {

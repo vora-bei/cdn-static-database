@@ -15,6 +15,7 @@ interface ResultIndiceSearch {
     missed: boolean;
     greed: boolean;
     paths: Set<string>
+    caches: Map<any, RawObject>
 }
 export class Db {
     private schema: Schema;
@@ -34,9 +35,14 @@ export class Db {
     buildIndexSearch(
         criteria: RawObject,
         sort?: { [k: string]: 1 | -1 },
-        context?: { path?: string, isRoot: boolean, indices: Map<ISharedIndice<any, any>, IIndiceOption> }
+        context?: {
+            path?: string,
+            isRoot: boolean,
+            indices: Map<ISharedIndice<any, any>, IIndiceOption>,
+            caches?: Map<any, object>
+        }
     ): () => ResultIndiceSearch {
-        const { isRoot = true, } = context || {}
+        const { isRoot = true, caches = new Map() } = context || {}
         const indices: Map<ISharedIndice<any, any>, IIndiceOption> = new Map();
         const sortIndices: Map<ISharedIndice<any, any>, IIndiceOption> = new Map();
         const subIterables: (() => ResultIndiceSearch)[] = [];
@@ -55,7 +61,7 @@ export class Db {
         for (const [key, value] of Object.entries(criteria)) {
             if (logicalOperators.has(key) && isArray(value)) {
                 const subIt = (value as any[])
-                    .map(subCriteria => this.buildIndexSearch(subCriteria, sort, { indices, isRoot: false }));
+                    .map(subCriteria => this.buildIndexSearch(subCriteria, sort, { indices, isRoot: false, caches }));
 
                 () => {
                     const isAnd = key === '$and';
@@ -75,6 +81,7 @@ export class Db {
                     );
                     const sIs = key === '$and' ? intersectAsyncIterable(results) : combineAsyncIterable(results);
                     subIterables.push(() => ({
+                        caches,
                         result: sIs,
                         greed,
                         missed,
@@ -98,7 +105,7 @@ export class Db {
                     indices.set(indiceOptions.indice, { ...exists, ...indiceOptions, value: value as any, op: key })
                 }
             } else if (isObject(value)) {
-                subIterables.push(this.buildIndexSearch(value as RawObject, sort, { path: key, indices, isRoot: false }))
+                subIterables.push(this.buildIndexSearch(value as RawObject, sort, { path: key, indices, isRoot: false, caches }))
             } else {
                 const indiceOptions = this.schema.indices.find(o => o.path === key);
                 if (indiceOptions) {
@@ -111,7 +118,7 @@ export class Db {
             const values = [...indices.values()];
             const simpleIterable = values
                 .map(({ indice, value, order, op }) => {
-                    return this.indiceCursor(indice, value, order, op);
+                    return this.indiceCursor(indice, value, caches, order, op);
                 });
             const subResult: ResultIndiceSearch[] = subIterables.map(it => it());
             const subGreed = subResult.every(({ greed }) => greed);
@@ -123,7 +130,7 @@ export class Db {
             }, new Set<string>());
             const paths = new Set([...values.map(({ path }) => path!), ...subPaths]);
             const sortedIterable = [...sortIndices.values()].filter(({ path }) => !paths.has(path!) && isRoot)
-                .map(({ indice, value, order, op }) => this.indiceCursor(indice, value, order, op));
+                .map(({ indice, value, order, op }) => this.indiceCursor(indice, value, caches, order, op));
             const missedAll = !sortedIterable.length && !indices.size && missed;
             const greedAll = greed && subGreed;
             if (isRoot) {
@@ -140,6 +147,7 @@ export class Db {
                 greed: greedAll,
                 missed: missedAll,
                 paths,
+                caches
             };
         }
     }
@@ -152,13 +160,15 @@ export class Db {
         let result: any[] = [];
         const query = new mingo.Query(criteria);
         let i = 0;
+        const caches = search.caches.values();
+        const isEnough = () => limit && i === limit && !search.greed
         if (search.missed) {
             for await (let values of primaryIndice.cursor()) {
                 for (let value of values) {
                     if (query.test(value) && i >= skip) {
                         i++;
                         result.push(value)
-                        if (limit && i === limit && !search.greed) {
+                        if (isEnough()) {
                             break;
                         }
                     }
@@ -166,11 +176,42 @@ export class Db {
             }
         } else {
             let ids: any[] = [];
-            loop:
-            for await (let subIds of search.result) {
-                ids.push(...subIds);
-                if (ids.length >= chunkSize) {
-                    const values = await primaryIndice.find(ids.splice(0, chunkSize));
+            for (let value of caches) {
+                if (query.test(value)) {
+                    i++;
+                    if (i >= skip) {
+                        result.push(value)
+                    }
+                    if (isEnough()) {
+                        ids = [];
+                        break;
+                    }
+                }
+            }
+            if (!isEnough()) {
+                loop:
+                for await (let subIds of search.result) {
+                    ids.push(...subIds);
+                    if (ids.length >= chunkSize) {
+                        const searchIds = ids.filter(id => !search.caches.has(id));
+                        const values = await primaryIndice.find(searchIds.splice(0, chunkSize));
+                        for (let value of [...values]) {
+                            if (query.test(value)) {
+                                i++;
+                                if (i >= skip) {
+                                    result.push(value)
+                                }
+                                if (isEnough()) {
+                                    ids = [];
+                                    break loop;
+                                }
+                            }
+                        }
+                        ids = [];
+                    }
+                }
+                if (ids.length) {
+                    const values = await primaryIndice.find(ids);
                     for (let value of values) {
                         if (query.test(value)) {
                             i++;
@@ -178,24 +219,8 @@ export class Db {
                                 result.push(value)
                             }
                             if (limit && i === limit && !search.greed) {
-                                ids = [];
-                                break loop;
+                                break;
                             }
-                        }
-                    }
-                    ids = [];
-                }
-            }
-            if (ids.length) {
-                const values = await primaryIndice.find(ids);
-                for (let value of values) {
-                    if (query.test(value)) {
-                        i++;
-                        if (i >= skip) {
-                            result.push(value)
-                        }
-                        if (limit && i === limit && !search.greed) {
-                            break;
                         }
                     }
                 }
@@ -217,7 +242,7 @@ export class Db {
         return res.all() as T[];
     }
 
-    private indiceCursor(indice: ISharedIndice<any, any>, value: any, order?: 1 | -1, op?: string): AsyncIterable<any[]> {
+    private indiceCursor(indice: ISharedIndice<any, any>, value: any, caches: Map<any, object>, order?: 1 | -1, op?: string): AsyncIterable<any[]> {
         const { idAttr } = this.schema;
         const iterator = indice.cursor(value, op, order);
         if (this.schema.primaryIndice !== indice) {
@@ -229,6 +254,7 @@ export class Db {
                     async next() {
                         const { result } = await getNext(iterator[Symbol.asyncIterator](), 0);
                         if (!result.done) {
+                            result.value.forEach(it => caches.set(it[idAttr], it));
                             return { done: false, value: result.value.map((it) => it[idAttr]) };
                         } else {
                             return { done: true, value: undefined };

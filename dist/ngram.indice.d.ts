@@ -1,5 +1,5 @@
 import { ISpreadIndice } from "./interfaces";
-interface IOptions {
+interface IOptions extends Record<string, unknown> {
     id?: string;
     gramLen: number;
     actuationLimit: number;
@@ -8,7 +8,7 @@ interface IOptions {
     preTokenizr?(value: string): string;
     postTokenizr?(value: string, tokens: string[]): string[];
     isLoaded: boolean;
-    load?(options: any): Promise<any>;
+    load?(options: IOptions): Promise<never>;
 }
 export declare class NgramIndice<T> implements ISpreadIndice<T, string> {
     private nGram;
@@ -18,7 +18,7 @@ export declare class NgramIndice<T> implements ISpreadIndice<T, string> {
     get id(): string;
     constructor({ id, gramLen, actuationLimit, toLowcase, actuationLimitAuto, isLoaded, load }?: Partial<IOptions>);
     add(key: T, value: string | string[]): void;
-    serializeOptions(): Object;
+    serializeOptions(): IOptions;
     serializeData(): any[];
     tokenizr(value: string): string[];
     private load;
@@ -29,7 +29,7 @@ export declare class NgramIndice<T> implements ISpreadIndice<T, string> {
     private getLimit;
     serialize(): {
         data: any[];
-        options: Object;
+        options: IOptions;
     };
     static deserialize<T, P>(data: any, options?: any): NgramIndice<T>;
     spread(chunkSize?: number): ISpreadIndice<T, string>[];

@@ -97,15 +97,14 @@ class RangeLinearIndice {
     }
     cursor(value, operator = '$eq', sort = 1) {
         const load$ = this.load();
-        const self = this;
+        const { indice, indices } = this;
         let cursor;
         let iterator;
         let isFound = false;
-        let find = async () => {
+        const find = async () => {
             if (isFound) {
                 return;
             }
-            const { indice } = self;
             if (!indice) {
                 throw new Error("Spread indice doesn't initialized");
             }
@@ -113,15 +112,15 @@ class RangeLinearIndice {
             if (value !== undefined) {
                 tokens = Array.isArray(value) ? value.flatMap(v => indice.tokenizr(v)) : indice.tokenizr(value);
             }
-            let indices = [...self.indices].map(([filter, indice]) => {
+            const filteredIndices = [...indices].map(([filter, indice]) => {
                 const weight = tokens.reduce((w, token) => filter.test(token, operator) ? 1 + w : w, 0);
                 return [weight, indice];
             }).filter(([weight]) => this.filterIndicesByWeight(weight, tokens, operator))
                 .map(([_, indice]) => indice);
             if (sort === -1) {
-                indices.reverse();
+                filteredIndices.reverse();
             }
-            cursor = indice.cursorAll(indices, value, operator, sort);
+            cursor = indice.cursorAll(filteredIndices, value, operator, sort);
             isFound = true;
             iterator = cursor[Symbol.asyncIterator]();
         };

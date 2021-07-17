@@ -130,7 +130,7 @@ class SimpleIndice {
     async preFilter(tokens, operator, sort = 1) {
         const countResults = new Map();
         await this.load();
-        let t = [...tokens];
+        const t = [...tokens];
         t.sort((a, b) => {
             if (a === b) {
                 return 0;
@@ -140,7 +140,7 @@ class SimpleIndice {
         const indices = this.getIndices(t, operator, sort);
         if (indices) {
             indices.forEach((id) => {
-                let count = countResults.get(id) || 0;
+                const count = countResults.get(id) || 0;
                 countResults.set(id, count + 1);
             });
         }
@@ -236,8 +236,7 @@ class SimpleIndice {
         let result = null;
         let indiceIndex = 0;
         let data = new Map();
-        const chunkSize = 20;
-        const self = this;
+        const chunkSize = 500;
         return {
             [Symbol.asyncIterator]() {
                 return {

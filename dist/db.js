@@ -135,15 +135,15 @@ class Db {
         console.time('find');
         const chunkSize = limit || 20;
         const primaryIndice = this.schema.primaryIndice;
-        let search = this.buildIndexSearch(criteria, sort)();
-        let result = [];
+        const search = this.buildIndexSearch(criteria, sort)();
+        const result = [];
         const query = new mingo_1.default.Query(criteria);
         let i = 0;
         const caches = search.caches.values();
         const isEnough = () => limit && i === limit && !search.greed;
         if (search.missed) {
-            for await (let values of primaryIndice.cursor()) {
-                for (let value of values) {
+            for await (const values of primaryIndice.cursor()) {
+                for (const value of values) {
                     if (query.test(value) && i >= skip) {
                         i++;
                         result.push(value);
@@ -156,7 +156,7 @@ class Db {
         }
         else {
             let ids = [];
-            for (let value of caches) {
+            for (const value of caches) {
                 if (query.test(value)) {
                     i++;
                     if (i >= skip) {
@@ -169,12 +169,12 @@ class Db {
                 }
             }
             if (!isEnough()) {
-                loop: for await (let subIds of search.result) {
+                loop: for await (const subIds of search.result) {
                     ids.push(...subIds);
                     if (ids.length >= chunkSize) {
                         const searchIds = ids.filter(id => !search.caches.has(id));
                         const values = await primaryIndice.find(searchIds.splice(0, chunkSize));
-                        for (let value of [...values]) {
+                        for (const value of [...values]) {
                             if (query.test(value)) {
                                 i++;
                                 if (i >= skip) {
@@ -191,7 +191,7 @@ class Db {
                 }
                 if (ids.length) {
                     const values = await primaryIndice.find(ids);
-                    for (let value of values) {
+                    for (const value of values) {
                         if (query.test(value)) {
                             i++;
                             if (i >= skip) {
@@ -221,10 +221,11 @@ class Db {
     }
     indiceCursor(indice, value, caches, order, op) {
         const { idAttr } = this.schema;
-        const iterator = indice.cursor(value, op, order);
         if (this.schema.primaryIndice !== indice) {
+            const iterator = indice.cursor(value, op, order);
             return iterator;
         }
+        const iterator = this.schema.primaryIndice.cursor(value, op, order);
         return {
             [Symbol.asyncIterator]() {
                 return {

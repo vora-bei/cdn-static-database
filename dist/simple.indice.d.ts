@@ -1,5 +1,5 @@
 import { ISpreadIndice } from "./interfaces";
-interface IOptions {
+interface IOptions extends Record<string, unknown> {
     id?: string;
     isLoaded: boolean;
     load?(options: any): Promise<any>;
@@ -11,7 +11,7 @@ export declare class SimpleIndice<T, P> implements ISpreadIndice<T, P> {
     get id(): string;
     constructor({ id, isLoaded, load }?: Partial<IOptions>);
     add(key: T, value: P | P[]): void;
-    serializeOptions(): Object;
+    serializeOptions(): Record<string, unknown>;
     serializeData(): any[];
     tokenizr(value: P): P[];
     private load;
@@ -23,7 +23,7 @@ export declare class SimpleIndice<T, P> implements ISpreadIndice<T, P> {
     postFilter(countResults: Map<T, number>, tokens: P[]): T[];
     serialize(): {
         data: any[];
-        options: Object;
+        options: Record<string, unknown>;
     };
     static deserialize<T, P>(data: any, options?: any): SimpleIndice<T, P>;
     spread(chunkSize?: number): ISpreadIndice<T, P>[];

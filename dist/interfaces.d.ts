@@ -1,10 +1,10 @@
 export interface ISerializeIndex {
     serialize(): {
-        data: any;
-        options: Object;
+        data: unknown;
+        options: Record<string, unknown>;
     };
-    serializeOptions(): Object;
-    serializeData(): any[];
+    serializeOptions(): Record<string, unknown>;
+    serializeData(): unknown[];
 }
 export interface IBaseIndice<T, P> {
     id: string;
@@ -23,8 +23,8 @@ export interface ISpreadIndice<T, P> extends IIndice<T, P> {
     cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator?: string, sort?: 1 | -1): AsyncIterable<T[]>;
 }
 export interface ISharedIndice<T, P> extends IBaseIndice<T, P>, ISerializeIndex {
-    indices: Map<any, ISpreadIndice<T, P>>;
+    indices: Map<unknown, ISpreadIndice<T, P>>;
     cursor(value?: P | P[], operator?: string, sort?: 1 | -1): AsyncIterable<T[]>;
-    testIndice(key: string, value: any): boolean;
+    testIndice(key: string, value: unknown): boolean;
 }
 //# sourceMappingURL=interfaces.d.ts.map

@@ -87,7 +87,7 @@ class NgramIndice {
             const indices = this.getIndices(token, operator);
             if (indices) {
                 indices.forEach((id) => {
-                    let count = countResults.get(id) || 0;
+                    const count = countResults.get(id) || 0;
                     countResults.set(id, count + 1);
                 });
             }
@@ -181,11 +181,14 @@ class NgramIndice {
                 result,
             }));
         });
-        const self = this;
+        let { postFilter } = this;
+        postFilter = postFilter.bind(this);
         let subResult = [];
-        let duplicates = new Set();
-        let combineWeights = new Map();
-        const never = new Promise(() => { });
+        const duplicates = new Set();
+        const combineWeights = new Map();
+        const never = new Promise(() => {
+            // do nothing.
+        });
         return {
             [Symbol.asyncIterator]() {
                 return {
@@ -200,8 +203,11 @@ class NgramIndice {
                                 const value = combineWeights.get(key) || 0;
                                 combineWeights.set(key, weight + value);
                             }, new Map());
-                            subResult = self.postFilter(combineWeights, tokens)
-                                .filter(r => !duplicates.has(r));
+                            subResult = postFilter(combineWeights, tokens)
+                                .filter(r => {
+                                combineWeights.delete(r);
+                                return r;
+                            });
                             subResult.reverse();
                             if (subResult.length) {
                                 return { done: false, value: subResult };

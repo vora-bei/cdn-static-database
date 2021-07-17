@@ -2,11 +2,11 @@ import { ISharedIndice } from "interfaces";
 import { RawObject } from "mingo/util";
 import { IIndiceOption, Schema } from "./schema";
 interface ResultIndiceSearch {
-    result: AsyncIterable<any>;
+    result: AsyncIterable<unknown[]>;
     missed: boolean;
     greed: boolean;
     paths: Set<string>;
-    caches: Map<any, RawObject>;
+    caches: Map<unknown, RawObject>;
 }
 export declare class Db {
     private schema;
@@ -17,10 +17,10 @@ export declare class Db {
     }, context?: {
         path?: string;
         isRoot: boolean;
-        indices: Map<ISharedIndice<any, any>, IIndiceOption>;
-        caches?: Map<any, object>;
+        indices: Map<ISharedIndice<unknown, unknown>, IIndiceOption>;
+        caches?: Map<unknown, Record<string, unknown>>;
     }): () => ResultIndiceSearch;
-    find<T extends any>(criteria: RawObject, sort?: {
+    find<T extends unknown>(criteria: RawObject, sort?: {
         [k: string]: 1 | -1;
     }, skip?: number, limit?: number): Promise<T[]>;
     private indiceCursor;

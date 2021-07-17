@@ -18,7 +18,7 @@ const saveSharedIndices = async (indice, publicPath = '.') => {
         await mkdir(dir);
     }
     await writeFile(path_1.join(dir, 'index.json'), JSON.stringify(indice.serialize()));
-    for (let [_, v] of indice.indices) {
+    for (const [_, v] of indice.indices) {
         await writeFile(path_1.join(dir, `chunk_${v.id}.json`), JSON.stringify({ data: v.serializeData(), options: { id: v.id } }));
     }
 };

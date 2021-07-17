@@ -5,9 +5,9 @@ interface IOptions<T, P> {
     indice?: ISpreadIndice<T, P>;
     id?: string;
     isLoaded: boolean;
-    load?(options: any): Promise<any>;
+    load?(options: unknown): Promise<any>;
 }
-interface ISerializeOptions<T, P> {
+interface ISerializeOptions<T, P> extends Record<string, unknown> {
     self: IOptions<T, P>;
     spread?: any;
 }
@@ -19,8 +19,8 @@ export declare class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
     get id(): string;
     constructor({ indice, chunkSize, id, isLoaded, load }: Partial<IOptions<T, P>>);
     serialize(): {
-        data: any;
-        options: any;
+        data: unknown;
+        options: Record<string, unknown>;
     };
     serializeData(): (string | P[])[][];
     serializeOptions(): ISerializeOptions<T, P>;
@@ -28,8 +28,8 @@ export declare class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
     static deserialize<T, P>(data: [[P, P], T][], options: ISerializeOptions<T, P>, deserialize: (data: any, options?: any) => ISpreadIndice<T, P>): ISharedIndice<T, P>;
     static lazy<T, P>(options: {
         id: string;
-        load(options: object): Promise<any>;
-    }, deserialize: (options: object) => ISpreadIndice<T, P>): ISharedIndice<T, P>;
+        load(options: Record<string, unknown>): Promise<any>;
+    }, deserialize: (options: Record<string, unknown>) => ISpreadIndice<T, P>): ISharedIndice<T, P>;
     private filterIndicesByWeight;
     private load;
     find(value?: P | P[], operator?: string, sort?: 1 | -1): Promise<T[]>;

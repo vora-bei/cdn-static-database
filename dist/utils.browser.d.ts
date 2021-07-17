@@ -4,9 +4,9 @@ interface IOptions<T, P> {
     baseUrl: string;
     deserializeShared: (options: {
         id: string;
-        load(options: object): Promise<any>;
-    }, deserialize: (data: any, options?: any) => ISpreadIndice<T, P>) => ISharedIndice<T, P>;
-    deserialize: (options: object) => ISpreadIndice<T, P>;
+        load(options: Record<string, unknown>): Promise<any>;
+    }, deserialize: (data: any, options?: Record<string, unknown>) => ISpreadIndice<T, P>) => ISharedIndice<T, P>;
+    deserialize: (options: Record<string, unknown>) => ISpreadIndice<T, P>;
 }
 export declare const restoreSharedIndices: <T, P>({ id, baseUrl, deserialize, deserializeShared }: IOptions<T, P>) => Promise<ISharedIndice<T, P>>;
 export {};

@@ -232,7 +232,10 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
                                     combineWeights.set(key, weight + value);
                                 }, new Map());
                             subResult = postFilter(combineWeights, tokens)
-                                .filter(r => !duplicates.has(r));
+                                .filter(r => {
+                                    combineWeights.delete(r);
+                                    return r;
+                                });
                             subResult.reverse();
                             if (subResult.length) {
                                 return { done: false, value: subResult };

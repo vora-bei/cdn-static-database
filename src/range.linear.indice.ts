@@ -119,11 +119,11 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
     }
     cursor(value?: P | P[], operator = '$eq', sort: 1 | -1 = 1): AsyncIterable<T[]> {
         const load$ = this.load();
-        const { indice, indices } = this;
         let cursor;
         let iterator;
         let isFound = false;
         const find = async () => {
+            const { indice, indices } = this;
             if (isFound) {
                 return;
             }

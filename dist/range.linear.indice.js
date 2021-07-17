@@ -97,11 +97,11 @@ class RangeLinearIndice {
     }
     cursor(value, operator = '$eq', sort = 1) {
         const load$ = this.load();
-        const { indice, indices } = this;
         let cursor;
         let iterator;
         let isFound = false;
         const find = async () => {
+            const { indice, indices } = this;
             if (isFound) {
                 return;
             }

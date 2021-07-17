@@ -11,7 +11,7 @@ interface IOptions extends Record<string, unknown> {
     preTokenizr?(value: string): string;
     postTokenizr?(value: string, tokens: string[]): string[];
     isLoaded: boolean;
-    load?(options: any): Promise<any>;
+    load?(options: IOptions): Promise<never>;
 }
 let id_counter = 1;
 
@@ -29,7 +29,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         })
         return keys;
     }
-    public get id() {
+    public get id(): string {
         return this.options.id!;
     }
     constructor({
@@ -212,7 +212,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         const duplicates: Set<T> = new Set();
         const combineWeights: Map<T, number> = new Map();
         const never: Promise<{
-            index: any;
+            index: number;
             result: Map<T, number>;
         }> = new Promise(() => {
             // do nothing.

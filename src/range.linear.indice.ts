@@ -7,7 +7,7 @@ interface IOptions<T, P> {
     indice?: ISpreadIndice<T, P>;
     id?: string;
     isLoaded: boolean;
-    load?(options: any): Promise<any>;
+    load?(options: unknown): Promise<any>;
 }
 
 interface ISerializeOptions<T, P> extends Record<string, unknown> {
@@ -30,7 +30,7 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         }
         this.options = { id, isLoaded, load };
     }
-    serialize(): { data: any; options: any; } {
+    serialize(): { data: unknown, options: Record<string, unknown> } {
         return { data: this.serializeData(), options: this.serializeOptions() };
     }
     serializeData() {

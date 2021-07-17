@@ -11,11 +11,11 @@ const logicalOperators = new Set([
     '$and', '$or'
 ]);
 interface ResultIndiceSearch {
-    result: AsyncIterable<any>;
+    result: AsyncIterable<unknown[]>;
     missed: boolean;
     greed: boolean;
     paths: Set<string>
-    caches: Map<any, RawObject>
+    caches: Map<unknown, RawObject>
 }
 export class Db {
     private schema: Schema;
@@ -38,13 +38,13 @@ export class Db {
         context?: {
             path?: string,
             isRoot: boolean,
-            indices: Map<ISharedIndice<any, any>, IIndiceOption>,
-            caches?: Map<any, Record<string, unknown>>
+            indices: Map<ISharedIndice<unknown, unknown>, IIndiceOption>,
+            caches?: Map<unknown, Record<string, unknown>>
         }
     ): () => ResultIndiceSearch {
         const { isRoot = true, caches = new Map() } = context || {}
-        const indices: Map<ISharedIndice<any, any>, IIndiceOption> = new Map();
-        const sortIndices: Map<ISharedIndice<any, any>, IIndiceOption> = new Map();
+        const indices: Map<ISharedIndice<unknown, unknown>, IIndiceOption> = new Map();
+        const sortIndices: Map<ISharedIndice<unknown, unknown>, IIndiceOption> = new Map();
         const subIterables: (() => ResultIndiceSearch)[] = [];
         let greed = false;
         if (sort) {
@@ -60,7 +60,7 @@ export class Db {
 
         for (const [key, value] of Object.entries(criteria)) {
             if (logicalOperators.has(key) && isArray(value)) {
-                const subIt = (value as any[])
+                const subIt = (value as RawObject[])
                     .map(subCriteria => this.buildIndexSearch(subCriteria, sort, { indices, isRoot: false, caches }));
 
                 () => {
@@ -95,14 +95,14 @@ export class Db {
                     .filter(i => i.path === key)
                     .pop();
                 if (fullTextIndice) {
-                    indices.set(fullTextIndice.indice, { ...fullTextIndice, value: value as any });
+                    indices.set(fullTextIndice.indice, { ...fullTextIndice, value: value as unknown });
                 }
                 delete criteria[key]
             } else if (isOperator(key)) {
                 const indiceOptions = this.schema.indices.find(o => this.testIndice(o, key, value, context?.path));
                 if (indiceOptions) {
                     const exists = sortIndices.get(indiceOptions.indice) || {};
-                    indices.set(indiceOptions.indice, { ...exists, ...indiceOptions, value: value as any, op: key })
+                    indices.set(indiceOptions.indice, { ...exists, ...indiceOptions, value: value as unknown, op: key })
                 }
             } else if (isObject(value)) {
                 subIterables.push(this.buildIndexSearch(value as RawObject, sort, { path: key, indices, isRoot: false, caches }))
@@ -110,7 +110,7 @@ export class Db {
                 const indiceOptions = this.schema.indices.find(o => o.path === key);
                 if (indiceOptions) {
                     const exists = sortIndices.get(indiceOptions.indice) || {};
-                    indices.set(indiceOptions.indice, { ...exists, ...indiceOptions, value: value as any, op: '$eq' })
+                    indices.set(indiceOptions.indice, { ...exists, ...indiceOptions, value: value as unknown, op: '$eq' })
                 }
             }
         }
@@ -152,12 +152,12 @@ export class Db {
         }
     }
 
-    async find<T extends any>(criteria: RawObject, sort?: { [k: string]: 1 | -1 }, skip = 0, limit?: number) {
+    async find<T extends unknown>(criteria: RawObject, sort?: { [k: string]: 1 | -1 }, skip = 0, limit?: number): Promise<T[]> {
         console.time('find')
         const chunkSize = limit || 20;
         const primaryIndice = this.schema.primaryIndice;
         const search: ResultIndiceSearch = this.buildIndexSearch(criteria, sort)();
-        const result: any[] = [];
+        const result: unknown[] = [];
         const query = new mingo.Query(criteria);
         let i = 0;
         const caches = search.caches.values();
@@ -175,7 +175,7 @@ export class Db {
                 }
             }
         } else {
-            let ids: any[] = [];
+            let ids: unknown[] = [];
             for (const value of caches) {
                 if (query.test(value)) {
                     i++;
@@ -242,17 +242,18 @@ export class Db {
         return res.all() as T[];
     }
 
-    private indiceCursor(indice: ISharedIndice<any, any>, value: any, caches: Map<any, Record<string, unknown>>, order?: 1 | -1, op?: string): AsyncIterable<any[]> {
+    private indiceCursor(indice: ISharedIndice<unknown, unknown>, value: unknown, caches: Map<unknown, Record<string, unknown>>, order?: 1 | -1, op?: string): AsyncIterable<unknown[]> {
         const { idAttr } = this.schema;
-        const iterator = indice.cursor(value, op, order);
         if (this.schema.primaryIndice !== indice) {
+            const iterator = indice.cursor(value, op, order);
             return iterator;
         }
+        const iterator = this.schema.primaryIndice.cursor(value, op, order);
         return {
             [Symbol.asyncIterator]() {
                 return {
                     async next() {
-                        const { result } = await getNext(iterator[Symbol.asyncIterator](), 0);
+                        const { result } = await getNext<Record<string, unknown>>(iterator[Symbol.asyncIterator](), 0);
                         if (!result.done) {
                             result.value.forEach(it => caches.set(it[idAttr], it));
                             return { done: false, value: result.value.map((it) => it[idAttr]) };
@@ -266,7 +267,7 @@ export class Db {
 
     }
 
-    private testIndice(options: IIndiceOption, key: string, value: any, path?  : string) {
+    private testIndice(options: IIndiceOption, key: string, value: unknown, path?  : string) {
         const pathEqual = options.path === path;
         return pathEqual && options.indice.testIndice(key, value);
     }

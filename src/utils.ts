@@ -1,25 +1,28 @@
 
- export function getNext(asyncIterator: AsyncIterator<any[]>, index) {
+export function getNext<R extends unknown>(asyncIterator: AsyncIterator<R[], unknown, unknown>, index: number): Promise<{
+    index: number;
+    result: IteratorResult<R[], unknown>;
+}> {
     return asyncIterator.next().then(result => ({
         index,
         result,
     }));
 }
-const never:  Promise<{
-    index: any;
-    result: IteratorResult< any[], any>;
-}> = new Promise(() => { 
+const never: Promise<{
+    index: number;
+    result: IteratorResult<unknown[], unknown>;
+}> = new Promise(() => {
     // do nothing
 });
 
-export async function* combineAsyncIterable(iterable: AsyncIterable<any[]>[]) {
+export async function* combineAsyncIterable(iterable: AsyncIterable<unknown[]>[]): AsyncGenerator<unknown[], unknown[], unknown> {
     const asyncIterators = Array.from(iterable, o => o[Symbol.asyncIterator]());
-    const results: any[] = [];
+    const results: unknown[] = [];
     let count = asyncIterators.length;
-   
+
     const nextPromises: Promise<{
-        index: any;
-        result: IteratorResult<any[], any>;
+        index: number;
+        result: IteratorResult<unknown[], unknown>;
     }>[] = asyncIterators.map(getNext);
     try {
         while (count) {
@@ -42,11 +45,11 @@ export async function* combineAsyncIterable(iterable: AsyncIterable<any[]>[]) {
     return results;
 }
 
-export async function* intersectAsyncIterable(iterable: AsyncIterable<any[]>[]) {
+export async function* intersectAsyncIterable(iterable: AsyncIterable<unknown[]>[]): AsyncGenerator<unknown[], unknown[], unknown> {
     const asyncIterators = Array.from(iterable, o => o[Symbol.asyncIterator]());
-    const results: any[] = [];
+    const results: unknown[] = [];
     let count = asyncIterators.length;
-    const combineResults: Map<number, Set<any>> = new Map(
+    const combineResults: Map<number, Set<unknown>> = new Map(
         new Array(count)
             .fill(undefined)
             .map((_, i) => ([i, new Set()]))
@@ -60,21 +63,23 @@ export async function* intersectAsyncIterable(iterable: AsyncIterable<any[]>[]) 
                 results[index] = result.value; //what's return is question
                 count--;
             } else {
-                const combineResult = combineResults.get(index)!;
+                const combineResult = combineResults.get(index);
                 nextPromises[index] = getNext(asyncIterators[index], index);
-                const subResults: any[] = [];
+                const subResults: unknown[] = [];
                 for (const v of result.value) {
-                    combineResult.add(v);
-                    if(iterable.length === 1){
+                    if (combineResult) {
+                        combineResult.add(v);
+                    }
+                    if (iterable.length === 1) {
                         subResults.push(v);
                     } else if ([...combineResults.values()].every(c => c.has(v))) {
                         [...combineResults.values()].forEach(c => c.delete(v));
                         subResults.push(v);
                     }
                 }
-                if(subResults.length){
+                if (subResults.length) {
                     yield subResults;
-                }        
+                }
             }
         }
     } finally {

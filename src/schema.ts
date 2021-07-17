@@ -8,7 +8,7 @@ export interface IIndiceOption {
     op?: any;
 }
 export class Schema {
-    primaryIndice: ISharedIndice<any, any>;
+    primaryIndice: ISharedIndice<Record<string, unknown>, unknown>;
     indices: IIndiceOption[];
     idAttr: string;
     constructor(idAttr: string, primaryIndice: ISharedIndice<any, any>, indices: IIndiceOption[]) {

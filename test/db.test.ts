@@ -14,9 +14,9 @@ beforeAll(async () => {
     countries.forEach((country, key) => indices.add(key, [country.country, country.continent]));
     const range = new RangeLinearIndice<number, string>({ indice: indices, id: 'text', chunkSize: 30 });
 
-    const primaryIndices = new SimpleIndice<object, number>({ isLoaded: false });
+    const primaryIndices = new SimpleIndice<Record<string, unknown>, number>({ isLoaded: false });
     countries.forEach((country, key) => primaryIndices.add({ ...country, id: key }, key));
-    const primaryRange = new RangeLinearIndice<object, number>({ indice: primaryIndices, id: 'primary', chunkSize: 30 });
+    const primaryRange = new RangeLinearIndice<Record<string, unknown>, number>({ indice: primaryIndices, id: 'primary', chunkSize: 30 });
 
     const simpleIndices = new SimpleIndice<number, string>({ isLoaded: false });
     countries.forEach((country, key) => simpleIndices.add(key, country.continent));
@@ -27,7 +27,7 @@ beforeAll(async () => {
         saveSharedIndices(simpleRange)
     ]);
     const [primary, text, simple] = await Promise.all([
-        restoreSharedIndices<number, object>(
+        restoreSharedIndices<number, Record<string, unknown>>(
             "primary",
             RangeLinearIndice.deserialize,
             SimpleIndice.deserialize

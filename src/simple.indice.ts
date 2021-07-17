@@ -3,7 +3,7 @@ const CHUNK_SIZE_DEFAULT = 100;
 interface IOptions extends Record<string, unknown> {
     id?: string;
     isLoaded: boolean;
-    load?(options: any): Promise<any>;
+    load?(options: IOptions): Promise<never>;
 }
 let id_counter = 1;
 export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
@@ -106,7 +106,7 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
                 
         }
     }
-    public getIndicesFullScanOr(tokens: P[], cond: (a: P, b: P) => boolean, sort: 1 | -1 = 1) {
+    private getIndicesFullScanOr(tokens: P[], cond: (a: P, b: P) => boolean, sort: 1 | -1 = 1): T[] {
         const keys = this.keys;
         if (sort === -1) {
             keys.reverse();
@@ -119,7 +119,7 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
             return sum;
         }, [] as T[]);
     }
-    public getIndicesFullScanAnd(tokens: P[], cond: (a: P, b: P) => boolean, sort: 1 | -1 = 1) {
+    private getIndicesFullScanAnd(tokens: P[], cond: (a: P, b: P) => boolean, sort: 1 | -1 = 1): T[]  {
         const keys = this.keys;
         if (sort === -1) {
             keys.reverse();
@@ -161,7 +161,7 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
         }
         return countResults;
     }
-    async find(value?: P | P[], operator = "$eq", sort: -1 | 1 = 1) {
+    async find(value?: P | P[], operator = "$eq", sort: -1 | 1 = 1): Promise<T[]> {
         let tokens: P[] = []
         if (value !== undefined) {
             tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
@@ -175,10 +175,13 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
         return results;
     }
 
-    serialize() {
+    serialize(): {
+        data: Record<string, unknown>[];
+        options: Record<string, unknown>;
+    } {
         return { data: this.serializeData(), options: this.serializeOptions() }
     }
-    static deserialize<T, P>(data: any, options?: any) {
+    static deserialize<T, P>(data: any, options?: IOptions): SimpleIndice<T, P> {
         if (!options) {
             options = data;
             data = null;
@@ -197,18 +200,7 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
         let map = new Map<P, T[]>();
         this.keys.forEach((key) => {
             const value = this.indices.get(key)!;
-            if (size > chunkSizeMax) {
-                while (value.length) {
-                    const leftValue = value.splice(0, chunkSizeMax - size);
-                    map.set(key, leftValue);
-                    result.push(SimpleIndice.deserialize<T, P>(
-                        map,
-                        options
-                    ));
-                    map = new Map();
-                    size = 0;
-                }
-            } else if (size >= chunkSize) {
+            if (size >= chunkSize) {
                 result.push(SimpleIndice.deserialize<T, P>(
                     map,
                     options

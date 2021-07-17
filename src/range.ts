@@ -16,14 +16,14 @@ export class Range<T> {
     public has(token: T): boolean {
         return token >= this.left && token <= this.right;
     }
-    public match(token: any): boolean {
+    public match(token: T): boolean {
         let source: string;
         let ignoreCase = false;
         if (token instanceof RegExp) {
             source = token.source
             ignoreCase = token.ignoreCase;
         } else {
-            source = (token as string).toString();
+            source = (`${token}`).toString();
         }
 
         const match = source.match(/\^([\w\d]+)/);
@@ -43,7 +43,7 @@ export class Range<T> {
     public gt(token: T): boolean {
         return token <= this.left || this.has(token);;
     }
-    test(token: T, operator: string) {
+    test(token: T, operator: string): boolean {
         switch (operator) {
             case '$eq':
             case '$in':

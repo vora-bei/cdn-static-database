@@ -1,4 +1,4 @@
-import { IIndice, ISharedIndice } from "interfaces";
+import { ISharedIndice } from "interfaces";
 
 export interface IIndiceOption {
     indice: ISharedIndice<any, any>;

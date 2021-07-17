@@ -92,7 +92,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
             throw (Error("option load doesn't implemented"))
         }
     }
-    public getIndices(token: string, operator: string) {
+    public getIndices(token: string, operator: string): T[] | undefined {
         return this.indices.get(token);
     }
     public async preFilter(tokens: string[], operator = "$eq"): Promise<Map<T, number>> {
@@ -109,7 +109,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         });
         return countResults;
     }
-    async find(value?: string | string[], operator = "$eq") {
+    async find(value?: string | string[], operator = "$eq"): Promise<T[]> {
         let tokens: string[] = []
         if (value !== undefined) {
             tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
@@ -150,19 +150,8 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         let size = 0;
         let map = new Map<string, T[]>();
         this.keys.forEach((key) => {
-            const value = this.indices.get(key)!;
-            if (size > chunkSizeMax) {
-                while (value.length) {
-                    const leftValue = value.splice(0, chunkSizeMax - size);
-                    map.set(key, leftValue);
-                    result.push(NgramIndice.deserialize<T, string>(
-                        map,
-                        options
-                    ));
-                    map = new Map();
-                    size = 0;
-                }
-            }else if (size >= chunkSize) {
+            const value = [...this.indices.get(key)!];
+            if (size >= chunkSize) {
                 result.push(NgramIndice.deserialize<T, string>(
                     map,
                     options

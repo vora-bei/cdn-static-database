@@ -52,7 +52,7 @@ class RangeLinearIndice {
         indice.indiceDeserialize = deserialize;
         return indice;
     }
-    filterIndicesByWeight(weight, tokens, operator) {
+    filterIndicesByWeight(weight, tokens) {
         return !!weight || !tokens.length;
     }
     async load() {
@@ -88,7 +88,7 @@ class RangeLinearIndice {
         const indices = [...this.indices].map(([filter, indice]) => {
             const weight = tokens.reduce((w, token) => filter.test(token, operator) ? 1 + w : w, 0);
             return [weight, indice];
-        }).filter(([weight]) => this.filterIndicesByWeight(weight, tokens, operator))
+        }).filter(([weight]) => this.filterIndicesByWeight(weight, tokens))
             .map(([_, indice]) => indice);
         if (sort === -1) {
             indices.reverse();
@@ -115,7 +115,7 @@ class RangeLinearIndice {
             const filteredIndices = [...indices].map(([filter, indice]) => {
                 const weight = tokens.reduce((w, token) => filter.test(token, operator) ? 1 + w : w, 0);
                 return [weight, indice];
-            }).filter(([weight]) => this.filterIndicesByWeight(weight, tokens, operator))
+            }).filter(([weight]) => this.filterIndicesByWeight(weight, tokens))
                 .map(([_, indice]) => indice);
             if (sort === -1) {
                 filteredIndices.reverse();

@@ -25,7 +25,7 @@ class Range {
             ignoreCase = token.ignoreCase;
         }
         else {
-            source = token.toString();
+            source = (`${token}`).toString();
         }
         const match = source.match(/\^([\w\d]+)/);
         if (!match) {

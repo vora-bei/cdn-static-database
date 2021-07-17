@@ -134,17 +134,8 @@ class NgramIndice {
         let size = 0;
         let map = new Map();
         this.keys.forEach((key) => {
-            const value = this.indices.get(key);
-            if (size > chunkSizeMax) {
-                while (value.length) {
-                    const leftValue = value.splice(0, chunkSizeMax - size);
-                    map.set(key, leftValue);
-                    result.push(NgramIndice.deserialize(map, options));
-                    map = new Map();
-                    size = 0;
-                }
-            }
-            else if (size >= chunkSize) {
+            const value = [...this.indices.get(key)];
+            if (size >= chunkSize) {
                 result.push(NgramIndice.deserialize(map, options));
                 size = value.length;
                 map = new Map([[key, value]]);

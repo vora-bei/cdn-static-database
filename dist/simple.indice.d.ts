@@ -2,7 +2,7 @@ import { ISpreadIndice } from "./interfaces";
 interface IOptions extends Record<string, unknown> {
     id?: string;
     isLoaded: boolean;
-    load?(options: any): Promise<any>;
+    load?(options: IOptions): Promise<never>;
 }
 export declare class SimpleIndice<T, P> implements ISpreadIndice<T, P> {
     indices: Map<P, T[]>;
@@ -16,16 +16,16 @@ export declare class SimpleIndice<T, P> implements ISpreadIndice<T, P> {
     tokenizr(value: P): P[];
     private load;
     private getIndices;
-    getIndicesFullScanOr(tokens: P[], cond: (a: P, b: P) => boolean, sort?: 1 | -1): T[];
-    getIndicesFullScanAnd(tokens: P[], cond: (a: P, b: P) => boolean, sort?: 1 | -1): T[];
+    private getIndicesFullScanOr;
+    private getIndicesFullScanAnd;
     preFilter(tokens: P[], operator: string, sort?: -1 | 1): Promise<Map<T, number>>;
     find(value?: P | P[], operator?: string, sort?: -1 | 1): Promise<T[]>;
     postFilter(countResults: Map<T, number>, tokens: P[]): T[];
     serialize(): {
-        data: any[];
+        data: Record<string, unknown>[];
         options: Record<string, unknown>;
     };
-    static deserialize<T, P>(data: any, options?: any): SimpleIndice<T, P>;
+    static deserialize<T, P>(data: any, options?: IOptions): SimpleIndice<T, P>;
     spread(chunkSize?: number): ISpreadIndice<T, P>[];
     findAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator?: string, sort?: -1 | 1): Promise<T[]>;
     cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator?: string, sort?: -1 | 1): AsyncIterable<T[]>;

@@ -4,7 +4,7 @@ export declare class Range<T> {
     constructor(left: T, right: T);
     static fromKeys<P>(indexes: P[]): Range<P>;
     has(token: T): boolean;
-    match(token: any): boolean;
+    match(token: T): boolean;
     lt(token: T): boolean;
     gt(token: T): boolean;
     test(token: T, operator: string): boolean;

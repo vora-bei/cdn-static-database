@@ -40,7 +40,7 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         const { load, ...options } = this.options;
         return { self: options, spread: { ...this.indice?.serializeOptions(), isLoaded: false } };
     }
-    testIndice( key: string, value: any) {
+    testIndice( key: string, value: any): boolean {
         if(key !== '$regex'){
             return true;
         }
@@ -73,7 +73,7 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         indice.indiceDeserialize = deserialize;
         return indice;
     }
-    private filterIndicesByWeight(weight: number, tokens: P[], operator: string) {
+    private filterIndicesByWeight(weight: number, tokens: P[]) {
         return !!weight || !tokens.length
     }
     private async load() {
@@ -110,7 +110,7 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         const indices = [...this.indices].map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
             const weight = tokens.reduce((w, token) => filter.test(token, operator) ? 1 + w : w, 0);
             return [weight, indice];
-        }).filter(([weight]) => this.filterIndicesByWeight(weight, tokens, operator))
+        }).filter(([weight]) => this.filterIndicesByWeight(weight, tokens))
             .map(([_, indice]) => indice);
         if (sort === -1) {
             indices.reverse();
@@ -137,7 +137,7 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
             const filteredIndices = [...indices].map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
                 const weight = tokens.reduce((w, token) => filter.test(token, operator) ? 1 + w : w, 0);
                 return [weight, indice];
-            }).filter(([weight]) => this.filterIndicesByWeight(weight, tokens, operator))
+            }).filter(([weight]) => this.filterIndicesByWeight(weight, tokens))
                 .map(([_, indice]) => indice);
             if (sort === -1) {
                 filteredIndices.reverse();

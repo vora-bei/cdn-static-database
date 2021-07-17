@@ -197,15 +197,8 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
         let map = new Map<P, T[]>();
         this.keys.forEach((key) => {
             const value = this.indices.get(key)!;
-            if (size >= chunkSize) {
-                result.push(SimpleIndice.deserialize<T, P>(
-                    map,
-                    options
-                ))
-                size = value.length;
-                map = new Map([[key, value]]);
-            } else if(size + value.length > chunkSizeMax) {
-                while(value.length) {
+            if (size > chunkSizeMax) {
+                while (value.length) {
                     const leftValue = value.splice(0, chunkSizeMax - size);
                     map.set(key, leftValue);
                     result.push(SimpleIndice.deserialize<T, P>(
@@ -215,6 +208,13 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
                     map = new Map();
                     size = 0;
                 }
+            } else if (size >= chunkSize) {
+                result.push(SimpleIndice.deserialize<T, P>(
+                    map,
+                    options
+                ))
+                size = value.length;
+                map = new Map([[key, value]]);
             } else {
                 size = size + value.length;
                 map.set(key, value);

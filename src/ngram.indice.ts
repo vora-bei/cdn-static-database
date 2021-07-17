@@ -151,14 +151,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         let map = new Map<string, T[]>();
         this.keys.forEach((key) => {
             const value = this.indices.get(key)!;
-            if (size >= chunkSize) {
-                result.push(NgramIndice.deserialize<T, string>(
-                    map,
-                    options
-                ))
-                size = value.length;
-                map = new Map([[key, value]]);
-            } else if (size + value.length > chunkSizeMax) {
+            if (size > chunkSizeMax) {
                 while (value.length) {
                     const leftValue = value.splice(0, chunkSizeMax - size);
                     map.set(key, leftValue);
@@ -169,7 +162,14 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
                     map = new Map();
                     size = 0;
                 }
-            } else {
+            }else if (size >= chunkSize) {
+                result.push(NgramIndice.deserialize<T, string>(
+                    map,
+                    options
+                ))
+                size = value.length;
+                map = new Map([[key, value]]);
+            }  else {
                 size = size + value.length;
                 map.set(key, value);
             }
@@ -209,7 +209,6 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         let { postFilter } = this;
         postFilter = postFilter.bind(this)
         let subResult: T[] = [];
-        const duplicates: Set<T> = new Set();
         const combineWeights: Map<T, number> = new Map();
         const never: Promise<{
             index: number;

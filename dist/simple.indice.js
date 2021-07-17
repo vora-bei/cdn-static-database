@@ -236,7 +236,7 @@ class SimpleIndice {
         let result = null;
         let indiceIndex = 0;
         let data = new Map();
-        const chunkSize = 500;
+        const chunkSize = 20;
         return {
             [Symbol.asyncIterator]() {
                 return {

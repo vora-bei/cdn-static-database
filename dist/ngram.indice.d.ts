@@ -1,4 +1,4 @@
-import { ISpreadIndice } from "./interfaces";
+import { IFindOptions, ISpreadIndice } from "./interfaces";
 interface IOptions extends Record<string, unknown> {
     id?: string;
     gramLen: number;
@@ -23,8 +23,8 @@ export declare class NgramIndice<T> implements ISpreadIndice<T, string> {
     tokenizr(value: string): string[];
     private load;
     getIndices(token: string, operator: string): T[] | undefined;
-    preFilter(tokens: string[], operator?: string): Promise<Map<T, number>>;
-    find(value?: string | string[], operator?: string): Promise<T[]>;
+    preFilter(tokens: string[], { operator }?: Partial<IFindOptions>): Promise<Map<T, number>>;
+    find(value?: string | string[], { operator }?: Partial<IFindOptions>): Promise<T[]>;
     postFilter(countResults: Map<T, number>, tokens: string[]): T[];
     private getLimit;
     serialize(): {
@@ -33,8 +33,8 @@ export declare class NgramIndice<T> implements ISpreadIndice<T, string> {
     };
     static deserialize<T, P>(data: any, options?: any): NgramIndice<T>;
     spread(chunkSize?: number): ISpreadIndice<T, string>[];
-    findAll(indices: ISpreadIndice<T, string>[], value: string, operator?: string): Promise<T[]>;
-    cursorAll(indices: ISpreadIndice<T, string>[], value: string | string[], operator?: string): AsyncIterable<T[]>;
+    findAll(indices: ISpreadIndice<T, string>[], value: string, { operator }?: Partial<IFindOptions>): Promise<T[]>;
+    cursorAll(indices: ISpreadIndice<T, string>[], value: string | string[], { operator, chunkSize }?: Partial<IFindOptions>): AsyncIterable<T[]>;
 }
 export {};
 //# sourceMappingURL=ngram.indice.d.ts.map

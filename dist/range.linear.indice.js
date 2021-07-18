@@ -75,7 +75,7 @@ class RangeLinearIndice {
             throw (Error("option load doesn't implemented"));
         }
     }
-    async find(value, operator = '$eq', sort = 1) {
+    async find(value, { operator = '$eq', sort = 1 } = {}) {
         await this.load();
         const { indice } = this;
         if (!indice) {
@@ -93,9 +93,9 @@ class RangeLinearIndice {
         if (sort === -1) {
             indices.reverse();
         }
-        return indice.findAll(indices, value, operator);
+        return indice.findAll(indices, value, { operator, sort });
     }
-    cursor(value, operator = '$eq', sort = 1) {
+    cursor(value, { operator = '$eq', sort = 1 } = {}) {
         const load$ = this.load();
         let cursor;
         let iterator;
@@ -120,7 +120,7 @@ class RangeLinearIndice {
             if (sort === -1) {
                 filteredIndices.reverse();
             }
-            cursor = indice.cursorAll(filteredIndices, value, operator, sort);
+            cursor = indice.cursorAll(filteredIndices, value, { operator, sort });
             isFound = true;
             iterator = cursor[Symbol.asyncIterator]();
         };

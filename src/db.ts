@@ -1,4 +1,4 @@
-import { ISharedIndice } from "interfaces";
+import { IFindOptions, ISharedIndice } from "interfaces";
 import mingo from "mingo";
 import { RawObject, isOperator, isArray, isObject } from "mingo/util";
 import { IIndiceOption, Schema } from "./schema";
@@ -35,6 +35,8 @@ export class Db {
     buildIndexSearch(
         criteria: RawObject,
         sort?: { [k: string]: 1 | -1 },
+        skip?: number,
+        limit?: number,
         context?: {
             path?: string,
             isRoot: boolean,
@@ -61,7 +63,7 @@ export class Db {
         for (const [key, value] of Object.entries(criteria)) {
             if (logicalOperators.has(key) && isArray(value)) {
                 const subIt = (value as RawObject[])
-                    .map(subCriteria => this.buildIndexSearch(subCriteria, sort, { indices, isRoot: false, caches }));
+                    .map(subCriteria => this.buildIndexSearch(subCriteria, sort, skip, limit, { indices, isRoot: false, caches }));
 
                 () => {
                     const isAnd = key === '$and';
@@ -105,7 +107,7 @@ export class Db {
                     indices.set(indiceOptions.indice, { ...exists, ...indiceOptions, value: value as unknown, op: key })
                 }
             } else if (isObject(value)) {
-                subIterables.push(this.buildIndexSearch(value as RawObject, sort, { path: key, indices, isRoot: false, caches }))
+                subIterables.push(this.buildIndexSearch(value as RawObject, sort, skip, limit, { path: key, indices, isRoot: false, caches }))
             } else {
                 const indiceOptions = this.schema.indices.find(o => o.path === key);
                 if (indiceOptions) {
@@ -118,7 +120,7 @@ export class Db {
             const values = [...indices.values()];
             const simpleIterable = values
                 .map(({ indice, value, order, op }) => {
-                    return this.indiceCursor(indice, value, caches, order, op);
+                    return this.indiceCursor(indice, value, caches, { sort: order, operator: op, chunkSize: (limit || 0) + (skip || 0) });
                 });
             const subResult: ResultIndiceSearch[] = subIterables.map(it => it());
             const subGreed = subResult.every(({ greed }) => greed);
@@ -130,7 +132,7 @@ export class Db {
             }, new Set<string>());
             const paths = new Set([...values.map(({ path }) => path!), ...subPaths]);
             const sortedIterable = [...sortIndices.values()].filter(({ path }) => !paths.has(path!) && isRoot)
-                .map(({ indice, value, order, op }) => this.indiceCursor(indice, value, caches, order, op));
+                .map(({ indice, value, order, op }) => this.indiceCursor(indice, value, caches, { sort: order, operator: op, chunkSize: (limit || 0) + (skip || 0) }));
             const missedAll = !sortedIterable.length && !indices.size && missed;
             const greedAll = greed && subGreed;
             if (isRoot) {
@@ -156,7 +158,7 @@ export class Db {
         console.time('find')
         const chunkSize = limit || 20;
         const primaryIndice = this.schema.primaryIndice;
-        const search: ResultIndiceSearch = this.buildIndexSearch(criteria, sort)();
+        const search: ResultIndiceSearch = this.buildIndexSearch(criteria, sort, skip, limit)();
         const result: unknown[] = [];
         const query = new mingo.Query(criteria);
         let i = 0;
@@ -242,13 +244,13 @@ export class Db {
         return res.all() as T[];
     }
 
-    private indiceCursor(indice: ISharedIndice<unknown, unknown>, value: unknown, caches: Map<unknown, Record<string, unknown>>, order?: 1 | -1, op?: string): AsyncIterable<unknown[]> {
+    private indiceCursor(indice: ISharedIndice<unknown, unknown>, value: unknown, caches: Map<unknown, Record<string, unknown>>, { operator = '$eq', sort = 1 }: Partial<IFindOptions> = {}): AsyncIterable<unknown[]> {
         const { idAttr } = this.schema;
         if (this.schema.primaryIndice !== indice) {
-            const iterator = indice.cursor(value, op, order);
+            const iterator = indice.cursor(value, { operator, sort });
             return iterator;
         }
-        const iterator = this.schema.primaryIndice.cursor(value, op, order);
+        const iterator = this.schema.primaryIndice.cursor(value, { operator, sort });
         return {
             [Symbol.asyncIterator]() {
                 return {
@@ -267,7 +269,7 @@ export class Db {
 
     }
 
-    private testIndice(options: IIndiceOption, key: string, value: unknown, path?  : string) {
+    private testIndice(options: IIndiceOption, key: string, value: unknown, path?: string) {
         const pathEqual = options.path === path;
         return pathEqual && options.indice.testIndice(key, value);
     }

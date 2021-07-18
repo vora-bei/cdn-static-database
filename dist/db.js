@@ -26,7 +26,7 @@ class Db {
             .filter((path) => !logicalOperators.has(path));
         this.customOperators = new Set(operators);
     }
-    buildIndexSearch(criteria, sort, context) {
+    buildIndexSearch(criteria, sort, skip, limit, context) {
         const { isRoot = true, caches = new Map() } = context || {};
         const indices = new Map();
         const sortIndices = new Map();
@@ -45,7 +45,7 @@ class Db {
         for (const [key, value] of Object.entries(criteria)) {
             if (logicalOperators.has(key) && util_1.isArray(value)) {
                 const subIt = value
-                    .map(subCriteria => this.buildIndexSearch(subCriteria, sort, { indices, isRoot: false, caches }));
+                    .map(subCriteria => this.buildIndexSearch(subCriteria, sort, skip, limit, { indices, isRoot: false, caches }));
                 () => {
                     const isAnd = key === '$and';
                     const result = subIt.map(it => it());
@@ -90,7 +90,7 @@ class Db {
                 }
             }
             else if (util_1.isObject(value)) {
-                subIterables.push(this.buildIndexSearch(value, sort, { path: key, indices, isRoot: false, caches }));
+                subIterables.push(this.buildIndexSearch(value, sort, skip, limit, { path: key, indices, isRoot: false, caches }));
             }
             else {
                 const indiceOptions = this.schema.indices.find(o => o.path === key);
@@ -104,7 +104,7 @@ class Db {
             const values = [...indices.values()];
             const simpleIterable = values
                 .map(({ indice, value, order, op }) => {
-                return this.indiceCursor(indice, value, caches, order, op);
+                return this.indiceCursor(indice, value, caches, { sort: order, operator: op, chunkSize: (limit || 0) + (skip || 0) });
             });
             const subResult = subIterables.map(it => it());
             const subGreed = subResult.every(({ greed }) => greed);
@@ -116,7 +116,7 @@ class Db {
             }, new Set());
             const paths = new Set([...values.map(({ path }) => path), ...subPaths]);
             const sortedIterable = [...sortIndices.values()].filter(({ path }) => !paths.has(path) && isRoot)
-                .map(({ indice, value, order, op }) => this.indiceCursor(indice, value, caches, order, op));
+                .map(({ indice, value, order, op }) => this.indiceCursor(indice, value, caches, { sort: order, operator: op, chunkSize: (limit || 0) + (skip || 0) }));
             const missedAll = !sortedIterable.length && !indices.size && missed;
             const greedAll = greed && subGreed;
             if (isRoot) {
@@ -135,7 +135,7 @@ class Db {
         console.time('find');
         const chunkSize = limit || 20;
         const primaryIndice = this.schema.primaryIndice;
-        const search = this.buildIndexSearch(criteria, sort)();
+        const search = this.buildIndexSearch(criteria, sort, skip, limit)();
         const result = [];
         const query = new mingo_1.default.Query(criteria);
         let i = 0;
@@ -219,13 +219,13 @@ class Db {
         console.timeEnd('find');
         return res.all();
     }
-    indiceCursor(indice, value, caches, order, op) {
+    indiceCursor(indice, value, caches, { operator = '$eq', sort = 1 } = {}) {
         const { idAttr } = this.schema;
         if (this.schema.primaryIndice !== indice) {
-            const iterator = indice.cursor(value, op, order);
+            const iterator = indice.cursor(value, { operator, sort });
             return iterator;
         }
-        const iterator = this.schema.primaryIndice.cursor(value, op, order);
+        const iterator = this.schema.primaryIndice.cursor(value, { operator, sort });
         return {
             [Symbol.asyncIterator]() {
                 return {

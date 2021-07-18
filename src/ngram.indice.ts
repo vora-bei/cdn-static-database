@@ -1,5 +1,5 @@
 import nGram from "n-gram";
-import { ISpreadIndice } from "./interfaces"
+import { IFindOptions, ISpreadIndice } from "./interfaces"
 const CHUNK_SIZE_DEFAULT = 100;
 const AUTO_LIMIT_FIND_PERCENT = 40;
 interface IOptions extends Record<string, unknown> {
@@ -95,7 +95,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
     public getIndices(token: string, operator: string): T[] | undefined {
         return this.indices.get(token);
     }
-    public async preFilter(tokens: string[], operator = "$eq"): Promise<Map<T, number>> {
+    public async preFilter(tokens: string[], { operator = '$eq' }: Partial<IFindOptions> = {}): Promise<Map<T, number>> {
         const countResults: Map<T, number> = new Map();
         await this.load();
         tokens.forEach((token) => {
@@ -109,12 +109,12 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         });
         return countResults;
     }
-    async find(value?: string | string[], operator = "$eq"): Promise<T[]> {
+    async find(value?: string | string[], { operator = '$eq' }: Partial<IFindOptions> = {}): Promise<T[]> {
         let tokens: string[] = []
         if (value !== undefined) {
             tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
         }
-        const preResult = await this.preFilter(tokens, operator);
+        const preResult = await this.preFilter(tokens, { operator });
         return this.postFilter(preResult, tokens);
     }
     public postFilter(countResults: Map<T, number>, tokens: string[]): T[] {
@@ -145,22 +145,24 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
     }
     public spread(chunkSize: number = CHUNK_SIZE_DEFAULT): ISpreadIndice<T, string>[] {
         const { id, ...options } = this.options;
-        const chunkSizeMax = chunkSize * 10;
         const result: ISpreadIndice<T, string>[] = [];
         let size = 0;
         let map = new Map<string, T[]>();
         this.keys.forEach((key) => {
             const value = [...this.indices.get(key)!];
-            if (size >= chunkSize) {
-                result.push(NgramIndice.deserialize<T, string>(
-                    map,
-                    options
-                ))
-                size = value.length;
-                map = new Map([[key, value]]);
-            }  else {
+            if (size + value.length <= chunkSize) {
                 size = size + value.length;
                 map.set(key, value);
+            } else {
+                while (value.length) {
+                    map.set(key, value.splice(0, chunkSize - size));
+                    result.push(NgramIndice.deserialize<T, string>(
+                        map,
+                        options
+                    ));
+                    size = 0;
+                    map = new Map();
+                }
             }
         })
         if (size != 0) {
@@ -171,9 +173,9 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         }
         return result;
     }
-    public async findAll(indices: ISpreadIndice<T, string>[], value: string, operator = '$eq'): Promise<T[]> {
+    public async findAll(indices: ISpreadIndice<T, string>[], value: string, { operator = '$eq' }: Partial<IFindOptions> = {}): Promise<T[]> {
         const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
-        const list = await Promise.all(indices.map((indice) => indice.preFilter(tokens, operator)));
+        const list = await Promise.all(indices.map((indice) => indice.preFilter(tokens, { operator })));
         const combineWeights = list.reduce((sum, weights) => {
             weights.forEach((value, key) => {
                 const count = sum.get(key) || 0
@@ -183,11 +185,11 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         }, new Map())
         return this.postFilter(combineWeights, tokens);
     }
-    public cursorAll(indices: ISpreadIndice<T, string>[], value: string | string[], operator = '$eq'): AsyncIterable<T[]> {
+    public cursorAll(indices: ISpreadIndice<T, string>[], value: string | string[], { operator = '$eq', chunkSize = 20 }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
         const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
 
         let count = indices.length;
-        const $promises = indices.map((indice) => indice.preFilter(tokens, operator))
+        const $promises = indices.map((indice) => indice.preFilter(tokens, { operator }))
             .map(($subResult, index) => {
                 return $subResult.then(result => ({
                     index,

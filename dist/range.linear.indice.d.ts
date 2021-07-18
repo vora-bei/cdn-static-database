@@ -1,4 +1,4 @@
-import { ISharedIndice, ISpreadIndice } from "./interfaces";
+import { IFindOptions, ISharedIndice, ISpreadIndice } from "./interfaces";
 import { Range } from "./range";
 interface IOptions<T, P> {
     chunkSize?: number;
@@ -32,8 +32,8 @@ export declare class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
     }, deserialize: (options: Record<string, unknown>) => ISpreadIndice<T, P>): ISharedIndice<T, P>;
     private filterIndicesByWeight;
     private load;
-    find(value?: P | P[], operator?: string, sort?: 1 | -1): Promise<T[]>;
-    cursor(value?: P | P[], operator?: string, sort?: 1 | -1): AsyncIterable<T[]>;
+    find(value?: P | P[], { operator, sort }?: Partial<IFindOptions>): Promise<T[]>;
+    cursor(value?: P | P[], { operator, sort }?: Partial<IFindOptions>): AsyncIterable<T[]>;
 }
 export {};
 //# sourceMappingURL=range.linear.indice.d.ts.map

@@ -4,10 +4,15 @@ export interface ISerializeIndex {
     serializeOptions(): Record<string, unknown>;
     serializeData(): unknown[];
 }
+export interface IFindOptions {
+    operator: string;
+    sort: 1 | -1,
+    chunkSize: number,
+}
 
 export interface IBaseIndice<T, P> {
     id: string;
-    find(search: P[] | P, op?: string, sort?: 1 | -1): Promise<T[]>;
+    find(search: P[] | P, options?: IFindOptions): Promise<T[]>;
 }
 export interface IIndice<T, P> extends ISerializeIndex, IBaseIndice<T, P> {
     tokenizr(search: P): P[];
@@ -17,13 +22,13 @@ export interface IIndice<T, P> extends ISerializeIndex, IBaseIndice<T, P> {
 export interface ISpreadIndice<T, P> extends IIndice<T, P> {
     spread(chunkSize: number): ISpreadIndice<T, P>[];
     postFilter(countResults: Map<T, number>, tokens: P[]): T[];
-    preFilter(tokens: P[], operator?: string, sort?: 1 | -1): Promise<Map<T, number>>;
-    findAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator?: string): Promise<T[]>;
-    cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], operator?: string, sort?: 1 | -1): AsyncIterable<T[]>;
+    preFilter(tokens: P[], options: Partial<IFindOptions>): Promise<Map<T, number>>;
+    findAll(indices: ISpreadIndice<T, P>[], value?: P | P[], options?: Partial<IFindOptions>): Promise<T[]>;
+    cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], options?: Partial<IFindOptions>): AsyncIterable<T[]>;
 }
 export interface ISharedIndice<T, P> extends IBaseIndice<T, P>, ISerializeIndex {
     indices: Map<unknown, ISpreadIndice<T, P>>
-    cursor(value?: P | P[], operator?: string, sort?: 1 | -1): AsyncIterable<T[]>;
+    cursor(value?: P | P[], options?: Partial<IFindOptions>): AsyncIterable<T[]>;
     testIndice(key: string, value: unknown): boolean;
 
 }

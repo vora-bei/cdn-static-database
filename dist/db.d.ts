@@ -14,7 +14,7 @@ export declare class Db {
     constructor(schema: Schema);
     buildIndexSearch(criteria: RawObject, sort?: {
         [k: string]: 1 | -1;
-    }, context?: {
+    }, skip?: number, limit?: number, context?: {
         path?: string;
         isRoot: boolean;
         indices: Map<ISharedIndice<unknown, unknown>, IIndiceOption>;

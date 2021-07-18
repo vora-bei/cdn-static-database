@@ -127,7 +127,7 @@ class SimpleIndice {
             return sum;
         }, []);
     }
-    async preFilter(tokens, operator, sort = 1) {
+    async preFilter(tokens, { operator = '$eq', sort = 1 } = {}) {
         const countResults = new Map();
         await this.load();
         const t = [...tokens];
@@ -154,12 +154,12 @@ class SimpleIndice {
         }
         return countResults;
     }
-    async find(value, operator = "$eq", sort = 1) {
+    async find(value, { operator = '$eq', sort = 1 } = {}) {
         let tokens = [];
         if (value !== undefined) {
             tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
         }
-        const preResult = await this.preFilter(tokens, operator, sort);
+        const preResult = await this.preFilter(tokens, { operator, sort });
         return this.postFilter(preResult, tokens);
     }
     postFilter(countResults, tokens) {
@@ -183,20 +183,22 @@ class SimpleIndice {
     }
     spread(chunkSize = CHUNK_SIZE_DEFAULT) {
         const { id, ...options } = this.options;
-        const chunkSizeMax = chunkSize * 10;
         const result = [];
         let size = 0;
         let map = new Map();
         this.keys.forEach((key) => {
-            const value = this.indices.get(key);
-            if (size >= chunkSize) {
-                result.push(SimpleIndice.deserialize(map, options));
-                size = value.length;
-                map = new Map([[key, value]]);
-            }
-            else {
+            const value = [...this.indices.get(key)];
+            if (size + value.length <= chunkSize) {
                 size = size + value.length;
                 map.set(key, value);
+            }
+            else {
+                while (value.length) {
+                    map.set(key, value.splice(0, chunkSize - size));
+                    result.push(SimpleIndice.deserialize(map, options));
+                    size = 0;
+                    map = new Map();
+                }
             }
         });
         if (size != 0) {
@@ -204,12 +206,12 @@ class SimpleIndice {
         }
         return result;
     }
-    async findAll(indices, value, operator = '$eq', sort = 1) {
+    async findAll(indices, value, { operator = '$eq', sort = 1 } = {}) {
         let tokens = [];
         if (value !== undefined) {
             tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
         }
-        const list = await Promise.all(indices.map((indice) => indice.preFilter(tokens, operator, sort)));
+        const list = await Promise.all(indices.map((indice) => indice.preFilter(tokens, { operator, sort })));
         const combineWeights = list.reduce((sum, weights) => {
             weights.forEach((value, key) => {
                 const count = sum.get(key) || 0;
@@ -219,7 +221,7 @@ class SimpleIndice {
         }, new Map());
         return this.postFilter(combineWeights, tokens);
     }
-    cursorAll(indices, value, operator = '$eq', sort = 1) {
+    cursorAll(indices, value, { operator = '$eq', sort = 1, chunkSize = 20 } = {}) {
         let tokens = [];
         if (value !== undefined) {
             tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
@@ -227,19 +229,18 @@ class SimpleIndice {
         let result = null;
         let indiceIndex = 0;
         let data = new Map();
-        const chunkSize = 20;
         return {
             [Symbol.asyncIterator]() {
                 return {
                     async next() {
                         if (indiceIndex === 0 && !result && indiceIndex <= indices.length - 1) {
-                            data = await indices[indiceIndex].preFilter(tokens, operator, sort);
+                            data = await indices[indiceIndex].preFilter(tokens, { operator, sort });
                             result = [...data.keys()];
                             result.reverse();
                         }
                         while (!(result === null || result === void 0 ? void 0 : result.length) && indiceIndex < indices.length - 1) {
                             indiceIndex++;
-                            data = await indices[indiceIndex].preFilter(tokens, operator, sort);
+                            data = await indices[indiceIndex].preFilter(tokens, { operator, sort });
                             result = [...data.keys()];
                             result.reverse();
                         }

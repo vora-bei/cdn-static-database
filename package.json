@@ -1,6 +1,6 @@
 {
   "name": "cdn-static-database",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -11,15 +11,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://gitlab.com/vora-bei/gatsby-full-text-search-server-static-index-plugin.git"
+    "url": "git+https://github.com/vora-bei/cdn-static-database.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["cdn", "search", "static"],
+  "author": "voronsupermen@gmail.com",
   "license": "ISC",
+  "files": ["src/*"],
   "bugs": {
-    "url": "https://gitlab.com/vora-bei/gatsby-full-text-search-server-static-index-plugin/issues"
+    "url": "https://github.com/vora-bei/cdn-static-database/issues"
   },
-  "homepage": "https://gitlab.com/vora-bei/gatsby-full-text-search-server-static-index-plugin#readme",
+  "homepage": "https://github.com/vora-bei/cdn-static-database.git#readme",
   "devDependencies": {
     "@types/jest": "^26.0.23",
     "@typescript-eslint/eslint-plugin": "^4.28.3",

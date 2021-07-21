@@ -203,14 +203,6 @@ test('{}, { country: -1 }', async () => {
         20
     );
 });
-// test('{}, { continent: -1 }', async () => {
-//     await expectEqualMingo(
-//         {},
-//         { continent: -1 },
-//         0,
-//         20
-//     );
-// });
 test('{}, { continent: -1 }', async () => {
     expect(true).toEqual(new mingo.Query({ a: /^abc/ }).test({ a: 'abc' }));
 

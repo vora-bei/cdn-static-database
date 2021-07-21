@@ -1,5 +1,5 @@
 {
-  "name": "gatsby-full-text-search-server-static-index-plugin",
+  "name": "cdn-static-database",
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",

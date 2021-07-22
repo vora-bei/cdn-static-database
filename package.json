@@ -1,6 +1,6 @@
 {
   "name": "cdn-static-database",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -13,10 +13,16 @@
     "type": "git",
     "url": "git+https://github.com/vora-bei/cdn-static-database.git"
   },
-  "keywords": ["cdn", "search", "static"],
+  "keywords": [
+    "cdn",
+    "search",
+    "static"
+  ],
   "author": "voronsupermen@gmail.com",
   "license": "ISC",
-  "files": ["dist/*"],
+  "files": [
+    "dist/*"
+  ],
   "bugs": {
     "url": "https://github.com/vora-bei/cdn-static-database/issues"
   },

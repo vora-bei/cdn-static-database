@@ -20,7 +20,10 @@
   ],
   "author": "voronsupermen@gmail.com",
   "license": "ISC",
-  "files": ["dist","coverage"],
+  "files": [
+    "dist",
+    "coverage"
+  ],
   "bugs": {
     "url": "https://github.com/vora-bei/cdn-static-database/issues"
   },

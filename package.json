@@ -16,7 +16,7 @@
   "keywords": ["cdn", "search", "static"],
   "author": "voronsupermen@gmail.com",
   "license": "ISC",
-  "files": ["src/*"],
+  "files": ["dist/*"],
   "bugs": {
     "url": "https://github.com/vora-bei/cdn-static-database/issues"
   },

@@ -5,19 +5,38 @@ But you can use it independently.
 
 ### Base usage
 ```javascript
- const indices = new NgramIndice<number>({ 
+ const indice = new NgramIndice<number>({ 
      gramLen: 3, actuationLimit: 2, toLowcase: true, actuationLimitAuto: true 
      });
-    countries.forEach((country, key) => indices.add(key, [country.country, country.continent]));
-    const range = new RangeLinearIndice<number, string>({ indice: indices, id: 'text', chunkSize: 30 });
+    countries
+        .forEach((country, key) => indices
+            .add(key, [country.country, country.continent])
+        );
+    const range = new RangeLinearIndice<number, string>({ 
+        indice,
+        id: 'text',
+        chunkSize: 30
+     });
 
     const primaryIndices = new SimpleIndice<Record<string, unknown>, number>({ });
-    countries.forEach((country, key) => primaryIndices.add({ ...country, id: key }, key));
-    const primaryRange = new RangeLinearIndice<Record<string, unknown>, number>({ indice: primaryIndices, id: 'primary', chunkSize: 30 });
+    countries
+        .forEach((country, key) => primaryIndices
+            .add({ ...country, id: key }, key)
+        );
+    const primaryRange = new RangeLinearIndice<Record<string, unknown>, number>({
+         indice: primaryIndices,
+          id: 'primary', 
+          chunkSize: 30
+     });
 
     const simpleIndices = new SimpleIndice<number, string>({  });
-    countries.forEach((country, key) => simpleIndices.add(key, country.continent));
-    const simpleRange = new RangeLinearIndice<number, string>({ indice: simpleIndices, id: 'simple', chunkSize: 30 });
+    countries
+        .forEach((country, key) => simpleIndices.add(key, country.continent));
+    const simpleRange = new RangeLinearIndice<number, string>({ 
+        indice: simpleIndices,
+        id: 'simple',
+        chunkSize: 30
+     });
     await Promise.all([
         saveSharedIndices(range),
         saveSharedIndices(primaryRange),

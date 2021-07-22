@@ -1,6 +1,6 @@
 {
   "name": "cdn-static-database",
-  "version": "1.0.7",
+  "version": "1.0.9",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
@@ -20,7 +20,7 @@
   ],
   "author": "voronsupermen@gmail.com",
   "license": "ISC",
-  "files": ["*"],
+  "files": ["dist","coverage"],
   "bugs": {
     "url": "https://github.com/vora-bei/cdn-static-database/issues"
   },

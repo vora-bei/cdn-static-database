@@ -10,6 +10,7 @@ export interface IFindOptions {
     chunkSize: number,
 }
 
+
 export interface IBaseIndice<T, P> {
     id: string;
     find(search: P[] | P, options?: IFindOptions): Promise<T[]>;

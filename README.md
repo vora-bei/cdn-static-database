@@ -1,6 +1,6 @@
 # Search cdn indice
 ## Mongo query compatible search engine. Deploy assets of indice to CDN.
-This is This is a helper library for the gatsby plugin "gatsby-cdn-search-plugin".
+This is a helper library for the gatsby plugin "gatsby-cdn-search-plugin".
 But you can use it independently.
 
 ### Base usage

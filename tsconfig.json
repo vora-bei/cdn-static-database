@@ -70,7 +70,5 @@
     "forceConsistentCasingInFileNames": true,        /* Disallow inconsistently-cased references to the same file. */
     "outDir": "./dist",
   },
-  "include": [
-    "src"
-, "tests"  ]
+  "include": ["src", "tests"  ]
 }

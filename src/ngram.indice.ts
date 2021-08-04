@@ -185,20 +185,28 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         }, new Map())
         return this.postFilter(combineWeights, tokens);
     }
-    public cursorAll(indices: ISpreadIndice<T, string>[], value: string | string[], { operator = '$eq', chunkSize = 20 }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
+    private getIndiceChunks(indices: ISpreadIndice<T, string>[], tokens: string[],{ operator = '$eq' }: Partial<IFindOptions> = {} ){
+        const CHUNK_SIZE = 3;
+        const slice: ISpreadIndice<T, string>[] = [...indices.splice(0, CHUNK_SIZE), ...indices.splice(-CHUNK_SIZE)];
+        
+        return slice.map((indice) => indice.preFilter(tokens, { operator }))
+        .map(($subResult, index) => {
+            return $subResult.then(result => ({
+                index,
+                result,
+            }));
+        });
+
+    }
+    public cursorAll(indices: ISpreadIndice<T, string>[], value: string | string[], { operator = '$eq' }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
         const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
+        const  copyIndices = [...indices];
+        let $promises = this.getIndiceChunks(copyIndices, tokens, {operator});
+        let count = $promises.length;
 
-        let count = indices.length;
-        const $promises = indices.map((indice) => indice.preFilter(tokens, { operator }))
-            .map(($subResult, index) => {
-                return $subResult.then(result => ({
-                    index,
-                    result,
-                }));
-            });
-
-        let { postFilter } = this;
-        postFilter = postFilter.bind(this)
+        let { postFilter, getIndiceChunks } = this;
+        postFilter = postFilter.bind(this);
+        getIndiceChunks = getIndiceChunks.bind(this);
         let subResult: T[] = [];
         const combineWeights: Map<T, number> = new Map();
         const never: Promise<{
@@ -207,12 +215,18 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         }> = new Promise(() => {
             // do nothing.
         });
+        let i = 1;
         return {
             [Symbol.asyncIterator]() {
                 return {
                     async next() {
                         subResult = [];
-                        while (count > 0) {
+                        while (count > 0 || copyIndices.length > 0) {
+                            if(count===0){
+                                $promises = getIndiceChunks(copyIndices, tokens, {operator});
+                                console.debug('n-gram chunk', $promises.length,copyIndices.length, i++);
+                                count = $promises.length;
+                            }
                             const { index, result: res } = await Promise.race($promises);
                             count--;
                             $promises[index] = never;
@@ -221,8 +235,8 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
                                     const value = combineWeights.get(key) || 0;
                                     combineWeights.set(key, weight + value);
                                 }, new Map());
-                            subResult = postFilter(combineWeights, tokens)
-                                .filter(r => {
+                            subResult = postFilter(combineWeights, tokens);
+                            subResult.forEach(r => {
                                     combineWeights.delete(r);
                                     return r;
                                 });

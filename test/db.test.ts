@@ -99,6 +99,13 @@ const expectTextMingo = async (query: any, sort: any, skip: number, count: numbe
     ).toBeTruthy()
     expect(actual).toHaveLength(1);
 }
+const expectTextErrorMingo = async (query: any, sort: any, skip: number, count: number) => {
+    const actual = await contriesDb.find<{ continent: string, country: string }>(query, sort,
+        skip,
+        count
+    );
+    expect(actual).toHaveLength(0);
+}
 
 // test('{ continent: { $nin: ["Oceania", "Asia", "Europe", "Antarctica", "Africa"] } }', async () => {
 //     await expectNinMingo(
@@ -144,6 +151,14 @@ test('{ id: {$lt: 10} }', async () => {
 test('{ $text: "Angola", continent: "Africa" }', async () => {
     await expectTextMingo(
         { $text: "Angoli", continent: { $in: ["Africa"] } },
+        undefined,
+        0,
+        20
+    );
+});
+test('{ $text: "Angola  Bolivia British Russia", continent: "Africa" }', async () => {
+    await expectTextErrorMingo(
+        { $text: "Angoli Bolivia British Russia" },
         undefined,
         0,
         20

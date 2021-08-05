@@ -163,13 +163,15 @@ export class Db {
         const query = new mingo.Query(criteria);
         let i = 0;
         const caches = search.caches.values();
-        const isEnough = () => limit && i === limit && !search.greed
+        const isEnough = () => limit && i  === limit + skip && !search.greed
         if (search.missed) {
             for await (const values of primaryIndice.cursor()) {
                 for (const value of values) {
-                    if (query.test(value) && i >= skip) {
+                    if (query.test(value)) {
                         i++;
-                        result.push(value)
+                        if(i > skip){
+                            result.push(value)
+                        }
                         if (isEnough()) {
                             break;
                         }
@@ -181,7 +183,7 @@ export class Db {
             for (const value of caches) {
                 if (query.test(value)) {
                     i++;
-                    if (i >= skip) {
+                    if (i > skip) {
                         result.push(value)
                     }
                     if (isEnough()) {
@@ -200,8 +202,8 @@ export class Db {
                         for (const value of [...values]) {
                             if (query.test(value)) {
                                 i++;
-                                if (i >= skip) {
-                                    result.push(value)
+                                if (i > skip) {
+                                    result.push(value);
                                 }
                                 if (isEnough()) {
                                     ids = [];
@@ -217,10 +219,10 @@ export class Db {
                     for (const value of values) {
                         if (query.test(value)) {
                             i++;
-                            if (i >= skip) {
+                            if (i > skip) {
                                 result.push(value)
                             }
-                            if (limit && i === limit && !search.greed) {
+                            if (isEnough()) {
                                 break;
                             }
                         }

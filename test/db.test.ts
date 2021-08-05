@@ -60,7 +60,7 @@ const expectEqualMingo = async (query: any, sort: any, skip: number, count: numb
         count
     )
     expect(actual.length).toBeGreaterThan(0)
-    expect(actual).toEqual(new mingo.Query(query).find(actual).sort(sort).limit(count).all());
+    expect(actual).toEqual(new mingo.Query(query).find(actual).limit(count).all());
 }
 const expectNinMingo = async (query: any, sort: any, skip: number, count: number) => {
     const actual = await contriesDb.find<{ continent: string }>(query, sort,
@@ -70,6 +70,14 @@ const expectNinMingo = async (query: any, sort: any, skip: number, count: number
     const not = new Set(query['$nin'] as string[]);
     expect(actual.every((res) => !not.has(res.continent as string))).toBeTruthy()
     expect(actual).toHaveLength(51);
+}
+const expectSkipGtMingo = async (query: any, sort: any, skip: number, count: number) => {
+    const actual = await contriesDb.find<{ continent: string }>(query, sort,
+        skip,
+        count
+    );
+    expect(actual.every((res) => res.continent as string >= "Oceania")).toBeTruthy()
+    expect(actual).toHaveLength(10);
 }
 const expectLtMingo = async (query: any, sort: any, skip: number, count: number) => {
     const actual = await contriesDb.find<{ continent: string }>(query, sort,
@@ -208,6 +216,14 @@ test('{ continent: { $gte: "Oceania" } }, { continent: 1 }', async () => {
         { continent: 1 },
         0,
         20
+    );
+});
+test('{ continent: { $gte: "Oceania" } }, { continent: 1 }, skip: 10', async () => {
+    await expectSkipGtMingo(
+        { continent: { $gte: "Oceania" } },
+        { continent: 1 },
+        10,
+        10
     );
 });
 test('{}, { country: -1 }', async () => {

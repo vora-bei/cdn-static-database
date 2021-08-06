@@ -65,31 +65,29 @@ export class Db {
                 const subIt = (value as RawObject[])
                     .map(subCriteria => this.buildIndexSearch(subCriteria, sort, skip, limit, { indices, isRoot: false, caches }));
 
-                () => {
-                    const isAnd = key === '$and';
-                    const result: ResultIndiceSearch[] = subIt.map(it => it());
-                    const greed = isAnd ? result.every(({ greed }) => greed) : result.some(({ greed }) => greed);
-                    const missed = isAnd ? result.every(({ missed }) => missed) : result.some(({ missed }) => missed);
-                    const results = result.map(({ result }) => result);
-                    const paths = new Set([
-                        ...result.reduce((sum, { paths }) => {
-                            paths.forEach((path) => {
-                                sum.set(path, (sum.get(path) || 0) + 1)
-                            })
-                            return sum;
-                        }, new Map<string, number>()).entries()
-                    ].filter(([, count]) => isAnd || count === result.length)
-                        .map(([path]) => path)
-                    );
-                    const sIs = key === '$and' ? intersectAsyncIterable(results) : combineAsyncIterable(results);
-                    subIterables.push(() => ({
-                        caches,
-                        result: sIs,
-                        greed,
-                        missed,
-                        paths,
-                    }));
-                }
+                const isAnd = key === '$and';
+                const result: ResultIndiceSearch[] = subIt.map(it => it());
+                const greed = isAnd ? result.every(({ greed }) => greed) : result.some(({ greed }) => greed);
+                const missed = isAnd ? result.every(({ missed }) => missed) : result.some(({ missed }) => missed);
+                const results = result.map(({ result }) => result);
+                const paths = new Set([
+                    ...result.reduce((sum, { paths }) => {
+                        paths.forEach((path) => {
+                            sum.set(path, (sum.get(path) || 0) + 1)
+                        })
+                        return sum;
+                    }, new Map<string, number>()).entries()
+                ].filter(([, count]) => isAnd || count === result.length)
+                    .map(([path]) => path)
+                );
+                const sIs = isAnd ? intersectAsyncIterable(results) : combineAsyncIterable(results);
+                subIterables.push(() => ({
+                    caches,
+                    result: sIs,
+                    greed,
+                    missed,
+                    paths,
+                }));
             } else if (this.customOperators.has(key)) {
                 const fullTextIndice = this
                     .schema
@@ -163,13 +161,13 @@ export class Db {
         const query = new mingo.Query(criteria);
         let i = 0;
         const caches = search.caches.values();
-        const isEnough = () => limit && i  === limit + skip && !search.greed
+        const isEnough = () => limit && i === limit + skip && !search.greed
         if (search.missed) {
             for await (const values of primaryIndice.cursor()) {
                 for (const value of values) {
                     if (query.test(value)) {
                         i++;
-                        if(i > skip){
+                        if (i > skip) {
                             result.push(value)
                         }
                         if (isEnough()) {

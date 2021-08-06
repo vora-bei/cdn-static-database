@@ -180,6 +180,14 @@ test('{ continent: "Africa" }', async () => {
         20
     );
 });
+test('{ continent: "Africa or Asia" }', async () => {
+    await expectEqualMingo(
+        {$or: [{ continent: "Africa" }, { continent: "Asia" }]},
+        undefined,
+        0,
+        20
+    );
+});
 test('{ continent: " regex Africa string" }', async () => {
     await expectEqualMingo(
         { continent: { $regex: "^Afr" } },

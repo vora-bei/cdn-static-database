@@ -4,6 +4,7 @@ import mingo from "mingo"
 import countries from "./__seed__/country-by-continent.json";
 import { saveSharedIndices, restoreSharedIndices } from "../src/utils.ssr";
 import { SimpleIndice } from "../src/simple.indice";
+import { TextLexIndice } from "../src/text.lex.indice";
 import { Db } from "../src/db";
 import { Schema } from "../src/schema";
 
@@ -21,12 +22,19 @@ beforeAll(async () => {
     const simpleIndices = new SimpleIndice<number, string>({ isLoaded: false });
     countries.forEach((country, key) => simpleIndices.add(key, country.continent));
     const simpleRange = new RangeLinearIndice<number, string>({ indice: simpleIndices, id: 'simple', chunkSize: 30 });
+   
+    const lexIndices = new TextLexIndice<number>({ isLoaded: false });
+    countries.forEach((country, key) => lexIndices.add(key, country.country));
+    const lexRange = new RangeLinearIndice<number, string>({ indice: lexIndices, id: 'lex', chunkSize: 30 });
+ 
+   
     await Promise.all([
         saveSharedIndices(range),
         saveSharedIndices(primaryRange),
-        saveSharedIndices(simpleRange)
+        saveSharedIndices(simpleRange),
+        saveSharedIndices(lexRange)
     ]);
-    const [primary, text, simple] = await Promise.all([
+    const [primary, text, simple, lex] = await Promise.all([
         restoreSharedIndices<number, Record<string, unknown>>(
             "primary",
             RangeLinearIndice.deserialize,
@@ -42,13 +50,19 @@ beforeAll(async () => {
             RangeLinearIndice.deserialize,
             SimpleIndice.deserialize
         ),
+        restoreSharedIndices<number, string>(
+            "lex",
+            RangeLinearIndice.deserialize,
+            TextLexIndice.deserialize
+        ),
     ]);
     contriesDb = new Db(new Schema(
         'id',
         primary,
         [
             { indice: text, path: "$text" },
-            { indice: simple, path: 'continent' }
+            { indice: simple, path: 'continent' },
+            { indice: lex, path: '$lex' },
         ]
     ))
 
@@ -133,6 +147,29 @@ const expectTextErrorMingo = async (query: any, sort: any, skip: number, count: 
 //         20
 //     );
 // });
+test('cursor { continent: { $gt: "Oceania" } }', async () => {
+    const cursor = contriesDb.cursor({ continent: { $gt: "Oceania" } },
+        undefined,
+        0,
+        20
+    );
+    console.log(await cursor.next());
+    console.log(await cursor.hasNext());
+});
+test('cursor { continent: { $lt: "Oceania" } }', async () => {
+    const cursor = contriesDb.cursor({ continent: { $lt: "Oceania" } },
+        undefined,
+        0,
+        40
+    );
+    console.log(await cursor.next());
+    console.log(await cursor.hasNext());
+    console.log(await cursor.next());
+    console.log(await cursor.next());
+    console.log(await cursor.next());
+
+
+});
 test('{ continent: { $lt: "Oceania" } }', async () => {
     await expectLtMingo(
         { continent: { $lt: "Oceania" } },
@@ -182,7 +219,7 @@ test('{ continent: "Africa" }', async () => {
 });
 test('{ continent: "Africa or Asia" }', async () => {
     await expectEqualMingo(
-        {$or: [{ continent: "Africa" }, { continent: "Asia" }]},
+        { $or: [{ continent: "Africa" }, { continent: "Asia" }] },
         undefined,
         0,
         20
@@ -217,6 +254,14 @@ test('{ not: "Africa" }', async () => {
         20
     )
     expect(result).toHaveLength(0)
+});
+test('{ lex: "Russia" }', async () => {
+    const result = await contriesDb.find<{country}>({ $lex: "Germanies" }, undefined,
+        0,
+        20
+    )
+    expect(result).toHaveLength(1)
+    expect(result[0].country).toEqual("Germany")
 });
 test('{ continent: { $gte: "Oceania" } }, { continent: 1 }', async () => {
     await expectEqualMingo(

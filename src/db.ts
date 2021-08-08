@@ -1,6 +1,7 @@
 import { IFindOptions, ISharedIndice } from "interfaces";
 import mingo from "mingo";
 import { RawObject, isOperator, isArray, isObject } from "mingo/util";
+import { finished } from "stream";
 import { IIndiceOption, Schema } from "./schema";
 import { combineAsyncIterable, getNext, intersectAsyncIterable } from './utils'
 
@@ -16,6 +17,15 @@ interface ResultIndiceSearch {
     greed: boolean;
     paths: Set<string>
     caches: Map<unknown, RawObject>
+}
+
+interface IPageCursor<R> {
+    next: () => Promise<R[]>;
+    hasNext: () => boolean;
+    finish: () => void
+}
+function PoisonPillow() {
+    // hello tslint
 }
 export class Db {
     private schema: Schema;
@@ -152,6 +162,7 @@ export class Db {
         }
     }
 
+
     async find<T extends unknown>(criteria: RawObject, sort?: { [k: string]: 1 | -1 }, skip = 0, limit?: number): Promise<T[]> {
         console.time('find')
         const chunkSize = limit || 20;
@@ -161,13 +172,13 @@ export class Db {
         const query = new mingo.Query(criteria);
         let i = 0;
         const caches = search.caches.values();
-        const isEnough = () => limit && i === limit + skip && !search.greed
+        const isEnough = () => limit && i === limit + skip && !search.greed;
         if (search.missed) {
             for await (const values of primaryIndice.cursor()) {
                 for (const value of values) {
                     if (query.test(value)) {
                         i++;
-                        if (i > skip) {
+                        if (i > skip || search.greed) {
                             result.push(value)
                         }
                         if (isEnough()) {
@@ -181,7 +192,7 @@ export class Db {
             for (const value of caches) {
                 if (query.test(value)) {
                     i++;
-                    if (i > skip) {
+                    if (i > skip || search.greed) {
                         result.push(value)
                     }
                     if (isEnough()) {
@@ -200,7 +211,7 @@ export class Db {
                         for (const value of [...values]) {
                             if (query.test(value)) {
                                 i++;
-                                if (i > skip) {
+                                if (i > skip || search.greed) {
                                     result.push(value);
                                 }
                                 if (isEnough()) {
@@ -217,7 +228,7 @@ export class Db {
                     for (const value of values) {
                         if (query.test(value)) {
                             i++;
-                            if (i > skip) {
+                            if (i > skip || search.greed) {
                                 result.push(value)
                             }
                             if (isEnough()) {
@@ -242,6 +253,143 @@ export class Db {
         }
         console.timeEnd('find')
         return res.all() as T[];
+    }
+
+
+    cursor<T extends unknown>(criteria: RawObject, sort?: { [k: string]: 1 | -1 }, skip = 0, limit?: number): IPageCursor<T> {
+        console.time('find')
+        const chunkSize = limit || 20;
+        const primaryIndice = this.schema.primaryIndice;
+        const search: ResultIndiceSearch = this.buildIndexSearch(criteria, sort, skip, limit)();
+        let result: unknown[] = [];
+        const query = new mingo.Query(criteria);
+        let i = 0;
+        const caches = search.caches.values();
+        const isEnough = () => limit && i === limit + skip && !search.greed;
+        let cursorSuccess;
+        let lockCursorSuccess;
+        let lockCursorError;
+        let cursorError;
+        let hasNext = true;
+        const cursorCreator = () => new Promise<T[]>((suc, err) => {
+            cursorSuccess = suc;
+            cursorError = err;
+        });
+        const lockCreator = () => new Promise<T[]>((suc, err) => {
+            lockCursorSuccess = suc;
+            lockCursorError = err;
+        })
+        let cursor = cursorCreator();
+        let lockCursor = lockCreator();
+        if (search.greed) {
+            throw new Error("Unsuported greed cursor yet. Please add indice")
+        }
+        (async () => {
+            await lockCursor;
+            lockCursor = lockCreator();
+            try {
+                if (search.missed) {
+                    for await (const values of primaryIndice.cursor()) {
+                        for (const value of values) {
+                            if (query.test(value)) {
+                                i++;
+                                if (i > skip) {
+                                    result.push(value)
+                                }
+                                if (isEnough()) {
+                                    cursorSuccess(result);
+                                    result = [];
+                                    i = skip;
+                                    cursor = cursorCreator();
+                                    await lockCursor;
+                                    lockCursor = lockCreator();
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    let ids: unknown[] = [];
+                    for (const value of caches) {
+                        if (query.test(value)) {
+                            i++;
+                            if (i > skip) {
+                                result.push(value)
+                            }
+                            if (isEnough()) {
+                                ids = [];
+                                cursorSuccess(result);
+                                result = [];
+                                i = skip;
+                                cursor = cursorCreator();
+                                await lockCursor;
+                                lockCursor = lockCreator();
+                            }
+                        }
+                    }
+                    if (!isEnough()) {
+                        for await (const subIds of search.result) {
+                            ids.push(...subIds);
+                            if (ids.length >= chunkSize) {
+                                const searchIds = ids.filter(id => !search.caches.has(id));
+                                const values = await primaryIndice.find(searchIds.splice(0, chunkSize));
+                                for (const value of [...values]) {
+                                    if (query.test(value)) {
+                                        i++;
+                                        if (i > skip) {
+                                            result.push(value);
+                                        }
+                                        if (isEnough()) {
+                                            ids = [];
+                                            cursorSuccess(result);
+                                            result = [];
+                                            i = skip;
+                                            cursor = cursorCreator();
+                                            await lockCursor;
+                                            lockCursor = lockCreator()
+                                        }
+                                    }
+                                }
+                                ids = [];
+                            }
+                        }
+                        if (ids.length) {
+                            const values = await primaryIndice.find(ids);
+                            for (const value of values) {
+                                if (query.test(value)) {
+                                    i++;
+                                    if (i > skip) {
+                                        result.push(value)
+                                    }
+                                }
+                            }
+                            cursorSuccess(result);
+                            cursor = cursorCreator();
+                            result = [];
+                        }
+                    }
+                }
+            } catch (e) {
+                if ((e instanceof PoisonPillow)) {
+                    throw e;
+                }
+            } finally {
+                hasNext = false;
+            }
+            hasNext = false;
+        })()
+        return {
+            next() {
+                if (!hasNext) {
+                    cursorError("End of list");
+                }
+                lockCursorSuccess();
+                return cursor
+            },
+            hasNext() { return hasNext },
+            finish() {
+                lockCursorError(new PoisonPillow())
+            }
+        }
     }
 
     private indiceCursor(indice: ISharedIndice<unknown, unknown>, value: unknown, caches: Map<unknown, Record<string, unknown>>, { operator = '$eq', sort = 1 }: Partial<IFindOptions> = {}): AsyncIterable<unknown[]> {

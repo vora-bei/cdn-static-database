@@ -5,4 +5,5 @@ text
 default_linear
 coverage
 dist
+lex
 junit.xml

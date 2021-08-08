@@ -54,8 +54,8 @@ export class Range<T> {
             case '$lt':
             case '$lte':
                 return this.lt(token);
-            case '$lt':
-            case '$lte':
+            case '$gt':
+            case '$gte':
                 return this.gt(token);
             case '$regex':
                 return this.match(token);

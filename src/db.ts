@@ -369,7 +369,7 @@ export class Db {
                     }
                 }
             } catch (e) {
-                if ((e instanceof PoisonPillow)) {
+                if (!(e instanceof PoisonPillow)) {
                     throw e;
                 }
             } finally {

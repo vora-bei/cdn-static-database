@@ -12,11 +12,8 @@ interface IOptions<T, P> {
     ) => ISpreadIndice<T, P>
 }
 
-
 export const restoreSharedIndices = async <T, P>(
-    { id, baseUrl, deserialize, deserializeShared }: IOptions<T, P>
-
-) => {
+    { id, baseUrl, deserialize, deserializeShared }: IOptions<T, P>) => {
     const loadChunk = async (options: { id: T }) => {
         const response = await fetch(`${baseUrl}/${id}/chunk_${options.id}.json`);
         return response.json();

@@ -1,7 +1,6 @@
 import { IFindOptions, ISharedIndice } from "interfaces";
 import mingo from "mingo";
 import { RawObject, isOperator, isArray, isObject } from "mingo/util";
-import { finished } from "stream";
 import { IIndiceOption, Schema } from "./schema";
 import { combineAsyncIterable, getNext, intersectAsyncIterable } from './utils'
 
@@ -362,10 +361,10 @@ export class Db {
                                     }
                                 }
                             }
-                            cursorSuccess(result);
-                            cursor = cursorCreator();
-                            result = [];
                         }
+                        cursorSuccess(result);
+                        cursor = cursorCreator();
+                        result = [];
                     }
                 }
             } catch (e) {

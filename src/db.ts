@@ -372,9 +372,9 @@ export class Db {
                     throw e;
                 }
             } finally {
+                lockCursorSuccess();
                 hasNext = false;
             }
-            hasNext = false;
         })()
         return {
             next() {

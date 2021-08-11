@@ -1,6 +1,5 @@
 import { IFindOptions, ISpreadIndice } from "./interfaces";
 import { newStemmer } from "snowball-stemmers";
-import { filterMissing } from "mingo/util";
 const CHUNK_SIZE_DEFAULT = 100;
 
 interface IOptions extends Record<string, unknown> {
@@ -64,7 +63,7 @@ export class TextLexIndice<T> implements ISpreadIndice<T, string>{
         return [...this.indices];
     }
     tokenizr(value: string): string[] {
-        return value.split(/[ \,\.]/)
+        return value.toLowerCase().split(/[ \,\.]/)
             .filter(v => !this.options.stopWords || !this.options.stopWords.has(v))
             .map(v => this.stemmer.stem(v))
     }

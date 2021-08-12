@@ -87,7 +87,6 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
                     const regexp = b instanceof RegExp ? b : new RegExp(`${b}`);
                     return regexp.test(`${a}`)
                 }, sort);
-
             }
             case '$nin':
             case '$ne': {

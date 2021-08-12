@@ -1,5 +1,7 @@
 import nGram from "n-gram";
-import { IFindOptions, ISpreadIndice } from "./interfaces"
+import { IFindOptions, ISpreadIndice } from "./interfaces";
+import { newStemmer } from "snowball-stemmers";
+
 const CHUNK_SIZE_DEFAULT = 100;
 const AUTO_LIMIT_FIND_PERCENT = 40;
 interface IOptions extends Record<string, unknown> {
@@ -8,6 +10,8 @@ interface IOptions extends Record<string, unknown> {
     actuationLimit: number;
     toLowcase: boolean;
     actuationLimitAuto: boolean;
+    stem?: string;
+    stopWords?: Set<string>,
     preTokenizr?(value: string): string;
     postTokenizr?(value: string, tokens: string[]): string[];
     isLoaded: boolean;
@@ -18,6 +22,7 @@ let id_counter = 1;
 export class NgramIndice<T> implements ISpreadIndice<T, string>{
     private nGram: ReturnType<typeof nGram>;
     public indices: Map<string, T[]> = new Map();
+    public stemmer: { stem: (w: string) => string };
     public options: IOptions;
     get keys() {
         const keys = [...this.indices.keys()];
@@ -39,7 +44,9 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         toLowcase = true,
         actuationLimitAuto = false,
         isLoaded = true,
-        load
+        stem,
+        stopWords = new Set(),
+        load,
     }: Partial<IOptions> = {}) {
         this.nGram = nGram(gramLen)
         this.options = {
@@ -48,9 +55,12 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
             toLowcase,
             actuationLimitAuto,
             isLoaded,
+            stem,
+            stopWords,
             id,
             load
         };
+        this.stemmer = stem ? newStemmer(stem) : null;
         return this;
     }
     add(key: T, value: string | string[]): void {
@@ -67,7 +77,10 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         });
     }
     serializeOptions(): IOptions {
-        const { load, ...options } = this.options;
+        const { load, stopWords, ...options } = this.options;
+        if(stopWords){
+            options.stopWords = [...stopWords];
+        }
         return options;
     }
     serializeData(): any[] {
@@ -77,7 +90,11 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         const { preTokenizr, postTokenizr } = this.options;
         let v = preTokenizr ? preTokenizr(value) : value
         v = this.options.toLowcase ? v.toLowerCase() : v;
-        const tokens = v.split(" ").flatMap((word) => this.nGram(word))
+        const tokens = v
+            .split(/[ \,\.]/)
+            .filter(v => !this.options.stopWords || !this.options.stopWords.has(v))
+            .map(v => this.stemmer ? this.stemmer.stem(v) : v)
+            .flatMap((word) => this.nGram(word))
         return postTokenizr ? postTokenizr(value, tokens) : tokens;
 
     }
@@ -136,6 +153,9 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         if (!options) {
             options = data;
             data = null;
+        }
+        if(options && options.stopWords){
+            options.stopWords = new Set(options.stopWords);
         }
         const index = new NgramIndice<T>(options);
         if (!!data) {

@@ -56,7 +56,10 @@ export class TextLexIndice<T> implements ISpreadIndice<T, string>{
         });
     }
     serializeOptions(): Record<string, unknown> {
-        const { load, ...options } = this.options;
+        const { load, stopWords, ...options } = this.options;
+        if (stopWords) {
+            options.stopWords = [...stopWords];
+        }
         return options;
     }
     serializeData(): any[] {
@@ -132,6 +135,9 @@ export class TextLexIndice<T> implements ISpreadIndice<T, string>{
         if (!options) {
             options = data;
             data = null;
+        }
+        if (options && options.stopWords) {
+            options.stopWords = new Set(options.stopWords);
         }
         const index = new TextLexIndice<T>(options);
         if (!!data) {

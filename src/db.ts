@@ -205,22 +205,24 @@ export class Db {
                 for await (const subIds of search.result) {
                     ids.push(...subIds);
                     const searchIds = ids.filter(id => !search.caches.has(id));
-                    while (searchIds.length >= chunkSize) {
-                        const values = await primaryIndice.find(searchIds.splice(0, chunkSize));
-                        for (const value of [...values]) {
-                            if (query.test(value)) {
-                                i++;
-                                if (i > skip || search.greed) {
-                                    result.push(value);
-                                }
-                                if (isEnough()) {
-                                    ids = [];
-                                    break loop;
+                    if (searchIds.length >= chunkSize) {
+                        while (searchIds.length >= chunkSize) {
+                            const values = await primaryIndice.find(searchIds.splice(0, chunkSize));
+                            for (const value of [...values]) {
+                                if (query.test(value)) {
+                                    i++;
+                                    if (i > skip || search.greed) {
+                                        result.push(value);
+                                    }
+                                    if (isEnough()) {
+                                        ids = [];
+                                        break loop;
+                                    }
                                 }
                             }
                         }
+                        ids = [];
                     }
-                    ids = [];
                 }
                 if (ids.length) {
                     const values = await primaryIndice.find(ids);
@@ -328,26 +330,28 @@ export class Db {
                         for await (const subIds of search.result) {
                             ids.push(...subIds);
                             const searchIds = ids.filter(id => !search.caches.has(id));
-                            while (searchIds.length >= chunkSize) {
-                                const values = await primaryIndice.find(searchIds.splice(0, chunkSize));
-                                for (const value of [...values]) {
-                                    if (query.test(value)) {
-                                        i++;
-                                        if (i > skip) {
-                                            result.push(value);
-                                        }
-                                        if (isEnough()) {
-                                            cursorSuccess(result);
-                                            result = [];
-                                            i = skip;
-                                            cursor = cursorCreator();
-                                            await lockCursor;
-                                            lockCursor = lockCreator()
+                            if (searchIds.length >= chunkSize) {
+                                while (searchIds.length >= chunkSize) {
+                                    const values = await primaryIndice.find(searchIds.splice(0, chunkSize));
+                                    for (const value of [...values]) {
+                                        if (query.test(value)) {
+                                            i++;
+                                            if (i > skip) {
+                                                result.push(value);
+                                            }
+                                            if (isEnough()) {
+                                                cursorSuccess(result);
+                                                result = [];
+                                                i = skip;
+                                                cursor = cursorCreator();
+                                                await lockCursor;
+                                                lockCursor = lockCreator()
+                                            }
                                         }
                                     }
                                 }
+                                ids = [];
                             }
-                            ids = []
                         }
                         if (ids.length) {
                             const values = await primaryIndice.find(ids);

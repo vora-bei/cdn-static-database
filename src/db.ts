@@ -204,8 +204,8 @@ export class Db {
                 loop:
                 for await (const subIds of search.result) {
                     ids.push(...subIds);
+                    const searchIds = ids.filter(id => !search.caches.has(id));
                     while (ids.length >= chunkSize) {
-                        const searchIds = ids.filter(id => !search.caches.has(id));
                         const values = await primaryIndice.find(searchIds.splice(0, chunkSize));
                         for (const value of [...values]) {
                             if (query.test(value)) {
@@ -327,8 +327,8 @@ export class Db {
                     if (!isEnough()) {
                         for await (const subIds of search.result) {
                             ids.push(...subIds);
-                            while (ids.length >= chunkSize) {
-                                const searchIds = ids.filter(id => !search.caches.has(id));
+                            const searchIds = ids.filter(id => !search.caches.has(id));
+                            while (searchIds.length >= chunkSize) {
                                 const values = await primaryIndice.find(searchIds.splice(0, chunkSize));
                                 for (const value of [...values]) {
                                     if (query.test(value)) {

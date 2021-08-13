@@ -205,7 +205,7 @@ export class Db {
                 for await (const subIds of search.result) {
                     ids.push(...subIds);
                     const searchIds = ids.filter(id => !search.caches.has(id));
-                    while (ids.length >= chunkSize) {
+                    while (searchIds.length >= chunkSize) {
                         const values = await primaryIndice.find(searchIds.splice(0, chunkSize));
                         for (const value of [...values]) {
                             if (query.test(value)) {
@@ -219,8 +219,8 @@ export class Db {
                                 }
                             }
                         }
-                        ids = [];
                     }
+                    ids = [];
                 }
                 if (ids.length) {
                     const values = await primaryIndice.find(ids);
@@ -307,7 +307,7 @@ export class Db {
                         }
                     }
                 } else {
-                    const ids: unknown[] = [];
+                    let ids: unknown[] = [];
                     for (const value of caches) {
                         if (query.test(value)) {
                             i++;
@@ -347,6 +347,7 @@ export class Db {
                                     }
                                 }
                             }
+                            ids = []
                         }
                         if (ids.length) {
                             const values = await primaryIndice.find(ids);

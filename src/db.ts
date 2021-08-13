@@ -315,7 +315,6 @@ export class Db {
                                 result.push(value)
                             }
                             if (isEnough()) {
-                                ids = [];
                                 cursorSuccess(result);
                                 result = [];
                                 i = skip;
@@ -338,7 +337,6 @@ export class Db {
                                             result.push(value);
                                         }
                                         if (isEnough()) {
-                                            ids = [];
                                             cursorSuccess(result);
                                             result = [];
                                             i = skip;

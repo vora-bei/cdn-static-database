@@ -307,7 +307,7 @@ export class Db {
                         }
                     }
                 } else {
-                    let ids: unknown[] = [];
+                    const ids: unknown[] = [];
                     for (const value of caches) {
                         if (query.test(value)) {
                             i++;
@@ -346,7 +346,6 @@ export class Db {
                                         }
                                     }
                                 }
-                                ids = [];
                             }
                         }
                         if (ids.length) {

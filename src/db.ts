@@ -267,20 +267,63 @@ export class Db {
         let i = 0;
         const caches = search.caches.values();
         const isEnough = () => limit && i === limit + skip && !search.greed;
-        let cursorSuccess;
+        let hasNext = true;
+        const cursorQueue: {
+            promise: Promise<T[]>,
+            cursorSuccess: (res: unknown[]) => void,
+            cursorError: (e: any) => void
+        }[] = [];
+        const cursorSuccess = (res: unknown[]) => cursorQueue[cursorQueue.length - 1].cursorSuccess(res);
+        const cursorError = (e: any) => cursorQueue[cursorQueue.length - 1].cursorError(e);
         let lockCursorSuccess;
         let lockCursorError;
-        let cursorError;
-        let hasNext = true;
-        const cursorCreator = () => new Promise<T[]>((suc, err) => {
-            cursorSuccess = suc;
-            cursorError = err;
-        });
         const lockCreator = () => new Promise<T[]>((suc, err) => {
             lockCursorSuccess = suc;
             lockCursorError = err;
-        })
-        let cursor = cursorCreator();
+        });
+        const cursorCreator = () => {
+            let cursorSuccess, cursorError;
+            const promise = new Promise<T[]>((suc, err) => {
+            cursorSuccess = (res: T[]) => {
+                lockCursor = lockCreator()
+                cursorQueue.pop();
+                if (cursorQueue.length) {
+                    lockCursorSuccess();
+                }
+                suc(res);
+            };
+            cursorError = () => {
+                cursorQueue.pop();
+                err();
+            }
+        });
+        return {
+            promise,
+            cursorSuccess,
+            cursorError
+        };
+    };
+        const getCursor = () => {
+            cursorQueue.push(cursorCreator());
+            if (cursorQueue.length === 1) {
+                lockCursorSuccess()
+            }
+            return cursorQueue[cursorQueue.length - 1]
+        };
+        const matchResultHandler = async (value: { [name: string]: unknown }) => {
+            if (query.test(value)) {
+                i++;
+                if (i > skip) {
+                    result.push(value)
+                }
+                if (isEnough()) {
+                    cursorSuccess(result);
+                    result = [];
+                    i = skip;
+                    await lockCursor;
+                }
+            }
+        }
         let lockCursor = lockCreator();
         if (search.greed) {
             throw new Error("Unsuported greed cursor yet. Please add indice")
@@ -292,39 +335,13 @@ export class Db {
                 if (search.missed) {
                     for await (const values of primaryIndice.cursor()) {
                         for (const value of values) {
-                            if (query.test(value)) {
-                                i++;
-                                if (i > skip) {
-                                    result.push(value)
-                                }
-                                if (isEnough()) {
-                                    cursorSuccess(result);
-                                    result = [];
-                                    i = skip;
-                                    cursor = cursorCreator();
-                                    await lockCursor;
-                                    lockCursor = lockCreator();
-                                }
-                            }
+                            await matchResultHandler(value);
                         }
                     }
                 } else {
                     let ids: unknown[] = [];
                     for (const value of caches) {
-                        if (query.test(value)) {
-                            i++;
-                            if (i > skip) {
-                                result.push(value)
-                            }
-                            if (isEnough()) {
-                                cursorSuccess(result);
-                                result = [];
-                                i = skip;
-                                cursor = cursorCreator();
-                                await lockCursor;
-                                lockCursor = lockCreator();
-                            }
-                        }
+                        await matchResultHandler(value);
                     }
                     if (!isEnough()) {
                         for await (const subIds of search.result) {
@@ -334,20 +351,7 @@ export class Db {
                                 while (searchIds.length >= chunkSize) {
                                     const values = await primaryIndice.find(searchIds.splice(0, chunkSize));
                                     for (const value of [...values]) {
-                                        if (query.test(value)) {
-                                            i++;
-                                            if (i > skip) {
-                                                result.push(value);
-                                            }
-                                            if (isEnough()) {
-                                                cursorSuccess(result);
-                                                result = [];
-                                                i = skip;
-                                                cursor = cursorCreator();
-                                                await lockCursor;
-                                                lockCursor = lockCreator()
-                                            }
-                                        }
+                                        await matchResultHandler(value);
                                     }
                                 }
                                 ids = [];
@@ -365,7 +369,6 @@ export class Db {
                             }
                         }
                         cursorSuccess(result);
-                        cursor = cursorCreator();
                         result = [];
                     }
                 }
@@ -383,8 +386,7 @@ export class Db {
                 if (!hasNext) {
                     cursorError("End of list");
                 }
-                lockCursorSuccess();
-                return cursor
+                return getCursor().promise;
             },
             hasNext() { return hasNext },
             finish() {

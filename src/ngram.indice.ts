@@ -78,7 +78,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
     }
     serializeOptions(): IOptions {
         const { load, stopWords, ...options } = this.options;
-        if(stopWords){
+        if (stopWords) {
             options.stopWords = [...stopWords];
         }
         return options;
@@ -154,7 +154,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
             options = data;
             data = null;
         }
-        if(options && options.stopWords){
+        if (options && options.stopWords) {
             options.stopWords = new Set(options.stopWords);
         }
         const index = new NgramIndice<T>(options);
@@ -229,6 +229,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         getIndiceChunks = getIndiceChunks.bind(this);
         let subResult: T[] = [];
         const combineWeights: Map<T, number> = new Map();
+        const alreadyGiveIds: Set<T> = new Set();
         const never: Promise<{
             index: number;
             result: Map<T, number>;
@@ -256,7 +257,9 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
                                     combineWeights.set(key, weight + value);
                                 }, new Map());
                             subResult = postFilter(combineWeights, tokens);
+                            subResult = subResult.filter(r => !alreadyGiveIds.has(r));
                             subResult.forEach(r => {
+                                alreadyGiveIds.add(r);
                                 combineWeights.delete(r);
                                 return r;
                             });

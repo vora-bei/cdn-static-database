@@ -118,7 +118,7 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         }
         return indice.findAll(indices, value, { operator, sort });
     }
-    cursor(value?: P | P[], { operator = '$eq', sort = 1 }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
+    cursor(value?: P | P[], { operator = '$eq', sort = 1, currentReqId }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
         const load$ = this.load();
         let cursor;
         let iterator;
@@ -137,13 +137,18 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
             }
             const filteredIndices = [...indices].map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
                 const weight = tokens.reduce((w, token) => filter.test(token, operator) ? 1 + w : w, 0);
+                if (weight) {
+                    console.debug(`[${currentReqId}]`, `Cursor range indice ${this.options.id} [${filter.left}, ${filter.right}]`);
+                }
                 return [weight, indice];
             }).filter(([weight]) => this.filterIndicesByWeight(weight, tokens))
-                .map(([_, indice]) => indice);
+                .map(([_, indice]) => {
+                    return indice;
+                });
             if (sort === -1) {
                 filteredIndices.reverse();
             }
-            cursor = indice.cursorAll(filteredIndices, value, { operator, sort })
+            cursor = indice.cursorAll(filteredIndices, value, { operator, sort, currentReqId })
             isFound = true;
             iterator = cursor[Symbol.asyncIterator]()
 

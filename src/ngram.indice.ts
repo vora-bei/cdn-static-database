@@ -58,7 +58,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
             stem,
             stopWords,
             id,
-            load
+            load,
         };
         this.stemmer = stem ? newStemmer(stem) : null;
         return this;
@@ -218,8 +218,13 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
                 }));
             });
     }
-    public cursorAll(indices: ISpreadIndice<T, string>[], value: string | string[], { operator = '$eq' }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
+    public cursorAll(indices: ISpreadIndice<T, string>[], value: string | string[], { operator = '$eq', currentReqId }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
         const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
+        console.debug(
+            `[${currentReqId}]`,
+            `Cursor all n-gram indice id: ${this.options.id} value: ${value} operator ${operator}, tokens:`,
+            tokens,
+        );
         const copyIndices = [...indices];
         let $promises = this.getIndiceChunks(copyIndices, tokens, { operator });
         let count = $promises.length;
@@ -245,7 +250,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
                         while (count > 0 || copyIndices.length > 0) {
                             if (count === 0) {
                                 $promises = getIndiceChunks(copyIndices, tokens, { operator });
-                                console.debug('n-gram chunk', $promises.length, copyIndices.length, i++);
+                                console.debug(`[${currentReqId}]`, 'Cursor all n-gram indice chunk', $promises.length, copyIndices.length, i++);
                                 count = $promises.length;
                             }
                             const { index, result: res } = await Promise.race($promises);

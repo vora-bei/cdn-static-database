@@ -236,11 +236,12 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
         }, new Map())
         return this.postFilter(combineWeights, tokens);
     }
-    public cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], { operator = '$eq', sort = 1, chunkSize = 20 }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
+    public cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], { operator = '$eq', sort = 1, chunkSize = 20, currentReqId }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
         let tokens: P[] = []
         if (value !== undefined) {
             tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
         }
+        console.debug(`[${currentReqId}]`, `Cursor all simple indice id: ${this.options.id} value: ${value} operator ${operator}, tokens:`, tokens);
         let result: T[] | null = null;
         let indiceIndex = 0;
         let data = new Map<T, number>();

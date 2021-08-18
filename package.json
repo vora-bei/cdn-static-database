@@ -1,13 +1,14 @@
 {
   "name": "cdn-static-database",
-  "version": "1.1.13",
+  "version": "1.1.14",
   "description": "",
   "main": "dist/index.js",
   "scripts": {
     "test": "jest --coverage",
     "start": "ts-node src/tests/db.test.ts",
     "build": "tsc",
-    "lint": "eslint './src/**/*.{js,ts}' --quiet --fix"
+    "lint": "eslint './src/**/*.{js,ts}' --quiet --fix",
+    "format": "prettier --write \"{src,test}/**/*.{js,ts}\" \"**/*.md\""
   },
   "repository": {
     "type": "git",

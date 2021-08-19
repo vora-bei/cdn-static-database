@@ -4,6 +4,16 @@ simple
 text
 default_linear
 coverage
+
 dist
+lib
+es
+types
+
 lex
 junit.xml
+
+website/translated_docs
+website/build/
+website/node_modules
+website/i18n/*

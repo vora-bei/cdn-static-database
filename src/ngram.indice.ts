@@ -22,7 +22,7 @@ let id_counter = 1;
 export class NgramIndice<T> implements ISpreadIndice<T, string> {
   private nGram: ReturnType<typeof nGram>;
   public indices: Map<string, T[]> = new Map();
-  public stemmer: { stem: (w: string) => string };
+  public stemmer: { stem: (w: string) => string } | null;
   public options: IOptions;
   get keys() {
     const keys = [...this.indices.keys()];

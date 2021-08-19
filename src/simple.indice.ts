@@ -1,5 +1,6 @@
 import { IFindOptions, ISpreadIndice } from './@types/indice';
 const CHUNK_SIZE_DEFAULT = 100;
+import log from './log';
 interface IOptions extends Record<string, unknown> {
   id?: string;
   isLoaded: boolean;
@@ -235,12 +236,17 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P> {
   public cursorAll(
     indices: ISpreadIndice<T, P>[],
     value?: P | P[],
-    { operator = '$eq', sort = 1, chunkSize = 20 }: Partial<IFindOptions> = {},
+    { operator = '$eq', sort = 1, chunkSize = 20, traceId }: Partial<IFindOptions> = {},
   ): AsyncIterable<T[]> {
     let tokens: P[] = [];
     if (value !== undefined) {
       tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
     }
+    log.debug(
+      `[${traceId}]`,
+      `Cursor all simple indice value: ${value ? 'value' : ''} operator ${operator}, tokens:`,
+      tokens,
+    );
     let result: T[] | null = null;
     let indiceIndex = 0;
     let data = new Map<T, number>();

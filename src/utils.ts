@@ -1,3 +1,5 @@
+import log from './log';
+
 export function getNext<R extends unknown>(
   asyncIterator: AsyncIterator<R[], unknown, unknown>,
   index: number,
@@ -16,11 +18,13 @@ const never: Promise<{
 }> = new Promise(() => {
   // do nothing
 });
-
+let traceIteratorId = 1;
 export async function* combineAsyncIterable(
   iterable: AsyncIterable<unknown[]>[],
+  traceId?: number,
 ): AsyncGenerator<unknown[], unknown[], unknown> {
   const asyncIterators = Array.from(iterable, o => o[Symbol.asyncIterator]());
+  const currentTraceIteratorId = traceIteratorId++;
   const results: unknown[] = [];
   let count = asyncIterators.length;
 
@@ -37,6 +41,9 @@ export async function* combineAsyncIterable(
         count--;
       } else {
         nextPromises[index] = getNext(asyncIterators[index], index);
+        if (asyncIterators.length > 1) {
+          log.debug(`[${traceId}][${currentTraceIteratorId}]`, `Result combined indices:`, result.value);
+        }
         yield result.value;
       }
     }
@@ -50,7 +57,9 @@ export async function* combineAsyncIterable(
 
 export async function* intersectAsyncIterable(
   iterable: AsyncIterable<unknown[]>[],
+  traceId?: number,
 ): AsyncGenerator<unknown[], unknown[], unknown> {
+  const currentTraceIteratorId = traceIteratorId++;
   const asyncIterators = Array.from(iterable, o => o[Symbol.asyncIterator]());
   const results: unknown[] = [];
   let count = asyncIterators.length;
@@ -81,6 +90,9 @@ export async function* intersectAsyncIterable(
           }
         }
         if (subResults.length) {
+          if (asyncIterators.length > 1) {
+            log.debug(`[${traceId}][${currentTraceIteratorId}]`, `Result intersect indices:`, subResults);
+          }
           yield subResults;
         }
       }

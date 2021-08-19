@@ -1,6 +1,7 @@
 import nGram from 'n-gram';
 import { newStemmer } from 'snowball-stemmers';
 import { IFindOptions, ISpreadIndice } from './@types/indice';
+import log from './log';
 
 const CHUNK_SIZE_DEFAULT = 100;
 const AUTO_LIMIT_FIND_PERCENT = 40;
@@ -204,11 +205,17 @@ export class NgramIndice<T> implements ISpreadIndice<T, string> {
   private getIndiceChunks(
     indices: ISpreadIndice<T, string>[],
     tokens: string[],
-    { operator = '$eq' }: Partial<IFindOptions> = {},
+    { operator = '$eq', traceId }: Partial<IFindOptions> = {},
   ) {
     const CHUNK_SIZE = 5;
+    const { length } = indices;
     const slice: ISpreadIndice<T, string>[] = [...indices.splice(0, CHUNK_SIZE), ...indices.splice(-CHUNK_SIZE)];
-
+    slice.forEach((indice, i) => {
+      log.debug(
+        `[${traceId}]`,
+        `Loading simple indice search id: ${indice.id}, loading ${i + 1}/${length}  suggestions chunk`,
+      );
+    });
     return slice
       .map(indice => indice.preFilter(tokens, { operator }))
       .map(($subResult, index) => {
@@ -221,13 +228,13 @@ export class NgramIndice<T> implements ISpreadIndice<T, string> {
   public cursorAll(
     indices: ISpreadIndice<T, string>[],
     value: string | string[],
-    { operator = '$eq' }: Partial<IFindOptions> = {},
+    { operator = '$eq', traceId }: Partial<IFindOptions> = {},
   ): AsyncIterable<T[]> {
     const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
     const copyIndices = [...indices];
     let $promises = this.getIndiceChunks(copyIndices, tokens, { operator });
     let count = $promises.length;
-
+    log.debug(`[${traceId}]`, `Cursor all n-gram indice value: ${value} operator ${operator}, tokens:`, tokens);
     let { postFilter, getIndiceChunks } = this;
     postFilter = postFilter.bind(this);
     getIndiceChunks = getIndiceChunks.bind(this);
@@ -248,7 +255,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string> {
             subResult = [];
             while (count > 0 || copyIndices.length > 0) {
               if (count === 0) {
-                $promises = getIndiceChunks(copyIndices, tokens, { operator });
+                $promises = getIndiceChunks(copyIndices, tokens, { operator, traceId });
                 console.debug('n-gram chunk', $promises.length, copyIndices.length, i++);
                 count = $promises.length;
               }

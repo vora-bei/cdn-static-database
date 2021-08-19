@@ -1,6 +1,6 @@
 {
   "name": "cdn-static-database",
-  "version": "1.1.15-rc.1",
+  "version": "1.1.15-rc.2",
   "description": "",
   "main": "dist/cdn-static-database.js",
   "unpkg": "dist/cdn-static-database.js",
@@ -66,6 +66,7 @@
     "typescript": "^4.1.6"
   },
   "dependencies": {
+    "loglevel": "^1.7.1",
     "@babel/runtime": "^7.15.3",
     "mingo": "^4.1.2",
     "n-gram": "^1.1.2",

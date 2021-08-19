@@ -232,7 +232,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string> {
   ): AsyncIterable<T[]> {
     const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
     const copyIndices = [...indices];
-    let $promises = this.getIndiceChunks(copyIndices, tokens, { operator });
+    let $promises = this.getIndiceChunks(copyIndices, tokens, { operator, traceId });
     let count = $promises.length;
     log.debug(`[${traceId}]`, `Cursor all n-gram indice value: ${value} operator ${operator}, tokens:`, tokens);
     let { postFilter, getIndiceChunks } = this;

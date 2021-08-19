@@ -11,7 +11,7 @@
     "start": "ts-node src/tests/db.test.ts",
     "build": "rollup -c",
     "format": "prettier --write \"{src,test}/**/*.{js,ts}\" \"**/*.md\"",
-    "code:lint": "eslint './src/**/*.{js,ts}' --quiet --fix",
+    "code:lint": "eslint \"{src,test}/**/*.{js,ts}\" --quiet --fix",
     "code:check-types": "tsc --noEmit"
   },
   "repository": {
@@ -53,6 +53,7 @@
     "@typescript-eslint/parser": "^4.28.3",
     "eslint": "^7.30.0",
     "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.24.0",
     "eslint-plugin-prettier": "^3.4.0",
     "jest": "^27.0.5",
     "jest-junit": "^12.2.0",

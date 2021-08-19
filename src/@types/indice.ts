@@ -3,6 +3,7 @@ export interface ISerializeIndex {
   serializeOptions(): Record<string, unknown>;
   serializeData(): unknown[];
 }
+
 export interface IFindOptions {
   operator: string;
   sort: 1 | -1;
@@ -13,11 +14,13 @@ export interface IBaseIndice<T, P> {
   id: string;
   find(search: P[] | P, options?: IFindOptions): Promise<T[]>;
 }
+
 export interface IIndice<T, P> extends ISerializeIndex, IBaseIndice<T, P> {
   tokenizr(search: P): P[];
   add(key: T, value: P | P[]): void;
   keys: P[];
 }
+
 export interface ISpreadIndice<T, P> extends IIndice<T, P> {
   spread(chunkSize: number): ISpreadIndice<T, P>[];
   postFilter(countResults: Map<T, number>, tokens: P[]): T[];

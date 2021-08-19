@@ -1,4 +1,4 @@
-import { IFindOptions, ISharedIndice, ISpreadIndice } from './interfaces';
+import { IFindOptions, ISharedIndice, ISpreadIndice } from './@types/indice';
 import { Range } from './range';
 
 const DEFAULT_CHUNK_ZIZE = 2000;

@@ -1,4 +1,4 @@
-import { IFindOptions, ISpreadIndice } from './interfaces';
+import { IFindOptions, ISpreadIndice } from './@types/indice';
 const CHUNK_SIZE_DEFAULT = 100;
 interface IOptions extends Record<string, unknown> {
   id?: string;
@@ -184,7 +184,7 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P> {
       data = null;
     }
     const index = new SimpleIndice<T, P>(options);
-    if (!!data) {
+    if (data) {
       index.indices = data;
     }
     return index;

@@ -1,5 +1,5 @@
-import { IFindOptions, ISpreadIndice } from './interfaces';
 import { newStemmer } from 'snowball-stemmers';
+import { IFindOptions, ISpreadIndice } from './@types/indice';
 const CHUNK_SIZE_DEFAULT = 100;
 
 interface IOptions extends Record<string, unknown> {
@@ -63,7 +63,7 @@ export class TextLexIndice<T> implements ISpreadIndice<T, string> {
   tokenizr(value: string): string[] {
     return value
       .toLowerCase()
-      .split(/[ \,\.]/)
+      .split(/[ \,\.]/) // eslint-disable-line no-useless-escape
       .filter(v => !this.options.stopWords || !this.options.stopWords.has(v))
       .map(v => this.stemmer.stem(v));
   }
@@ -87,6 +87,7 @@ export class TextLexIndice<T> implements ISpreadIndice<T, string> {
       return sum;
     }, [] as T[]);
   }
+  // eslint-disable-next-line no-empty-pattern
   public async preFilter(tokens: string[], {}: Partial<IFindOptions> = {}): Promise<Map<T, number>> {
     const countResults: Map<T, number> = new Map();
     await this.load();
@@ -131,7 +132,7 @@ export class TextLexIndice<T> implements ISpreadIndice<T, string> {
       options.stopWords = new Set(options.stopWords);
     }
     const index = new TextLexIndice<T>(options);
-    if (!!data) {
+    if (data) {
       index.indices = data;
     }
     return index;

@@ -5,6 +5,7 @@
   "main": "dist/cdn-static-database.js",
   "unpkg": "dist/cdn-static-database.js",
   "module": "es/cdn-static-database.js",
+  "types": "types/index.d.ts",
   "scripts": {
     "clean": "rimraf lib dist es coverage types",
     "test": "jest --coverage",

@@ -8,6 +8,7 @@ export interface IFindOptions {
   operator: string;
   sort: 1 | -1;
   chunkSize: number;
+  traceId?: number;
 }
 
 export interface IBaseIndice<T, P> {

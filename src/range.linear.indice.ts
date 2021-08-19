@@ -1,176 +1,193 @@
-import { IFindOptions, ISharedIndice, ISpreadIndice } from "./interfaces";
-import { Range } from "./range";
+import { IFindOptions, ISharedIndice, ISpreadIndice } from './@types/indice';
 import log from './log';
+import { Range } from './range';
 
 const DEFAULT_CHUNK_ZIZE = 2000;
 
 interface IOptions<T, P> {
-    chunkSize?: number;
-    indice?: ISpreadIndice<T, P>;
-    id?: string;
-    isLoaded: boolean;
-    load?(options: unknown): Promise<any>;
+  chunkSize?: number;
+  indice?: ISpreadIndice<T, P>;
+  id?: string;
+  isLoaded: boolean;
+  load?(options: unknown): Promise<any>;
 }
 
 interface ISerializeOptions<T, P> extends Record<string, unknown> {
-    self: IOptions<T, P>;
-    spread?: any;
+  self: IOptions<T, P>;
+  spread?: any;
 }
 let id_counter = 1;
 export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
-    public indices: Map<Range<P>, ISpreadIndice<T, P>> = new Map();
-    private indice?: ISpreadIndice<T, P>;
-    private indiceDeserialize?: (options: Record<string, unknown>) => ISpreadIndice<T, P>
-    public options: IOptions<T, P>;
-    public get id() {
-        return this.options.id!;
+  public indices: Map<Range<P>, ISpreadIndice<T, P>> = new Map();
+  private indice?: ISpreadIndice<T, P>;
+  private indiceDeserialize?: (options: Record<string, unknown>) => ISpreadIndice<T, P>;
+  public options: IOptions<T, P>;
+  public get id() {
+    return this.options.id!;
+  }
+  constructor({
+    indice,
+    chunkSize = DEFAULT_CHUNK_ZIZE,
+    id = `${id_counter++}`,
+    isLoaded = true,
+    load,
+  }: Partial<IOptions<T, P>>) {
+    if (indice) {
+      this.indice = indice;
+      this.indices = new Map(indice.spread(chunkSize).map(indice => [Range.fromKeys<P>(indice.keys), indice]));
     }
-    constructor({ indice, chunkSize = DEFAULT_CHUNK_ZIZE, id = `${id_counter++}`, isLoaded = true, load }: Partial<IOptions<T, P>>) {
-        if (indice) {
-            this.indice = indice;
-            this.indices = new Map(indice.spread(chunkSize).map((indice) => [Range.fromKeys<P>(indice.keys), indice]))
-        }
-        this.options = { id, isLoaded, load };
+    this.options = { id, isLoaded, load };
+  }
+  serialize(): { data: unknown; options: Record<string, unknown> } {
+    return { data: this.serializeData(), options: this.serializeOptions() };
+  }
+  serializeData() {
+    return [...this.indices].map(([filter, indice], i) => [[filter.left, filter.right], indice.id]);
+  }
+  serializeOptions(): ISerializeOptions<T, P> {
+    const { load, ...options } = this.options;
+    return { self: options, spread: { ...this.indice?.serializeOptions(), isLoaded: false } };
+  }
+  testIndice(key: string, value: any): boolean {
+    if (key !== '$regex') {
+      return true;
     }
-    serialize(): { data: unknown, options: Record<string, unknown> } {
-        return { data: this.serializeData(), options: this.serializeOptions() };
+    let source: string;
+    if (value instanceof RegExp) {
+      source = value.source;
     }
-    serializeData() {
-        return [...this.indices].map(([filter, indice], i) => ([[filter.left, filter.right], indice.id]));
-    }
-    serializeOptions(): ISerializeOptions<T, P> {
-        const { load, ...options } = this.options;
-        return { self: options, spread: { ...this.indice?.serializeOptions(), isLoaded: false } };
-    }
-    testIndice(key: string, value: any): boolean {
-        if (key !== '$regex') {
-            return true;
-        }
-        let source: string;
-        if (value instanceof RegExp) {
-            source = value.source
-        }
-        source = (value as string).toString();
-        return !!source.match(/\^[\w\d]+/);
-    }
+    source = (value as string).toString();
+    return !!source.match(/\^[\w\d]+/);
+  }
 
-    static deserialize<T, P>(
-        data: [[P, P], T][],
-        options: ISerializeOptions<T, P>,
-        deserialize: (data: any, options?: any) => ISpreadIndice<T, P>
-    ): ISharedIndice<T, P> {
-        const indices = new Map(data.map(([[left, right], id]) => {
-            return [new Range(left, right), deserialize({ ...options.spread, id })]
-        }));
-        const indice = new RangeLinearIndice<T, P>({ ...options.self });
-        indice.indices = indices;
-        indice.indice = deserialize({ ...options.spread })
-        return indice;
+  static deserialize<T, P>(
+    data: [[P, P], T][],
+    options: ISerializeOptions<T, P>,
+    deserialize: (data: any, options?: any) => ISpreadIndice<T, P>,
+  ): ISharedIndice<T, P> {
+    const indices = new Map(
+      data.map(([[left, right], id]) => {
+        return [new Range(left, right), deserialize({ ...options.spread, id })];
+      }),
+    );
+    const indice = new RangeLinearIndice<T, P>({ ...options.self });
+    indice.indices = indices;
+    indice.indice = deserialize({ ...options.spread });
+    return indice;
+  }
+  static lazy<T, P>(
+    options: { id: string; load(options: Record<string, unknown>): Promise<any> },
+    deserialize: (options: Record<string, unknown>) => ISpreadIndice<T, P>,
+  ): ISharedIndice<T, P> {
+    const indice = new RangeLinearIndice<T, P>({ ...options, isLoaded: false });
+    indice.indiceDeserialize = deserialize;
+    return indice;
+  }
+  private filterIndicesByWeight(weight: number, tokens: P[]) {
+    return !!weight || !tokens.length;
+  }
+  private async load() {
+    if (this.options.isLoaded) {
+      return;
+    } else if (this.options.load) {
+      if (!this.indiceDeserialize) {
+        throw Error("deserialzed doesn't set");
+      }
+      const {
+        data,
+        options,
+      }: {
+        data: [[P, P], T][];
+        options: ISerializeOptions<T, P>;
+      } = await this.options.load(this.options);
+      const indices = new Map(
+        data.map(([[left, right], id]) => {
+          return [new Range(left, right), this.indiceDeserialize!({ ...options.spread, id })];
+        }),
+      );
+      this.indices = indices;
+      this.indice = this.indiceDeserialize({ ...options.spread });
+      this.options.isLoaded = true;
+    } else {
+      throw Error("option load doesn't implemented");
     }
-    static lazy<T, P>(
-        options: { id: string, load(options: Record<string, unknown>): Promise<any> },
-        deserialize: (options: Record<string, unknown>) => ISpreadIndice<T, P>
-    ): ISharedIndice<T, P> {
-        const indice = new RangeLinearIndice<T, P>({ ...options, isLoaded: false });
-        indice.indiceDeserialize = deserialize;
-        return indice;
+  }
+  async find(value?: P | P[], { operator = '$eq', sort = 1 }: Partial<IFindOptions> = {}): Promise<T[]> {
+    await this.load();
+    const { indice } = this;
+    if (!indice) {
+      throw new Error("Spread indice doesn't initialized");
     }
-    private filterIndicesByWeight(weight: number, tokens: P[]) {
-        return !!weight || !tokens.length
+    let tokens: P[] = [];
+    if (value !== undefined) {
+      tokens = Array.isArray(value) ? value.flatMap(v => indice.tokenizr(v)) : indice.tokenizr(value);
     }
-    private async load() {
-        if (this.options.isLoaded) {
-            return;
-        } else if (this.options.load) {
-            if (!this.indiceDeserialize) {
-                throw (Error("deserialzed doesn't set"))
-            }
-            const { data, options }: {
-                data: [[P, P], T][],
-                options: ISerializeOptions<T, P>
-            } = await this.options.load(this.options);
-            const indices = new Map(data.map(([[left, right], id]) => {
-                return [new Range(left, right), this.indiceDeserialize!({ ...options.spread, id })]
-            }));
-            this.indices = indices;
-            this.indice = this.indiceDeserialize({ ...options.spread })
-            this.options.isLoaded = true;
-        } else {
-            throw (Error("option load doesn't implemented"))
-        }
+    const indices = [...this.indices]
+      .map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
+        const weight = tokens.reduce((w, token) => (filter.test(token, operator) ? 1 + w : w), 0);
+        return [weight, indice];
+      })
+      .filter(([weight]) => this.filterIndicesByWeight(weight, tokens))
+      .map(([_, indice]) => indice);
+    if (sort === -1) {
+      indices.reverse();
     }
-    async find(value?: P | P[], { operator = '$eq', sort = 1 }: Partial<IFindOptions> = {}): Promise<T[]> {
-        await this.load();
-        const { indice } = this;
-        if (!indice) {
-            throw new Error("Spread indice doesn't initialized")
-        }
-        let tokens: P[] = []
-        if (value !== undefined) {
-            tokens = Array.isArray(value) ? value.flatMap(v => indice.tokenizr(v)) : indice.tokenizr(value);
-        }
-        const indices = [...this.indices].map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
-            const weight = tokens.reduce((w, token) => filter.test(token, operator) ? 1 + w : w, 0);
-            return [weight, indice];
-        }).filter(([weight]) => this.filterIndicesByWeight(weight, tokens))
-            .map(([_, indice]) => indice);
-        if (sort === -1) {
-            indices.reverse();
-        }
-        return indice.findAll(indices, value, { operator, sort });
-    }
-    cursor(value?: P | P[], { operator = '$eq', sort = 1, traceId }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
-        const load$ = this.load();
-        load$.then(()=>{
-            log.debug(`[${traceId}]`, 'Loaded range indice id:', this.id);
+    return indice.findAll(indices, value, { operator, sort });
+  }
+  cursor(value?: P | P[], { operator = '$eq', sort = 1, traceId }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
+    const load$ = this.load();
+    load$.then(() => {
+      log.debug(`[${traceId}]`, 'Loaded range indice id:', this.id);
+    });
+    let cursor;
+    let iterator;
+    let isFound = false;
+    const find = async () => {
+      const { indice, indices } = this;
+      if (isFound) {
+        return;
+      }
+      log.debug(`[${traceId}]`, 'Start searching by range indice id:', this.id);
+      if (!indice) {
+        throw new Error("Spread indice doesn't initialized");
+      }
+      let tokens: P[] = [];
+      if (value !== undefined) {
+        tokens = Array.isArray(value) ? value.flatMap(v => indice.tokenizr(v)) : indice.tokenizr(value);
+      }
+      const filteredIndices = [...indices]
+        .map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
+          const weight = tokens.reduce((w, token) => (filter.test(token, operator) ? 1 + w : w), 0);
+          if (weight) {
+            log.debug(
+              `[${traceId}]`,
+              `Select to use chunk range indice id: '${this.options.id}: ${indice.id}' range: [${filter.left}, ${filter.right}]`,
+            );
+          }
+          return [weight, indice];
         })
-        let cursor;
-        let iterator;
-        let isFound = false;
-        const find = async () => {
-            const { indice, indices } = this;
-            if (isFound) {
-                return;
-            }
-            log.debug(`[${traceId}]`, 'Start searching by range indice id:', this.id);
-            if (!indice) {
-                throw new Error("Spread indice doesn't initialized")
-            }
-            let tokens: P[] = []
-            if (value !== undefined) {
-                tokens = Array.isArray(value) ? value.flatMap(v => indice.tokenizr(v)) : indice.tokenizr(value);
-            }
-            const filteredIndices = [...indices].map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
-                const weight = tokens.reduce((w, token) => filter.test(token, operator) ? 1 + w : w, 0);
-                if (weight) {
-                    log.debug(`[${traceId}]`, `Select to use chunk range indice id: '${this.options.id}: ${indice.id}' range: [${filter.left}, ${filter.right}]`);
-                }
-                return [weight, indice];
-            }).filter(([weight]) => this.filterIndicesByWeight(weight, tokens))
-                .map(([_, indice]) => {
-                    return indice;
-                });
-            if (sort === -1) {
-                filteredIndices.reverse();
-            }
-            log.debug(`[${traceId}]`, 'Finish searching by range indice id:', this.id);
-            cursor = indice.cursorAll(filteredIndices, value, { operator, sort, traceId })
-            isFound = true;
-            iterator = cursor[Symbol.asyncIterator]()
-
-        };
+        .filter(([weight]) => this.filterIndicesByWeight(weight, tokens))
+        .map(([_, indice]) => {
+          return indice;
+        });
+      if (sort === -1) {
+        filteredIndices.reverse();
+      }
+      log.debug(`[${traceId}]`, 'Finish searching by range indice id:', this.id);
+      cursor = indice.cursorAll(filteredIndices, value, { operator, sort, traceId });
+      isFound = true;
+      iterator = cursor[Symbol.asyncIterator]();
+    };
+    return {
+      [Symbol.asyncIterator]() {
         return {
-            [Symbol.asyncIterator]() {
-                return {
-                    async next() {
-                        await load$;
-                        await find();
-                        return await iterator.next();
-                    }
-                }
-            }
-        }
-    }
-
+          async next() {
+            await load$;
+            await find();
+            return await iterator.next();
+          },
+        };
+      },
+    };
+  }
 }
-

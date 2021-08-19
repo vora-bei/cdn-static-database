@@ -242,7 +242,11 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P> {
     if (value !== undefined) {
       tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
     }
-    log.debug(`[${traceId}]`, `Cursor all simple indice value: ${value ? 'value' : ''} operator ${operator}, tokens:`, tokens);
+    log.debug(
+      `[${traceId}]`,
+      `Cursor all simple indice value: ${value ? 'value' : ''} operator ${operator}, tokens:`,
+      tokens,
+    );
     let result: T[] | null = null;
     let indiceIndex = 0;
     let data = new Map<T, number>();

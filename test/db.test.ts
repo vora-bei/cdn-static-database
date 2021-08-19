@@ -1,5 +1,6 @@
 import mingo from 'mingo';
 import { Db } from '../src/db';
+import log from '../src/log';
 import { NgramIndice } from '../src/ngram.indice';
 import { RangeLinearIndice } from '../src/range.linear.indice';
 import { Schema } from '../src/schema';
@@ -7,7 +8,6 @@ import { SimpleIndice } from '../src/simple.indice';
 import { TextLexIndice } from '../src/text.lex.indice';
 import { saveSharedIndices, restoreSharedIndices } from '../src/utils.ssr';
 import countries from './__seed__/country-by-continent.json';
-import log from "../src/log"
 log.enableAll();
 
 let contriesDb: Db;

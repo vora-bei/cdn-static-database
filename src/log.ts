@@ -1,3 +1,3 @@
-import log from 'loglevel'; 
+import log from 'loglevel';
 const instance = log.noConflict() as log.Logger;
 export default instance;

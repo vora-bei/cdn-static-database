@@ -1,7 +1,7 @@
 import nGram from 'n-gram';
 import { newStemmer } from 'snowball-stemmers';
-import log from './log';
 import { IFindOptions, ISpreadIndice } from './@types/indice';
+import log from './log';
 
 const CHUNK_SIZE_DEFAULT = 100;
 const AUTO_LIMIT_FIND_PERCENT = 40;
@@ -209,9 +209,12 @@ export class NgramIndice<T> implements ISpreadIndice<T, string> {
   ) {
     const CHUNK_SIZE = 5;
     const slice: ISpreadIndice<T, string>[] = [...indices.splice(0, CHUNK_SIZE), ...indices.splice(-CHUNK_SIZE)];
-      slice.forEach((indice, i)=>{
-          log.debug(`[${traceId}]`, `Loading simple indice search id: ${indice.id}, loading ${i+1}/${length}  suggestions chunk`);
-      })
+    slice.forEach((indice, i) => {
+      log.debug(
+        `[${traceId}]`,
+        `Loading simple indice search id: ${indice.id}, loading ${i + 1}/${length}  suggestions chunk`,
+      );
+    });
     return slice
       .map(indice => indice.preFilter(tokens, { operator }))
       .map(($subResult, index) => {
@@ -230,11 +233,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string> {
     const copyIndices = [...indices];
     let $promises = this.getIndiceChunks(copyIndices, tokens, { operator });
     let count = $promises.length;
-      log.debug(
-        `[${traceId}]`,
-        `Cursor all n-gram indice value: ${value} operator ${operator}, tokens:`,
-        tokens,
-      );
+    log.debug(`[${traceId}]`, `Cursor all n-gram indice value: ${value} operator ${operator}, tokens:`, tokens);
     let { postFilter, getIndiceChunks } = this;
     postFilter = postFilter.bind(this);
     getIndiceChunks = getIndiceChunks.bind(this);

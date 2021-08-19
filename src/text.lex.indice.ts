@@ -1,4 +1,3 @@
-
 import { newStemmer } from 'snowball-stemmers';
 import { IFindOptions, ISpreadIndice } from './@types/indice';
 import log from './log';
@@ -191,8 +190,12 @@ export class TextLexIndice<T> implements ISpreadIndice<T, string> {
     if (value !== undefined) {
       tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
     }
-    log.debug(`[${traceId}]`, `Cursor all simple indice id: ${this.options.id} value: ${value} operator ${operator}, tokens:`, tokens);
-      let result: T[] | null = null;
+    log.debug(
+      `[${traceId}]`,
+      `Cursor all simple indice id: ${this.options.id} value: ${value} operator ${operator}, tokens:`,
+      tokens,
+    );
+    let result: T[] | null = null;
     let indiceIndex = 0;
     let data = new Map<T, number>();
     return {

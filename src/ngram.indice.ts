@@ -208,6 +208,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string> {
     { operator = '$eq', traceId }: Partial<IFindOptions> = {},
   ) {
     const CHUNK_SIZE = 5;
+    const { length } = indices;
     const slice: ISpreadIndice<T, string>[] = [...indices.splice(0, CHUNK_SIZE), ...indices.splice(-CHUNK_SIZE)];
     slice.forEach((indice, i) => {
       log.debug(

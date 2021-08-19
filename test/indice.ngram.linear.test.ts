@@ -1,4 +1,4 @@
-import { ISharedIndice } from '../src/interfaces';
+import { ISharedIndice } from '../src/@types/indice';
 import { NgramIndice } from '../src/ngram.indice';
 import { RangeLinearIndice } from '../src/range.linear.indice';
 import { saveSharedIndices, restoreSharedIndices } from '../src/utils.ssr';

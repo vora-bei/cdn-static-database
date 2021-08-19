@@ -1,5 +1,6 @@
 import { IFindOptions, ISpreadIndice } from "./interfaces"
 const CHUNK_SIZE_DEFAULT = 100;
+import log from './log';
 interface IOptions extends Record<string, unknown> {
     id?: string;
     isLoaded: boolean;
@@ -236,12 +237,12 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
         }, new Map())
         return this.postFilter(combineWeights, tokens);
     }
-    public cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], { operator = '$eq', sort = 1, chunkSize = 20, currentReqId }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
+    public cursorAll(indices: ISpreadIndice<T, P>[], value?: P | P[], { operator = '$eq', sort = 1, chunkSize = 20, traceId }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
         let tokens: P[] = []
         if (value !== undefined) {
             tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
         }
-        console.debug(`[${currentReqId}]`, `Cursor all simple indice id: ${this.options.id} value: ${value} operator ${operator}, tokens:`, tokens);
+        log.debug(`[${traceId}]`, `Cursor all simple indice value: ${value ? 'value' : ''} operator ${operator}, tokens:`, tokens);
         let result: T[] | null = null;
         let indiceIndex = 0;
         let data = new Map<T, number>();
@@ -250,7 +251,10 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P>{
                 return {
                     async next() {
                         if (indiceIndex === 0 && !result && indiceIndex <= indices.length - 1) {
+                            log.debug(`[${traceId}]`, `Loading simple indice search id: ${indices[indiceIndex].id}, loading ${indiceIndex+1}/${indices.length}  suggestions chunk`);
                             data = await indices[indiceIndex].preFilter(tokens, { operator, sort });
+                            log.debug(`[${traceId}]`, `Found simple indice search id: ${indices[indiceIndex].id} values:`, [...data.keys()]);
+
                             result = [...data.keys()];
                             result.reverse();
                         }

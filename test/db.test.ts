@@ -7,7 +7,8 @@ import { SimpleIndice } from "../src/simple.indice";
 import { TextLexIndice } from "../src/text.lex.indice";
 import { Db } from "../src/db";
 import { Schema } from "../src/schema";
-
+import log from "../src/log"
+log.enableAll();
 
 let contriesDb: Db;
 beforeAll(async () => {

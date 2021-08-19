@@ -8,7 +8,7 @@ export interface IFindOptions {
     operator: string;
     sort: 1 | -1,
     chunkSize: number,
-    currentReqId?: number
+    traceId?: number
 }
 
 

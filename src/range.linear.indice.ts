@@ -1,5 +1,6 @@
 import { IFindOptions, ISharedIndice, ISpreadIndice } from "./interfaces";
 import { Range } from "./range";
+import log from './log';
 
 const DEFAULT_CHUNK_ZIZE = 2000;
 
@@ -118,8 +119,11 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
         }
         return indice.findAll(indices, value, { operator, sort });
     }
-    cursor(value?: P | P[], { operator = '$eq', sort = 1, currentReqId }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
+    cursor(value?: P | P[], { operator = '$eq', sort = 1, traceId }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
         const load$ = this.load();
+        load$.then(()=>{
+            log.debug(`[${traceId}]`, 'Loaded range indice id:', this.id);
+        })
         let cursor;
         let iterator;
         let isFound = false;
@@ -128,6 +132,7 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
             if (isFound) {
                 return;
             }
+            log.debug(`[${traceId}]`, 'Start searching by range indice id:', this.id);
             if (!indice) {
                 throw new Error("Spread indice doesn't initialized")
             }
@@ -138,7 +143,7 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
             const filteredIndices = [...indices].map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
                 const weight = tokens.reduce((w, token) => filter.test(token, operator) ? 1 + w : w, 0);
                 if (weight) {
-                    console.debug(`[${currentReqId}]`, `Cursor range indice ${this.options.id} [${filter.left}, ${filter.right}]`);
+                    log.debug(`[${traceId}]`, `Select to use chunk range indice id: '${this.options.id}: ${indice.id}' range: [${filter.left}, ${filter.right}]`);
                 }
                 return [weight, indice];
             }).filter(([weight]) => this.filterIndicesByWeight(weight, tokens))
@@ -148,7 +153,8 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
             if (sort === -1) {
                 filteredIndices.reverse();
             }
-            cursor = indice.cursorAll(filteredIndices, value, { operator, sort, currentReqId })
+            log.debug(`[${traceId}]`, 'Finish searching by range indice id:', this.id);
+            cursor = indice.cursorAll(filteredIndices, value, { operator, sort, traceId })
             isFound = true;
             iterator = cursor[Symbol.asyncIterator]()
 

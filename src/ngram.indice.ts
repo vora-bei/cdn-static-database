@@ -1,6 +1,7 @@
 import nGram from "n-gram";
 import { IFindOptions, ISpreadIndice } from "./interfaces";
 import { newStemmer } from "snowball-stemmers";
+import log from './log';
 
 const CHUNK_SIZE_DEFAULT = 100;
 const AUTO_LIMIT_FIND_PERCENT = 40;
@@ -205,10 +206,14 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
         }, new Map())
         return this.postFilter(combineWeights, tokens);
     }
-    private getIndiceChunks(indices: ISpreadIndice<T, string>[], tokens: string[], { operator = '$eq' }: Partial<IFindOptions> = {}) {
+    private getIndiceChunks(indices: ISpreadIndice<T, string>[], tokens: string[], { operator = '$eq', traceId }: Partial<IFindOptions> = {}) {
         const CHUNK_SIZE = 5;
+        const length = indices.length;
         const slice: ISpreadIndice<T, string>[] = [...indices.splice(0, CHUNK_SIZE), ...indices.splice(-CHUNK_SIZE)];
+        slice.forEach((indice, i)=>{
+            log.debug(`[${traceId}]`, `Loading simple indice search id: ${indice.id}, loading ${i+1}/${length}  suggestions chunk`);
 
+        })
         return slice
             .map((indice) => indice.preFilter(tokens, { operator }))
             .map(($subResult, index) => {
@@ -218,15 +223,15 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
                 }));
             });
     }
-    public cursorAll(indices: ISpreadIndice<T, string>[], value: string | string[], { operator = '$eq', currentReqId }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
+    public cursorAll(indices: ISpreadIndice<T, string>[], value: string | string[], { operator = '$eq', traceId }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
         const tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
-        console.debug(
-            `[${currentReqId}]`,
-            `Cursor all n-gram indice id: ${this.options.id} value: ${value} operator ${operator}, tokens:`,
+        log.debug(
+            `[${traceId}]`,
+            `Cursor all n-gram indice value: ${value} operator ${operator}, tokens:`,
             tokens,
         );
         const copyIndices = [...indices];
-        let $promises = this.getIndiceChunks(copyIndices, tokens, { operator });
+        let $promises = this.getIndiceChunks(copyIndices, tokens, { operator, traceId });
         let count = $promises.length;
 
         let { postFilter, getIndiceChunks } = this;
@@ -249,8 +254,8 @@ export class NgramIndice<T> implements ISpreadIndice<T, string>{
                         subResult = [];
                         while (count > 0 || copyIndices.length > 0) {
                             if (count === 0) {
-                                $promises = getIndiceChunks(copyIndices, tokens, { operator });
-                                console.debug(`[${currentReqId}]`, 'Cursor all n-gram indice chunk', $promises.length, copyIndices.length, i++);
+                                $promises = getIndiceChunks(copyIndices, tokens, { operator, traceId });
+                                console.debug(`[${traceId}]`, 'Cursor all n-gram indice chunk', $promises.length, copyIndices.length, i++);
                                 count = $promises.length;
                             }
                             const { index, result: res } = await Promise.race($promises);

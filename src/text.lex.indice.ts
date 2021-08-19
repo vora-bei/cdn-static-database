@@ -1,5 +1,7 @@
 import { IFindOptions, ISpreadIndice } from "./interfaces";
 import { newStemmer } from "snowball-stemmers";
+import log from './log';
+
 const CHUNK_SIZE_DEFAULT = 100;
 
 interface IOptions extends Record<string, unknown> {
@@ -190,12 +192,12 @@ export class TextLexIndice<T> implements ISpreadIndice<T, string>{
         }, new Map())
         return this.postFilter(combineWeights);
     }
-    public cursorAll(indices: ISpreadIndice<T, string>[], value?: string | string[], { operator = '$eq', sort = 1, chunkSize = 20, currentReqId }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
+    public cursorAll(indices: ISpreadIndice<T, string>[], value?: string | string[], { operator = '$eq', sort = 1, chunkSize = 20, traceId }: Partial<IFindOptions> = {}): AsyncIterable<T[]> {
         let tokens: string[] = []
         if (value !== undefined) {
             tokens = Array.isArray(value) ? value.flatMap(v => this.tokenizr(v)) : this.tokenizr(value);
         }
-        console.debug(`[${currentReqId}]`, `Cursor all simple indice id: ${this.options.id} value: ${value} operator ${operator}, tokens:`, tokens);
+        log.debug(`[${traceId}]`, `Cursor all simple indice id: ${this.options.id} value: ${value} operator ${operator}, tokens:`, tokens);
         let result: T[] | null = null;
         let indiceIndex = 0;
         let data = new Map<T, number>();

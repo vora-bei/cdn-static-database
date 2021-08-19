@@ -1,18 +1,21 @@
 # Search cdn indice
+
 ## Mongo query compatible search engine. Deploy assets of indice to CDN.
+
 This is a helper library for the gatsby plugin "gatsby-cdn-search-plugin".
 But you can use it independently.
 
 ### Base usage
+
 ```javascript
- const indice = new NgramIndice<number>({ 
-     gramLen: 3, actuationLimit: 2, toLowcase: true, actuationLimitAuto: true 
+ const indice = new NgramIndice<number>({
+     gramLen: 3, actuationLimit: 2, toLowcase: true, actuationLimitAuto: true
      });
     countries
         .forEach((country, key) => indices
             .add(key, [country.country, country.continent])
         );
-    const range = new RangeLinearIndice<number, string>({ 
+    const range = new RangeLinearIndice<number, string>({
         indice,
         id: 'text',
         chunkSize: 30
@@ -25,14 +28,14 @@ But you can use it independently.
         );
     const primaryRange = new RangeLinearIndice<Record<string, unknown>, number>({
          indice: primaryIndices,
-          id: 'primary', 
+          id: 'primary',
           chunkSize: 30
      });
 
     const simpleIndices = new SimpleIndice<number, string>({  });
     countries
         .forEach((country, key) => simpleIndices.add(key, country.continent));
-    const simpleRange = new RangeLinearIndice<number, string>({ 
+    const simpleRange = new RangeLinearIndice<number, string>({
         indice: simpleIndices,
         id: 'simple',
         chunkSize: 30
@@ -74,6 +77,7 @@ But you can use it independently.
         0,
         20
     )
-    
+
 ```
+
     See more example in tests

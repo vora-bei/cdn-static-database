@@ -4,6 +4,7 @@ import { RawObject, isOperator, isArray, isObject } from "mingo/util";
 import { IIndiceOption, Schema } from "./schema";
 import { combineAsyncIterable, getNext, intersectAsyncIterable } from './utils'
 import log from './log';
+
 const comparableOperators = new Set([
     '$eq', '$gt', '$gte', '$in', '$lt', '$lte', '$ne', '$nin', '$regex'
 ])
@@ -11,25 +12,25 @@ const logicalOperators = new Set([
     '$and', '$or'
 ]);
 interface ResultIndiceSearch {
-    result: AsyncIterable<unknown[]>;
-    missed: boolean;
-    greed: boolean;
-    paths: Set<string>
-    caches: Map<unknown, RawObject>
+  result: AsyncIterable<unknown[]>;
+  missed: boolean;
+  greed: boolean;
+  paths: Set<string>;
+  caches: Map<unknown, RawObject>;
 }
 
 interface IPageCursor<R> {
-    next: () => Promise<R[]>;
-    hasNext: () => boolean;
-    finish: () => void
+  next: () => Promise<R[]>;
+  hasNext: () => boolean;
+  finish: () => void;
 }
 function PoisonPillow() {
-    // hello tslint
+  // hello tslint
 }
 let reqId = 1;
 export class Db {
-    private schema: Schema;
-    private customOperators: Set<string> = new Set([])
+  private schema: Schema;
+  private customOperators: Set<string> = new Set([]);
 
     constructor(schema: Schema) {
         this.schema = schema;
@@ -451,9 +452,8 @@ export class Db {
 
     }
 
-    private testIndice(options: IIndiceOption, key: string, value: unknown, path?: string) {
-        const pathEqual = options.path === path;
-        return pathEqual && options.indice.testIndice(key, value);
-    }
-
+  private testIndice(options: IIndiceOption, key: string, value: unknown, path?: string) {
+    const pathEqual = options.path === path;
+    return pathEqual && options.indice.testIndice(key, value);
+  }
 }

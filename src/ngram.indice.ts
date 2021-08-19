@@ -1,6 +1,6 @@
 import nGram from 'n-gram';
-import { IFindOptions, ISpreadIndice } from './interfaces';
 import { newStemmer } from 'snowball-stemmers';
+import { IFindOptions, ISpreadIndice } from './@types/indice';
 
 const CHUNK_SIZE_DEFAULT = 100;
 const AUTO_LIMIT_FIND_PERCENT = 40;
@@ -91,6 +91,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string> {
     let v = preTokenizr ? preTokenizr(value) : value;
     v = this.options.toLowcase ? v.toLowerCase() : v;
     const tokens = v
+      // eslint-disable-next-line no-useless-escape
       .split(/[ \,\.]/)
       .filter(v => !this.options.stopWords || !this.options.stopWords.has(v))
       .map(v => (this.stemmer ? this.stemmer.stem(v) : v))
@@ -155,7 +156,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string> {
       options.stopWords = new Set(options.stopWords);
     }
     const index = new NgramIndice<T>(options);
-    if (!!data) {
+    if (data) {
       index.indices = data;
     }
     return index;

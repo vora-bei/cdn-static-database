@@ -1,8 +1,8 @@
-import { RangeLinearIndice } from '../src/range.linear.indice';
-import { NgramIndice } from '../src/ngram.indice';
-import movies from './__seed__/movies.json';
-import { saveSharedIndices, restoreSharedIndices } from '../src/utils.ssr';
 import { ISharedIndice } from '../src/interfaces';
+import { NgramIndice } from '../src/ngram.indice';
+import { RangeLinearIndice } from '../src/range.linear.indice';
+import { saveSharedIndices, restoreSharedIndices } from '../src/utils.ssr';
+import movies from './__seed__/movies.json';
 
 let indiceRestored: ISharedIndice<number, string>;
 beforeAll(async () => {

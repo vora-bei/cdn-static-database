@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { join } from 'path';
 import util from 'util';
-import { ISharedIndice, ISpreadIndice } from './interfaces';
+import { ISharedIndice, ISpreadIndice } from './@types/indice';
 
 const writeFile = util.promisify(fs.writeFile);
 const readFile = util.promisify(fs.readFile);

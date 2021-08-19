@@ -1,12 +1,12 @@
-import { RangeLinearIndice } from '../src/range.linear.indice';
-import { NgramIndice } from '../src/ngram.indice';
 import mingo from 'mingo';
-import countries from './__seed__/country-by-continent.json';
-import { saveSharedIndices, restoreSharedIndices } from '../src/utils.ssr';
+import { Db } from '../src/db';
+import { NgramIndice } from '../src/ngram.indice';
+import { RangeLinearIndice } from '../src/range.linear.indice';
+import { Schema } from '../src/schema';
 import { SimpleIndice } from '../src/simple.indice';
 import { TextLexIndice } from '../src/text.lex.indice';
-import { Db } from '../src/db';
-import { Schema } from '../src/schema';
+import { saveSharedIndices, restoreSharedIndices } from '../src/utils.ssr';
+import countries from './__seed__/country-by-continent.json';
 
 let contriesDb: Db;
 beforeAll(async () => {

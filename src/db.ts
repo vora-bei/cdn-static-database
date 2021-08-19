@@ -1,6 +1,6 @@
-import { IFindOptions, ISharedIndice } from 'interfaces';
 import mingo from 'mingo';
 import { RawObject, isOperator, isArray, isObject } from 'mingo/util';
+import { IFindOptions, ISharedIndice } from './@types/indice';
 import { IIndiceOption, Schema } from './schema';
 import { combineAsyncIterable, getNext, intersectAsyncIterable } from './utils';
 

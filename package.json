@@ -1,10 +1,11 @@
 {
   "name": "cdn-static-database",
-  "version": "1.1.15-rc.2",
+  "version": "1.1.15-rc.3",
   "description": "",
   "main": "dist/cdn-static-database.js",
   "unpkg": "dist/cdn-static-database.js",
   "module": "es/cdn-static-database.js",
+  "types": "types/index.d.ts",
   "scripts": {
     "clean": "rimraf lib dist es coverage types",
     "test": "jest --coverage",

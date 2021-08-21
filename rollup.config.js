@@ -8,7 +8,7 @@ import typescript from 'rollup-plugin-typescript2';
 
 import pkg from './package.json';
 
-const extensions = ['.js, .ts', '.mjs', '.json', '.node'];
+const extensions = ['.js', '.ts', '.mjs', '.json', '.node'];
 const noDeclarationFiles = { compilerOptions: { declaration: false } };
 
 const babelRuntimeVersion = pkg.dependencies['@babel/runtime'].replace(/^[^0-9]*/, '');

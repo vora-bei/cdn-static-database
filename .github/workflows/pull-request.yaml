@@ -13,4 +13,5 @@ jobs:
           node-version: '12.x'
           registry-url: 'https://registry.npmjs.org'
       - run: npm install
-      - run: npm test
+      - run: npm test:ci
+      - run: npm run-script build

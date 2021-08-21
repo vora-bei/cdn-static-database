@@ -10,6 +10,7 @@
     "declaration": true,
     "declarationDir": "./types",
     "resolveJsonModule": true,
+    "downlevelIteration": true,
     "allowJs": true,
     "sourceMap": true,
     "removeComments": false,

@@ -1,6 +1,6 @@
 {
   "name": "cdn-static-database",
-  "version": "1.1.15-rc.5",
+  "version": "1.1.15-rc.6",
   "description": "",
   "main": "dist/cdn-static-database.js",
   "unpkg": "dist/cdn-static-database.js",

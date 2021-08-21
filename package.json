@@ -8,7 +8,8 @@
   "types": "types/index.d.ts",
   "scripts": {
     "clean": "rimraf lib dist es coverage types",
-    "test": "jest --coverage",
+    "test:ci": "jest --bail --ci",
+    "test:coverage": "jest --coverage",
     "start": "ts-node src/tests/db.test.ts",
     "build": "rollup -c",
     "format": "prettier --write \"{src,test}/**/*.{js,ts}\" \"**/*.md\"",

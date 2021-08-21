@@ -1,6 +1,6 @@
 {
   "name": "cdn-static-database",
-  "version": "1.1.15-rc.8",
+  "version": "1.1.15-rc.9",
   "description": "",
   "main": "dist/cdn-static-database.js",
   "unpkg": "dist/cdn-static-database.js",
@@ -39,7 +39,6 @@
   },
   "homepage": "https://github.com/vora-bei/cdn-static-database.git#readme",
   "devDependencies": {
-    "@babel/plugin-proposal-object-rest-spread": "^7.14.7",
     "@babel/plugin-transform-runtime": "^7.15.0",
     "@babel/preset-env": "^7.15.0",
     "@babel/preset-typescript": "^7.15.0",

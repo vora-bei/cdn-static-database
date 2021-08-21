@@ -1,4 +1,5 @@
 # Search cdn indice
+[![CodeFactor](https://www.codefactor.io/repository/github/vora-bei/cdn-static-database/badge)](https://www.codefactor.io/repository/github/vora-bei/cdn-static-database)
 
 ## Mongo query compatible search engine. Deploy assets of indice to CDN.
 

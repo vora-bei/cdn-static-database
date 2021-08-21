@@ -2,7 +2,6 @@ import babel from '@rollup/plugin-babel';
 import commonjs from '@rollup/plugin-commonjs';
 import nodeResolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
-import nodePolyfills from 'rollup-plugin-polyfill-node';
 import { terser } from 'rollup-plugin-terser';
 import typescript from 'rollup-plugin-typescript2';
 
@@ -40,7 +39,6 @@ export default [
         plugins: [['@babel/plugin-transform-runtime', { version: babelRuntimeVersion }]],
         babelHelpers: 'runtime',
       }),
-      nodePolyfills(),
     ],
   },
 
@@ -62,7 +60,6 @@ export default [
         plugins: [['@babel/plugin-transform-runtime', { version: babelRuntimeVersion, useESModules: true }]],
         babelHelpers: 'runtime',
       }),
-      nodePolyfills(),
     ],
   },
   // ES for Browsers
@@ -94,7 +91,6 @@ export default [
           warnings: false,
         },
       }),
-      nodePolyfills(),
     ],
   },
   // UMD Development
@@ -107,7 +103,6 @@ export default [
       indent: false,
     },
     plugins: [
-      nodePolyfills(),
       nodeResolve({
         extensions,
       }),
@@ -136,7 +131,6 @@ export default [
       indent: false,
     },
     plugins: [
-      nodePolyfills(),
       nodeResolve({
         extensions,
       }),

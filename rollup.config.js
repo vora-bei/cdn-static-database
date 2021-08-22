@@ -76,6 +76,7 @@ export default [
     },
     external: ['mingo/util'],
     plugins: [
+      nodePolyfills(),
       nodeResolve({
         extensions,
       }),
@@ -115,7 +116,6 @@ export default [
     },
     external: ['mingo/util'],
     plugins: [
-      nodePolyfills(),
       nodeResolve({
         extensions,
       }),
@@ -148,7 +148,6 @@ export default [
     },
     external: ['mingo/util'],
     plugins: [
-      nodePolyfills(),
       nodeResolve({
         extensions,
       }),

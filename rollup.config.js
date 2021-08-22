@@ -52,6 +52,7 @@ export default [
       ...Object.keys(pkg.peerDependencies || {}),
     ]),
     plugins: [
+      nodePolyfills(),
       nodeResolve({
         extensions,
       }),

@@ -443,7 +443,7 @@ export class Db {
         const start = new Date().getTime();
         cursor.promise.then(() => {
           const end = new Date().getTime();
-          log.debug(`[${traceId}]`, `Time next is ${start - end}`);
+          log.debug(`[${traceId}]`, `Time next is ${end - start}`)
         });
 
         return cursor.promise;

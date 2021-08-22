@@ -2,12 +2,13 @@ import babel from '@rollup/plugin-babel';
 import commonjs from '@rollup/plugin-commonjs';
 import nodeResolve from '@rollup/plugin-node-resolve';
 import replace from '@rollup/plugin-replace';
+import nodePolyfills from 'rollup-plugin-node-polyfills';
 import { terser } from 'rollup-plugin-terser';
 import typescript from 'rollup-plugin-typescript2';
 
 import pkg from './package.json';
 
-const extensions = ['.ts'];
+const extensions = ['.js', '.ts', '.mjs', '.json', '.node'];
 const noDeclarationFiles = { compilerOptions: { declaration: false } };
 
 const babelRuntimeVersion = pkg.dependencies['@babel/runtime'].replace(/^[^0-9]*/, '');
@@ -65,7 +66,15 @@ export default [
   // ES for Browsers
   {
     input: 'src/index.ts',
-    output: { file: 'es/cdn-static-database.mjs', format: 'es', indent: false },
+    output: {
+      file: 'es/cdn-static-database.mjs',
+      format: 'es',
+      indent: false,
+      globals: {
+        'mingo/util': 'mingo/util',
+      },
+    },
+    external: ['mingo/util'],
     plugins: [
       nodeResolve({
         extensions,
@@ -80,7 +89,6 @@ export default [
         extensions,
         exclude: 'node_modules/**',
         plugins: [],
-        skipPreflightCheck: true,
         babelHelpers: 'bundled',
       }),
       terser({
@@ -101,8 +109,13 @@ export default [
       format: 'umd',
       name: 'cdn-static-database',
       indent: false,
+      globals: {
+        'mingo/util': 'mingo/util',
+      },
     },
+    external: ['mingo/util'],
     plugins: [
+      nodePolyfills(),
       nodeResolve({
         extensions,
       }),
@@ -129,8 +142,13 @@ export default [
       format: 'umd',
       name: 'cdn-static-database',
       indent: false,
+      globals: {
+        'mingo/util': 'mingo/util',
+      },
     },
+    external: ['mingo/util'],
     plugins: [
+      nodePolyfills(),
       nodeResolve({
         extensions,
       }),
@@ -140,7 +158,6 @@ export default [
         extensions,
         exclude: 'node_modules/**',
         plugins: [],
-        skipPreflightCheck: true,
         babelHelpers: 'bundled',
       }),
       replace({

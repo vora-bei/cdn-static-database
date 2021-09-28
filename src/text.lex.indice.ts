@@ -1,6 +1,7 @@
 import { newStemmer } from 'snowball-stemmers';
 import { IFindOptions, ISpreadIndice } from './@types/indice';
 import log from './log';
+import {Range} from "./range";
 const CHUNK_SIZE_DEFAULT = 100;
 
 interface IOptions extends Record<string, unknown> {
@@ -224,5 +225,8 @@ export class TextLexIndice<T> implements ISpreadIndice<T, string> {
         };
       },
     };
+  }
+  testRange(range: Range<string>, token: string, op: string): boolean {
+    return range.test(token, op);
   }
 }

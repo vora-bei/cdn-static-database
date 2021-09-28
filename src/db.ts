@@ -7,6 +7,7 @@ import { combineAsyncIterable, getNext, intersectAsyncIterable } from './utils';
 
 const comparableOperators = new Set(['$eq', '$gt', '$gte', '$in', '$lt', '$lte', '$ne', '$nin', '$regex']);
 const logicalOperators = new Set(['$and', '$or']);
+
 interface ResultIndiceSearch {
   result: AsyncIterable<unknown[]>;
   missed: boolean;
@@ -20,10 +21,13 @@ interface IPageCursor<R> {
   hasNext: () => boolean;
   finish: () => void;
 }
+
 function PoisonPillow() {
   // hello tslint
 }
+
 let reqId = 1;
+
 export class Db {
   private schema: Schema;
   private customOperators: Set<string> = new Set([]);
@@ -37,6 +41,7 @@ export class Db {
       .filter(path => !logicalOperators.has(path));
     this.customOperators = new Set(operators);
   }
+
   buildIndexSearch(
     criteria: RawObject,
     sort?: { [k: string]: 1 | -1 },
@@ -443,7 +448,7 @@ export class Db {
         const start = new Date().getTime();
         cursor.promise.then(() => {
           const end = new Date().getTime();
-          log.debug(`[${traceId}]`, `Time next is ${end - start}`)
+          log.debug(`[${traceId}]`, `Time next is ${end - start}`);
         });
 
         return cursor.promise;
@@ -455,6 +460,25 @@ export class Db {
         lockCursorError(new PoisonPillow());
       },
     };
+  }
+
+  cursorText<T extends unknown>(search: string, skip = 0, limit?: number): IPageCursor<T> {
+    let criteria: RawObject = {};
+    if (search.length) {
+      const indicesOptions = this.schema.indices.filter(i => i.path && i.path.startsWith('$'));
+      if (indicesOptions.length === 0) {
+        throw new Error("Doesn't find n-gram or lex indices");
+      }
+      if (indicesOptions.length > 1) {
+        throw new Error('Find more than one n-gram or lex indices');
+      }
+      if (indicesOptions && indicesOptions[0].path) {
+        criteria = { [indicesOptions[0].path]: search };
+      }
+    } else {
+      criteria = {};
+    }
+    return this.cursor(criteria, undefined, skip, limit);
   }
 
   private indiceCursor(

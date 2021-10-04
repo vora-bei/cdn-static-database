@@ -442,7 +442,8 @@ export class Db {
     return {
       next() {
         if (!hasNext) {
-          cursorError('End of list');
+          cursorError(new PoisonPillow());
+          cursorError(new PoisonPillow());
         }
         const cursor = getCursor();
         const start = new Date().getTime();

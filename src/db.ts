@@ -443,7 +443,6 @@ export class Db {
       next() {
         if (!hasNext) {
           cursorError(new PoisonPillow());
-          cursorError(new PoisonPillow());
         }
         const cursor = getCursor();
         const start = new Date().getTime();

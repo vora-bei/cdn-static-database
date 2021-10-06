@@ -331,7 +331,7 @@ export class Db {
       cursorError: (e: any) => void;
     }[] = [];
     const cursorSuccess = (res: unknown[]) => cursorQueue[cursorQueue.length - 1].cursorSuccess(res);
-    const cursorError = (e: any) => cursorQueue[cursorQueue.length - 1].cursorError(e);
+    const cursorError = (e: any) => cursorQueue.forEach(q => q.cursorError(e));
     let lockCursorSuccess;
     let lockCursorError;
     const lockCreator = () =>

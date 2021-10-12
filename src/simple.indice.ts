@@ -1,6 +1,7 @@
 import { IFindOptions, ISpreadIndice } from './@types/indice';
 const CHUNK_SIZE_DEFAULT = 100;
 import log from './log';
+import {Range} from "./range";
 interface IOptions extends Record<string, unknown> {
   id?: string;
   isLoaded: boolean;
@@ -276,5 +277,8 @@ export class SimpleIndice<T, P> implements ISpreadIndice<T, P> {
         };
       },
     };
+  }
+  testRange(range: Range<P>, token: P, op: string): boolean {
+    return range.test(token, op);
   }
 }

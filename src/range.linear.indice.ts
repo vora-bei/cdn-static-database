@@ -157,7 +157,7 @@ export class RangeLinearIndice<T, P> implements ISharedIndice<T, P> {
       }
       const filteredIndices = [...indices]
         .map<[number, ISpreadIndice<T, P>]>(([filter, indice]) => {
-          const weight = tokens.reduce((w, token) => (filter.test(token, operator) ? 1 + w : w), 0);
+          const weight = tokens.reduce((w, token) => (indice.testRange(filter, token, operator) ? 1 + w : w), 0);
           if (weight) {
             log.debug(
               `[${traceId}]`,

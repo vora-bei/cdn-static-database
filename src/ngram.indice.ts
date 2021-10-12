@@ -2,7 +2,7 @@ import nGram from 'n-gram';
 import { newStemmer } from 'snowball-stemmers';
 import { IFindOptions, ISpreadIndice } from './@types/indice';
 import log from './log';
-
+import { Range } from './range';
 const CHUNK_SIZE_DEFAULT = 100;
 const AUTO_LIMIT_FIND_PERCENT = 40;
 interface IOptions extends Record<string, unknown> {
@@ -92,8 +92,7 @@ export class NgramIndice<T> implements ISpreadIndice<T, string> {
     let v = preTokenizr ? preTokenizr(value) : value;
     v = this.options.toLowcase ? v.toLowerCase() : v;
     const tokens = v
-      // eslint-disable-next-line no-useless-escape
-      .split(/[ \,\.]/)
+      .split(/[ ,.]/)
       .filter(v => !this.options.stopWords || !this.options.stopWords.has(v))
       .map(v => (this.stemmer ? this.stemmer.stem(v) : v))
       .flatMap(word => this.nGram(word));
@@ -283,5 +282,9 @@ export class NgramIndice<T> implements ISpreadIndice<T, string> {
         };
       },
     };
+  }
+
+  testRange(range: Range<string>, token: string, op: string): boolean {
+    return token.length === this.options.gramLen && range.test(token, op);
   }
 }

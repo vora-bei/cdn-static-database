@@ -7,6 +7,7 @@ import { combineAsyncIterable, getNext, intersectAsyncIterable } from './utils';
 
 const comparableOperators = new Set(['$eq', '$gt', '$gte', '$in', '$lt', '$lte', '$ne', '$nin', '$regex']);
 const logicalOperators = new Set(['$and', '$or']);
+
 interface ResultIndiceSearch {
   result: AsyncIterable<unknown[]>;
   missed: boolean;
@@ -20,10 +21,13 @@ interface IPageCursor<R> {
   hasNext: () => boolean;
   finish: () => void;
 }
+
 function PoisonPillow() {
   // hello tslint
 }
+
 let reqId = 1;
+
 export class Db {
   private schema: Schema;
   private customOperators: Set<string> = new Set([]);
@@ -37,6 +41,7 @@ export class Db {
       .filter(path => !logicalOperators.has(path));
     this.customOperators = new Set(operators);
   }
+
   buildIndexSearch(
     criteria: RawObject,
     sort?: { [k: string]: 1 | -1 },
@@ -326,7 +331,7 @@ export class Db {
       cursorError: (e: any) => void;
     }[] = [];
     const cursorSuccess = (res: unknown[]) => cursorQueue[cursorQueue.length - 1].cursorSuccess(res);
-    const cursorError = (e: any) => cursorQueue[cursorQueue.length - 1].cursorError(e);
+    const cursorError = (e: any) => cursorQueue.forEach(q => q.cursorError(e));
     let lockCursorSuccess;
     let lockCursorError;
     const lockCreator = () =>
@@ -437,16 +442,15 @@ export class Db {
     return {
       next() {
         if (!hasNext) {
-          cursorError('End of list');
+          cursorError(new PoisonPillow());
         }
         const cursor = getCursor();
         const start = new Date().getTime();
-        cursor.promise.then(() => {
+        return cursor.promise.then(r => {
           const end = new Date().getTime();
-          log.debug(`[${traceId}]`, `Time next is ${end - start}`)
+          log.debug(`[${traceId}]`, `Time next is ${end - start}`);
+          return r;
         });
-
-        return cursor.promise;
       },
       hasNext() {
         return hasNext;
@@ -455,6 +459,25 @@ export class Db {
         lockCursorError(new PoisonPillow());
       },
     };
+  }
+
+  cursorText<T extends unknown>(search: string, skip = 0, limit?: number): IPageCursor<T> {
+    let criteria: RawObject = {};
+    if (search.length) {
+      const indicesOptions = this.schema.indices.filter(i => i.path && i.path.startsWith('$'));
+      if (indicesOptions.length === 0) {
+        throw new Error("Doesn't find n-gram or lex indices");
+      }
+      if (indicesOptions.length > 1) {
+        throw new Error('Find more than one n-gram or lex indices');
+      }
+      if (indicesOptions && indicesOptions[0].path) {
+        criteria = { [indicesOptions[0].path]: search };
+      }
+    } else {
+      criteria = {};
+    }
+    return this.cursor(criteria, undefined, skip, limit);
   }
 
   private indiceCursor(
